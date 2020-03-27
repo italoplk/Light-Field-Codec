@@ -1,4 +1,4 @@
-# LF_Codec (ICIP 2020)
+# Light_Field_Codec
 ## Encoder Parameters (CLI)
 
 **Use:**  -**flag** *value*
@@ -27,3 +27,14 @@
 - **lfy** *int*: light field size in y dimension
 - **lfu** *int*: light field size in u dimension
 - **lfv** *int*: light field size in v dimension 
+
+##
+### Scripts 
+- Scripts to run the Light Field Codec for different **QPs** and different dataset
+##### Run simulation.py:
+1. In the simulation.py, change the input_file variable and the output_file variable
+    - **input_file:** Directory with .ppm files to be encoded
+    - **output_file:** Output directory for the encoded *.ppm
+2. Execute
+    - taskset -c 0 python3 simulation.py
+
