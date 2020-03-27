@@ -44,6 +44,12 @@ CMakeFiles/LF_Codec.dir/src/LightField.cpp.o: ../src/clip.h
 CMakeFiles/LF_Codec.dir/src/Point4D.cpp.o: ../src/Point4D.cpp
 CMakeFiles/LF_Codec.dir/src/Point4D.cpp.o: ../src/Point4D.h
 
+CMakeFiles/LF_Codec.dir/src/Prediction.cpp.o: ../src/Point4D.h
+CMakeFiles/LF_Codec.dir/src/Prediction.cpp.o: ../src/Prediction.cpp
+CMakeFiles/LF_Codec.dir/src/Prediction.cpp.o: ../src/Prediction.h
+CMakeFiles/LF_Codec.dir/src/Prediction.cpp.o: ../src/Typedef.h
+CMakeFiles/LF_Codec.dir/src/Prediction.cpp.o: ../src/clip.h
+
 CMakeFiles/LF_Codec.dir/src/Quantization.cpp.o: ../src/Point4D.h
 CMakeFiles/LF_Codec.dir/src/Quantization.cpp.o: ../src/Quantization.cpp
 CMakeFiles/LF_Codec.dir/src/Quantization.cpp.o: ../src/Quantization.h
@@ -71,6 +77,7 @@ CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/EncoderParameters.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/LRE.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/LightField.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Point4D.h
+CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Prediction.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Quantization.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Statistics.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Time.h
