@@ -10,6 +10,7 @@
 #include "EncBitstreamWriter.h"
 #include "Typedef.h"
 #include "Time.h"
+#include "Node.h"
 
 using namespace std;
 
@@ -210,6 +211,13 @@ int main(int argc, char **argv) {
                             temp_lre[i] = (int) std::trunc(qf4D[i]);
                         }
 
+#if HEXADECA_TREE
+                        Node root(temp_lre, encoderParameters.dim_block.getNSamples());
+                        root.CreateTree();
+                        //root.printLevelOrder();
+
+                        exit(1);
+#endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
                         bits_per_4D_Block = encoder.write4DBlock(temp_lre, encoderParameters.dim_block.getNSamples(), lre_result);

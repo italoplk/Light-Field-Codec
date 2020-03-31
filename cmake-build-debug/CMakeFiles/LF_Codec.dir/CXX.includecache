@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/CAVLC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/CAVLC.h
 limits.h
 -
 vector
@@ -16,19 +16,19 @@ iostream
 assert.h
 -
 LRE.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/LRE.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/DpcmDC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/DpcmDC.h
 vector
 -
 ostream
 -
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncBitstreamBuffer.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
 algorithm
 -
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncBitstreamVLC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
 cstdio
 -
 string
@@ -46,43 +46,39 @@ cmath
 bitset
 -
 Point4D.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 LRE.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/LRE.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
 CAVLC.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/CAVLC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/CAVLC.h
 EncBitstreamBuffer.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncBitstreamBuffer.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
 EncoderParameters.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncoderParameters.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncBitstreamWriter.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.h
 EncBitstreamVLC.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncBitstreamVLC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncoderParameters.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 string
 -
 Point4D.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/LRE.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
 iostream
 -
 vector
 -
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/LightField.cpp
-LightField.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/LightField.h
-
-/home/ubuntu/Documentos/Git/LF_Codec/src/LightField.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.h
 Typedef.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Typedef.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 clip.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/clip.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/clip.h
 Point4D.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 string
 -
 cmath
@@ -92,7 +88,17 @@ cstring
 cassert
 -
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.h
+vector
+-
+iostream
+-
+cmath
+-
+queue
+-
+
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 zconf.h
 -
 iostream
@@ -100,21 +106,15 @@ iostream
 iomanip
 -
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/Quantization.cpp
-Quantization.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Quantization.h
-cmath
--
-
-/home/ubuntu/Documentos/Git/LF_Codec/src/Quantization.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.h
 cmath
 -
 Typedef.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Typedef.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 Point4D.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/Statistics.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Statistics.h
 cmath
 -
 climits
@@ -132,11 +132,11 @@ cassert
 cfloat
 -
 Point4D.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 LRE.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/LRE.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/Time.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.h
 ctime
 -
 chrono
@@ -144,47 +144,43 @@ chrono
 iostream
 -
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/Transform.cpp
-cassert
--
-Transform.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Transform.h
-
-/home/ubuntu/Documentos/Git/LF_Codec/src/Transform.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.h
 zconf.h
 -
 Typedef.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Typedef.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 Point4D.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 cmath
 -
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/Typedef.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/clip.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/clip.h
 
-/home/ubuntu/Documentos/Git/LF_Codec/src/main.cpp
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/main.cpp
 iostream
 -
 EncoderParameters.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncoderParameters.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 Quantization.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Quantization.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.h
 Transform.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Transform.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.h
 LightField.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/LightField.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.h
 Statistics.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Statistics.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Statistics.h
 LRE.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/LRE.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
 DpcmDC.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/DpcmDC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/DpcmDC.h
 EncBitstreamWriter.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/EncBitstreamWriter.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.h
 Typedef.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Typedef.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 Time.h
-/home/ubuntu/Documentos/Git/LF_Codec/src/Time.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.h
+Node.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.h
 

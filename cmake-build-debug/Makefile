@@ -48,10 +48,10 @@ RM = /home/ubuntu/Downloads/CLion-2019.3.4/clion-2019.3.4/bin/cmake/linux/bin/cm
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ubuntu/Documentos/Git/LF_Codec
+CMAKE_SOURCE_DIR = /home/ubuntu/Documentos/Git/Light-Field-Codec
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug
+CMAKE_BINARY_DIR = /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug/CMakeFiles /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -339,6 +339,33 @@ src/LightField.cpp.s:
 	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/LightField.cpp.s
 .PHONY : src/LightField.cpp.s
 
+src/Node.o: src/Node.cpp.o
+
+.PHONY : src/Node.o
+
+# target to build an object file
+src/Node.cpp.o:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Node.cpp.o
+.PHONY : src/Node.cpp.o
+
+src/Node.i: src/Node.cpp.i
+
+.PHONY : src/Node.i
+
+# target to preprocess a source file
+src/Node.cpp.i:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Node.cpp.i
+.PHONY : src/Node.cpp.i
+
+src/Node.s: src/Node.cpp.s
+
+.PHONY : src/Node.s
+
+# target to generate assembly for a file
+src/Node.cpp.s:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Node.cpp.s
+.PHONY : src/Node.cpp.s
+
 src/Point4D.o: src/Point4D.cpp.o
 
 .PHONY : src/Point4D.o
@@ -534,6 +561,9 @@ help:
 	@echo "... src/LightField.o"
 	@echo "... src/LightField.i"
 	@echo "... src/LightField.s"
+	@echo "... src/Node.o"
+	@echo "... src/Node.i"
+	@echo "... src/Node.s"
 	@echo "... src/Point4D.o"
 	@echo "... src/Point4D.i"
 	@echo "... src/Point4D.s"

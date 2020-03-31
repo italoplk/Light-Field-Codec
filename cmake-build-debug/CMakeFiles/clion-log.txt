@@ -1,4 +1,4 @@
-/home/ubuntu/Downloads/CLion-2019.3.4/clion-2019.3.4/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/ubuntu/Documentos/Git/LF_Codec
+/home/ubuntu/Downloads/CLion-2019.3.4/clion-2019.3.4/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/ubuntu/Documentos/Git/Light-Field-Codec
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug
+-- Build files have been written to: /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug

@@ -7,6 +7,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/LF_Codec.dir/src/EncoderParameters.cpp.o"
   "CMakeFiles/LF_Codec.dir/src/LRE.cpp.o"
   "CMakeFiles/LF_Codec.dir/src/LightField.cpp.o"
+  "CMakeFiles/LF_Codec.dir/src/Node.cpp.o"
   "CMakeFiles/LF_Codec.dir/src/Point4D.cpp.o"
   "CMakeFiles/LF_Codec.dir/src/Quantization.cpp.o"
   "CMakeFiles/LF_Codec.dir/src/Statistics.cpp.o"

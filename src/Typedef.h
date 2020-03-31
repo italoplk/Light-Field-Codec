@@ -9,14 +9,15 @@
 #define TRANSF_QUANT true
 #define QUANTIZATION true
 
-#define STATISTICS_LOCAL true
+#define STATISTICS_LOCAL false
 #define STATISTICS_GLOBAL false
-#define STATISTICS_TIME true
+#define STATISTICS_TIME false
 
 #define TRACE_TRANSF false
 #define TRACE_QUANT false
 #define TRACE_LRE false
 
 #define DPCM_DC true
+#define HEXADECA_TREE true
 
 #endif //TYPEDEF_H
