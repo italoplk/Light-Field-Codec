@@ -41,8 +41,10 @@ CMakeFiles/LF_Codec.dir/src/LightField.cpp.o: ../src/Point4D.h
 CMakeFiles/LF_Codec.dir/src/LightField.cpp.o: ../src/Typedef.h
 CMakeFiles/LF_Codec.dir/src/LightField.cpp.o: ../src/clip.h
 
+CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/EncoderParameters.h
 CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/Node.cpp
 CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/Node.h
+CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/Point4D.h
 
 CMakeFiles/LF_Codec.dir/src/Point4D.cpp.o: ../src/Point4D.cpp
 CMakeFiles/LF_Codec.dir/src/Point4D.cpp.o: ../src/Point4D.h

@@ -23,6 +23,17 @@ void printVector(const std::string &msg, T *vet, int size) {
     std::cout << std::endl;
 }
 
+vector<string> Split(const string& s, char delimiter) {
+    vector<string> tokens;
+    string token;
+    istringstream tokenStream(s);
+    while (getline(tokenStream, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
 int main(int argc, char **argv) {
     EncoderParameters encoderParameters;
     encoderParameters.parse_cli(argc, argv);
@@ -65,6 +76,26 @@ int main(int argc, char **argv) {
 #endif
 
     std::string sep = ",";
+
+#if HEXADECA_TREE
+    uint hypercubo = 0;
+    string light_field_name = Split(encoderParameters.getPathInput(), '/').back();
+    ofstream file_hexadeca_tree;
+    file_hexadeca_tree.open(encoderParameters.getPathOutput() + light_field_name + "_hexadecaTree.csv");
+    if (file_hexadeca_tree.is_open()){
+        file_hexadeca_tree <<
+                           "Light_Field" << sep <<
+                           "Channel" << sep <<
+                           "Hypercubo" << sep <<
+                           "Level" << sep <<
+                           "Hypercubo_Size" << sep <<
+                           "N_Zero" << sep <<
+                           "N_One" << sep <<
+                           "N_Two" << sep <<
+                           "N_Greater_Than_Two" << sep <<
+                           "Total_Values" << sep << endl;
+    }
+#endif
 
 #if TRACE_TRANSF
     std::ofstream file_traceTransf;
@@ -213,10 +244,10 @@ int main(int argc, char **argv) {
 
 #if HEXADECA_TREE
                         Node root(temp_lre, encoderParameters.dim_block.getNSamples());
-                        root.CreateTree();
-                        //root.printLevelOrder();
 
-                        exit(1);
+                        root.CreateTree(file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0);
+
+                        //exit(1);
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
@@ -325,6 +356,9 @@ int main(int argc, char **argv) {
 #endif
                         encoder.write_completedBytes();
                     }
+#if HEXADECA_TREE
+                    hypercubo++;
+#endif
                 }
             }
         }
@@ -341,6 +375,10 @@ int main(int argc, char **argv) {
     cout << "\n#########################################################" << endl;
     cout << "Total bytes:\t" << encoder.getTotalBytes() << endl;
     cout << "#########################################################" << endl;
+
+#if HEXADECA_TREE
+    file_hexadeca_tree.close();
+#endif
 
 #if STATISTICS_GLOBAL
     // TODO: statistics (global)
