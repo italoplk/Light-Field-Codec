@@ -6,6 +6,10 @@
 
 #IncludeRegexTransform: 
 
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/CAVLC.cpp
+CAVLC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/CAVLC.h
+
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/CAVLC.h
 limits.h
 -
@@ -18,15 +22,31 @@ assert.h
 LRE.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
 
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/DpcmDC.cpp
+cmath
+-
+algorithm
+-
+DpcmDC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/DpcmDC.h
+
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/DpcmDC.h
 vector
 -
 ostream
 -
 
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.cpp
+EncBitstreamBuffer.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
+
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.h
 algorithm
 -
+
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.cpp
+EncBitstreamVLC.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
 
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
 cstdio
@@ -56,15 +76,27 @@ EncBitstreamBuffer.h
 EncoderParameters.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.cpp
+EncBitstreamWriter.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.h
+
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamWriter.h
 EncBitstreamVLC.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamVLC.h
+
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.cpp
+EncoderParameters.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 string
 -
 Point4D.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
+
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.cpp
+LRE.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
 
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
 iostream
@@ -92,19 +124,9 @@ cstring
 cassert
 -
 
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.h
-vector
--
-iostream
--
-cmath
--
-queue
--
-fstream
--
-EncoderParameters.h
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.cpp
+Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 zconf.h
@@ -128,6 +150,12 @@ Typedef.h
 Point4D.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Statistics.cpp
+Statistics.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Statistics.h
+cmath
+-
+
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Statistics.h
 cmath
 -
@@ -149,6 +177,10 @@ Point4D.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 LRE.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
+
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.cpp
+Time.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.h
 
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.h
 ctime
@@ -173,6 +205,24 @@ Point4D.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 cmath
 -
+
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.cpp
+Tree.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
+
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
+vector
+-
+iostream
+-
+cmath
+-
+queue
+-
+fstream
+-
+EncoderParameters.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
 
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 
@@ -201,6 +251,6 @@ Typedef.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 Time.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.h
-Node.h
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.h
+Tree.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
 

@@ -10,7 +10,7 @@
 #include "EncBitstreamWriter.h"
 #include "Typedef.h"
 #include "Time.h"
-#include "Node.h"
+#include "Tree.h"
 
 using namespace std;
 
@@ -79,14 +79,16 @@ int main(int argc, char **argv) {
 
 #if HEXADECA_TREE
     uint hypercubo = 0;
+    Tree tree;
+    Node *root = nullptr;
     string light_field_name = Split(encoderParameters.getPathInput(), '/').back();
     ofstream file_hexadeca_tree;
     file_hexadeca_tree.open(encoderParameters.getPathOutput() + light_field_name + "_hexadecaTree.csv");
     if (file_hexadeca_tree.is_open()){
         file_hexadeca_tree <<
                            "Light_Field" << sep <<
-                           "Channel" << sep <<
                            "Hypercubo" << sep <<
+                           "Channel" << sep <<
                            "Level" << sep <<
                            "Hypercubo_Size" << sep <<
                            "N_Zero" << sep <<
@@ -243,9 +245,10 @@ int main(int argc, char **argv) {
                         }
 
 #if HEXADECA_TREE
-                        Node root(temp_lre, encoderParameters.dim_block.getNSamples());
-
-                        root.CreateTree(file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0);
+                        root = tree.CreateRoot(temp_lre, encoderParameters.dim_block.getNSamples());
+                        tree.CreateTree(root, file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0);
+                        tree.DeleteTree(root);
+                        delete root;
 
                         //exit(1);
 #endif

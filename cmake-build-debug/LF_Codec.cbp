@@ -132,12 +132,6 @@
 		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.h">
 			<Option target="LF_Codec"/>
 		</Unit>
-		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.cpp">
-			<Option target="LF_Codec"/>
-		</Unit>
-		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.h">
-			<Option target="LF_Codec"/>
-		</Unit>
 		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.cpp">
 			<Option target="LF_Codec"/>
 		</Unit>
@@ -166,6 +160,12 @@
 			<Option target="LF_Codec"/>
 		</Unit>
 		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.h">
+			<Option target="LF_Codec"/>
+		</Unit>
+		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.cpp">
+			<Option target="LF_Codec"/>
+		</Unit>
+		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h">
 			<Option target="LF_Codec"/>
 		</Unit>
 		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h">

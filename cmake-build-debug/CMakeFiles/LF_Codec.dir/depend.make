@@ -41,11 +41,6 @@ CMakeFiles/LF_Codec.dir/src/LightField.cpp.o: ../src/Point4D.h
 CMakeFiles/LF_Codec.dir/src/LightField.cpp.o: ../src/Typedef.h
 CMakeFiles/LF_Codec.dir/src/LightField.cpp.o: ../src/clip.h
 
-CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/EncoderParameters.h
-CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/Node.cpp
-CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/Node.h
-CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/Point4D.h
-
 CMakeFiles/LF_Codec.dir/src/Point4D.cpp.o: ../src/Point4D.cpp
 CMakeFiles/LF_Codec.dir/src/Point4D.cpp.o: ../src/Point4D.h
 
@@ -67,6 +62,11 @@ CMakeFiles/LF_Codec.dir/src/Transform.cpp.o: ../src/Transform.cpp
 CMakeFiles/LF_Codec.dir/src/Transform.cpp.o: ../src/Transform.h
 CMakeFiles/LF_Codec.dir/src/Transform.cpp.o: ../src/Typedef.h
 
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.o: ../src/EncoderParameters.h
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.o: ../src/Point4D.h
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.o: ../src/Tree.cpp
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.o: ../src/Tree.h
+
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/CAVLC.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/DpcmDC.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/EncBitstreamBuffer.h
@@ -75,12 +75,12 @@ CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/EncBitstreamWriter.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/EncoderParameters.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/LRE.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/LightField.h
-CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Node.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Point4D.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Quantization.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Statistics.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Time.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Transform.h
+CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Tree.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/Typedef.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/clip.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o: ../src/main.cpp

@@ -41,11 +41,6 @@ CMakeFiles/LF_Codec.dir/src/LightField.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/clip.h
-CMakeFiles/LF_Codec.dir/src/Node.cpp.o
- /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
- /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.cpp
- /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.h
- /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 CMakeFiles/LF_Codec.dir/src/Point4D.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.cpp
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
@@ -67,6 +62,11 @@ CMakeFiles/LF_Codec.dir/src/Transform.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.cpp
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.o
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.cpp
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
 CMakeFiles/LF_Codec.dir/src/main.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/CAVLC.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/DpcmDC.h
@@ -76,12 +76,12 @@ CMakeFiles/LF_Codec.dir/src/main.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncoderParameters.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.h
- /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Statistics.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.h
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/clip.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/main.cpp

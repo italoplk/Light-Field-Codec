@@ -239,18 +239,18 @@ CMakeFiles/LF_Codec.dir/src/EncBitstreamBuffer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/LF_Codec.dir/src/EncBitstreamBuffer.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/Documentos/Git/Light-Field-Codec/src/EncBitstreamBuffer.cpp -o CMakeFiles/LF_Codec.dir/src/EncBitstreamBuffer.cpp.s
 
-CMakeFiles/LF_Codec.dir/src/Node.cpp.o: CMakeFiles/LF_Codec.dir/flags.make
-CMakeFiles/LF_Codec.dir/src/Node.cpp.o: ../src/Node.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/LF_Codec.dir/src/Node.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/LF_Codec.dir/src/Node.cpp.o -c /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.cpp
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.o: CMakeFiles/LF_Codec.dir/flags.make
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.o: ../src/Tree.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/LF_Codec.dir/src/Tree.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/LF_Codec.dir/src/Tree.cpp.o -c /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.cpp
 
-CMakeFiles/LF_Codec.dir/src/Node.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/LF_Codec.dir/src/Node.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.cpp > CMakeFiles/LF_Codec.dir/src/Node.cpp.i
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/LF_Codec.dir/src/Tree.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.cpp > CMakeFiles/LF_Codec.dir/src/Tree.cpp.i
 
-CMakeFiles/LF_Codec.dir/src/Node.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/LF_Codec.dir/src/Node.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Node.cpp -o CMakeFiles/LF_Codec.dir/src/Node.cpp.s
+CMakeFiles/LF_Codec.dir/src/Tree.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/LF_Codec.dir/src/Tree.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.cpp -o CMakeFiles/LF_Codec.dir/src/Tree.cpp.s
 
 # Object files for target LF_Codec
 LF_Codec_OBJECTS = \
@@ -268,7 +268,7 @@ LF_Codec_OBJECTS = \
 "CMakeFiles/LF_Codec.dir/src/EncBitstreamWriter.cpp.o" \
 "CMakeFiles/LF_Codec.dir/src/EncBitstreamVLC.cpp.o" \
 "CMakeFiles/LF_Codec.dir/src/EncBitstreamBuffer.cpp.o" \
-"CMakeFiles/LF_Codec.dir/src/Node.cpp.o"
+"CMakeFiles/LF_Codec.dir/src/Tree.cpp.o"
 
 # External object files for target LF_Codec
 LF_Codec_EXTERNAL_OBJECTS =
@@ -287,7 +287,7 @@ LF_Codec: CMakeFiles/LF_Codec.dir/src/CAVLC.cpp.o
 LF_Codec: CMakeFiles/LF_Codec.dir/src/EncBitstreamWriter.cpp.o
 LF_Codec: CMakeFiles/LF_Codec.dir/src/EncBitstreamVLC.cpp.o
 LF_Codec: CMakeFiles/LF_Codec.dir/src/EncBitstreamBuffer.cpp.o
-LF_Codec: CMakeFiles/LF_Codec.dir/src/Node.cpp.o
+LF_Codec: CMakeFiles/LF_Codec.dir/src/Tree.cpp.o
 LF_Codec: CMakeFiles/LF_Codec.dir/build.make
 LF_Codec: CMakeFiles/LF_Codec.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Linking CXX executable LF_Codec"

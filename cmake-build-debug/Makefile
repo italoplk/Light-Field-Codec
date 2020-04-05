@@ -339,33 +339,6 @@ src/LightField.cpp.s:
 	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/LightField.cpp.s
 .PHONY : src/LightField.cpp.s
 
-src/Node.o: src/Node.cpp.o
-
-.PHONY : src/Node.o
-
-# target to build an object file
-src/Node.cpp.o:
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Node.cpp.o
-.PHONY : src/Node.cpp.o
-
-src/Node.i: src/Node.cpp.i
-
-.PHONY : src/Node.i
-
-# target to preprocess a source file
-src/Node.cpp.i:
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Node.cpp.i
-.PHONY : src/Node.cpp.i
-
-src/Node.s: src/Node.cpp.s
-
-.PHONY : src/Node.s
-
-# target to generate assembly for a file
-src/Node.cpp.s:
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Node.cpp.s
-.PHONY : src/Node.cpp.s
-
 src/Point4D.o: src/Point4D.cpp.o
 
 .PHONY : src/Point4D.o
@@ -501,6 +474,33 @@ src/Transform.cpp.s:
 	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Transform.cpp.s
 .PHONY : src/Transform.cpp.s
 
+src/Tree.o: src/Tree.cpp.o
+
+.PHONY : src/Tree.o
+
+# target to build an object file
+src/Tree.cpp.o:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Tree.cpp.o
+.PHONY : src/Tree.cpp.o
+
+src/Tree.i: src/Tree.cpp.i
+
+.PHONY : src/Tree.i
+
+# target to preprocess a source file
+src/Tree.cpp.i:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Tree.cpp.i
+.PHONY : src/Tree.cpp.i
+
+src/Tree.s: src/Tree.cpp.s
+
+.PHONY : src/Tree.s
+
+# target to generate assembly for a file
+src/Tree.cpp.s:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Tree.cpp.s
+.PHONY : src/Tree.cpp.s
+
 src/main.o: src/main.cpp.o
 
 .PHONY : src/main.o
@@ -561,9 +561,6 @@ help:
 	@echo "... src/LightField.o"
 	@echo "... src/LightField.i"
 	@echo "... src/LightField.s"
-	@echo "... src/Node.o"
-	@echo "... src/Node.i"
-	@echo "... src/Node.s"
 	@echo "... src/Point4D.o"
 	@echo "... src/Point4D.i"
 	@echo "... src/Point4D.s"
@@ -579,6 +576,9 @@ help:
 	@echo "... src/Transform.o"
 	@echo "... src/Transform.i"
 	@echo "... src/Transform.s"
+	@echo "... src/Tree.o"
+	@echo "... src/Tree.i"
+	@echo "... src/Tree.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
