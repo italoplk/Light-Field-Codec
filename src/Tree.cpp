@@ -11,8 +11,8 @@ Node* Tree::CreateRoot(int *bitstream, uint nsamples) {
     for (int i = 0; i < nsamples; ++i) {
         root->bitstream.push_back(bitstream[i]);
     }
-    for (int j = 0; j < root->child.size(); ++j) {
-        root->child[j] = nullptr;
+    for (int j = 0; j < HEXADECA; ++j) {
+        root->child.push_back(nullptr);
     }
     return root;
 }
@@ -20,8 +20,8 @@ Node* Tree::CreateRoot(int *bitstream, uint nsamples) {
 Node* Tree::NewNode(vector<int> bitstream) {
     Node *node = new Node();
     node->bitstream = bitstream;
-    for (int i = 0; i < node->child.size(); ++i) {
-        node->child[i] = nullptr;
+    for (int i = 0; i < HEXADECA; ++i) {
+        node->child.push_back(nullptr);
     }
     return node;
 }
@@ -61,7 +61,7 @@ void Tree::DeleteTree(Node *root) {
     if (root != nullptr){
         for (int i = 0; i < root->child.size(); ++i) {
             this->DeleteTree(root->child[i]);
-            delete root;
+            free(root->child[i]);
         }
     }
 }

@@ -53,12 +53,12 @@ CMAKE_BINARY_DIR = /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-deb
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/LF_Codec.dir/all
+all: CMakeFiles/Light_Field_Codec.dir/all
 
 .PHONY : all
 
 # The main recursive "clean" target.
-clean: CMakeFiles/LF_Codec.dir/clean
+clean: CMakeFiles/Light_Field_Codec.dir/clean
 
 .PHONY : clean
 
@@ -68,31 +68,31 @@ preinstall:
 .PHONY : preinstall
 
 #=============================================================================
-# Target rules for target CMakeFiles/LF_Codec.dir
+# Target rules for target CMakeFiles/Light_Field_Codec.dir
 
 # All Build rule for target.
-CMakeFiles/LF_Codec.dir/all:
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/depend
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 "Built target LF_Codec"
-.PHONY : CMakeFiles/LF_Codec.dir/all
+CMakeFiles/Light_Field_Codec.dir/all:
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/depend
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 "Built target Light_Field_Codec"
+.PHONY : CMakeFiles/Light_Field_Codec.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/LF_Codec.dir/rule: cmake_check_build_system
+CMakeFiles/Light_Field_Codec.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles 16
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/LF_Codec.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/Light_Field_Codec.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles 0
-.PHONY : CMakeFiles/LF_Codec.dir/rule
+.PHONY : CMakeFiles/Light_Field_Codec.dir/rule
 
 # Convenience name for target.
-LF_Codec: CMakeFiles/LF_Codec.dir/rule
+Light_Field_Codec: CMakeFiles/Light_Field_Codec.dir/rule
 
-.PHONY : LF_Codec
+.PHONY : Light_Field_Codec
 
 # clean rule for target.
-CMakeFiles/LF_Codec.dir/clean:
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/clean
-.PHONY : CMakeFiles/LF_Codec.dir/clean
+CMakeFiles/Light_Field_Codec.dir/clean:
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/clean
+.PHONY : CMakeFiles/Light_Field_Codec.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

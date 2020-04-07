@@ -248,7 +248,8 @@ int main(int argc, char **argv) {
                         root = tree.CreateRoot(temp_lre, encoderParameters.dim_block.getNSamples());
                         tree.CreateTree(root, file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0);
                         tree.DeleteTree(root);
-                        delete root;
+
+                        root = nullptr;
 
                         //exit(1);
 #endif

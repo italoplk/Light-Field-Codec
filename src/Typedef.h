@@ -18,6 +18,6 @@
 #define TRACE_LRE false
 
 #define DPCM_DC true
-#define HEXADECA_TREE false
+#define HEXADECA_TREE true
 
 #endif //TYPEDEF_H

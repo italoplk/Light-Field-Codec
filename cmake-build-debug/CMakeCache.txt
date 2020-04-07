@@ -150,7 +150,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=LF_Codec
+CMAKE_PROJECT_NAME:STATIC=Light_Field_Codec
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -212,10 +212,10 @@ CMAKE_STRIP:FILEPATH=/usr/bin/strip
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Value Computed by CMake
-LF_Codec_BINARY_DIR:STATIC=/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug
+Light_Field_Codec_BINARY_DIR:STATIC=/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug
 
 //Value Computed by CMake
-LF_Codec_SOURCE_DIR:STATIC=/home/ubuntu/Documentos/Git/Light-Field-Codec
+Light_Field_Codec_SOURCE_DIR:STATIC=/home/ubuntu/Documentos/Git/Light-Field-Codec
 
 //Path to a program.
 ProcessorCount_cmd_nproc:FILEPATH=/usr/bin/nproc
