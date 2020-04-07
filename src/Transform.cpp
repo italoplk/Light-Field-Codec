@@ -19,6 +19,8 @@ float *Transform::generate_dct_coeff(int N) {
     auto *output = new float[N * N];
     auto *p_output = output;
     for (int k = 0; k < N; k++) {
+        // Normalization of parameters
+        // BUG:? The formulae should be sqrt(1 / 2 / N) and sqrt(1 / 4 / N)
         double s = (k == 0) ? 1 / (double) sqrt(N) : (sqrt(((double) 2 / N)));
 
         for (int n = 0; n < N; n++)
@@ -39,11 +41,13 @@ void Transform::dct_4d(const float *input, float *output, const Point4D &size, c
             size_u = size.u,
             size_v = size.v;
 
+    // TODO: Refactor these variables to something more meaninful 
     const uint offset1 = origSize.x,
             offset2 = offset1 * origSize.y,
             offset3 = offset2 * origSize.u,
             offset4 = offset3 * origSize.v;
 
+    // input_4D_t[:] = input[:]
     std::copy(input, input + offset4, input_4D_t);
     float *p_input = input_4D_t, *p_output = output;
 
@@ -62,6 +66,7 @@ void Transform::dct_4d(const float *input, float *output, const Point4D &size, c
         p_output += (origSize.u - size.u) * offset2;
     }
 
+    // input_4D_t[:] = output[:]
     std::copy(output, output + offset4, input_4D_t);
     p_input = input_4D_t, p_output = output;
 
@@ -115,6 +120,18 @@ void Transform::dct_4d(const float *input, float *output, const Point4D &size, c
 }
 
 
+
+/*********** Algorithm 
+ * void dct(float[] in, float[] out, float[][] coeff, const size) {
+ *      double sum;
+ *      for (int k = 0; k < size; ++k) {
+ *          sum = 0;
+ *          for (int n = 0; n < size; ++n)
+ *              sum += in[n] * coeff[k][n];
+ *          out[k] = sum;
+ *      }
+ * }
+ */
 void Transform::dct_1D(const float *in, float *out, float *coeff, const uint offset, const uint size) {
     int N = size;
 
@@ -124,6 +141,7 @@ void Transform::dct_1D(const float *in, float *out, float *coeff, const uint off
     for (int k = 0; k < N; ++k) {
         sum = 0;
         p_in = (float *) in;
+
         for (int n = 0; n < N; ++n) {
             sum += *p_in * *p_table;
 
@@ -137,6 +155,17 @@ void Transform::dct_1D(const float *in, float *out, float *coeff, const uint off
 
 }
 
+/*********** Algorithm 
+ * void idct(float[] in, float[] out, float[][] coeff, const size) {
+ *      double sum;
+ *      for (int k = 0; k < size; ++k) {
+ *          sum = 0;
+ *          for (int n = 0; n < size; ++n)
+ *              sum += in[n] * coeff[n][k];
+ *          out[k] = sum;
+ *      }
+ * }
+ */
 void Transform::idct_1D(const float *in, float *out, float *coeff, const uint offset, const uint size) {
     int N = size;
 
