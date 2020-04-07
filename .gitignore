@@ -18,3 +18,4 @@ _deps
 # Project Ignores
 Datasets/*
 .vscode/*
+LF_Codec
