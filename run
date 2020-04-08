@@ -1,2 +1,2 @@
 mkdir -p output/dummy
-./LF_Codec -input ./Datasets/Bikes/ -blx 15 -bly 15 -blu 13 -blv 13 -qx 100 -qy 100 -qu 100 -qv 100 -lfx 625 -lfy 434 -lfu 13 -lfv 13 -qp 100 -output ./output/dummy/
+./build-vscode/lfcodec -input ./Datasets/Bikes/ -blx 15 -bly 15 -blu 13 -blv 13 -qx 100 -qy 100 -qu 100 -qv 100 -lfx 625 -lfy 434 -lfu 13 -lfv 13 -qp 100 -output ./output/dummy/
