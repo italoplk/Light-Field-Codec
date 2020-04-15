@@ -22,7 +22,7 @@ void printVector(const std::string &msg, T *vet, int size) {
     std::cout << std::endl;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
     EncoderParameters encoderParameters;
     encoderParameters.parse_cli(argc, argv);
     encoderParameters.report();
