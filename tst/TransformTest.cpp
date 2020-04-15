@@ -3,95 +3,116 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
+#include <sstream>
 
 #include "../src/Transform.h"
 #include "../src/TransformContext.h"
 #include "../src/DiscreteCosineTransformContext.h"
+#include "../src/Point4D.h"
 
+typedef union {
+  float f;
+  struct {
+    unsigned int mantisa : 23;
+    unsigned int exponent : 8;
+    unsigned int sign : 1;
+  } parts;
+} float_cast;
 
-#define ARRAY_1D_LEN    11
-#define ERROR_EPSILON   1.0e-10
+#define ARRAY_1D_LEN    12548
 
-
-template <typename T>
-T abs(T val) {
-    if (val < 0)
-        return -val;
-    else
-        return val;
-}
-template <typename T>
-T error(const T *a1, const T *a2, size_t length) {
-    T error_sum = 0;
-    for(auto i = 0; i < length; ++i)
-        error_sum += abs<T>(a1[i] - a2[i]);
-    return error_sum;
-}
-
-
-template <typename T>
-void swap(T* a, T* b) {
-    T tmp;
-    tmp = *a;
-    *a = *b;
-    *b = tmp;
+std::stringstream display_differences(float _a, float _b) {
+    std::stringstream ss;
+    if (_a != _b) {
+        float_cast a = { .f = _a };
+        float_cast b = { .f = _b };
+        ss << "A(" << (a.parts.sign ? '-' : '+') << ", "
+                            << "e=" << a.parts.exponent << ", "
+                            << "m=" << a.parts.mantisa << ") ";
+        ss << "B(" << (b.parts.sign ? '-' : '+') << ", "
+                            << "e=" << b.parts.exponent << ", "
+                            << "m=" << b.parts.mantisa << ")";
+    }
+    return ss;
 }
 
 
-TEST(DCTContextTest, EnsureDCTOn1DIsTheSameAsOldAPI) {
-    TransformContext<float> *ctx;
-
-    float input[ARRAY_1D_LEN];
-    float output_gt[ARRAY_1D_LEN]; 
-    float output[ARRAY_1D_LEN];
-
-    // Seed the random number generator
-    std::srand(0);
-
-    // Populate input with random numbers
-    for (int i = 0; i < ARRAY_1D_LEN; i++) 
-        input[i] = 256 * std::rand() / (RAND_MAX + 1);
-    
-    
-    ctx = new DiscreteCosineTransformContext<float>(ARRAY_1D_LEN);
-    ctx->forward(input, output);
-
-    auto coeff = Transform::generate_dct_coeff(ARRAY_1D_LEN);
-    Transform::dct_1D(input, output_gt, coeff, 1, ARRAY_1D_LEN);
-    
-    ASSERT_NEAR(error<float>(output, output_gt, ARRAY_1D_LEN), 0, ERROR_EPSILON);
-}
-
-TEST(DCTContextTest, InverseTransformBelowEpsilon) {
+TEST(DCTContextTest, new_idct_has_same_results_as_old_api) {
     TransformContext<float> *ctx;
 
     float input_new[ARRAY_1D_LEN];
     float input_old[ARRAY_1D_LEN];
     float output_new[ARRAY_1D_LEN];
     float output_old[ARRAY_1D_LEN];
+    Point4D size(ARRAY_1D_LEN, 1, 1, 1);
 
     // Seed the random number generator
     std::srand(0);
 
     // Populate input with random numbers
-    for (int i = 0; i < ARRAY_1D_LEN; i++) 
-        input_new[i] = input_old[i] = 256 * std::rand() / (RAND_MAX + 1);
+    for (int i = 0; i < ARRAY_1D_LEN; i++) {
+        float value = 256 * (std::rand() / (RAND_MAX * 1.0));
+        input_new[i] = value;
+        input_old[i] = value;
+        output_new[i] = 0;
+        output_old[i] = 0;
+
+    }
     
     // New API DCT-1D
     ctx = new DiscreteCosineTransformContext<float>(ARRAY_1D_LEN);
+    Transform t(size);
     ctx->forward(input_new, output_new);
+    t.dct_4d(input_old, output_old, size, size);
+
+    for (int i = 0; i < ARRAY_1D_LEN; i++) {
+        ASSERT_FLOAT_EQ(output_new[i], output_old[i]) << "DCT(" << i << "): " << display_differences(output_new[i], output_old[i]).str();
+    }
+
     std::swap(input_new, output_new);
+    std::swap(output_old, input_old);
+
     ctx->inverse(input_new, output_new);
+    t.idct_4d(input_old, output_old, size, size);
 
-    // Old API DCT-1D
-    auto coeff = Transform::generate_dct_coeff(ARRAY_1D_LEN);
-    Transform::dct_1D(input_old, output_old, coeff, 1, ARRAY_1D_LEN);
-    std::swap(input_new, output_new);
-    Transform::idct_1D(input_old, output_old, coeff, 1, ARRAY_1D_LEN);
-
-    ASSERT_NEAR(error<float>(output_new, output_old, ARRAY_1D_LEN), 0, ERROR_EPSILON);
+    for (int i = 0; i < ARRAY_1D_LEN; i++) {
+        ASSERT_FLOAT_EQ(output_new[i], output_old[i]) << "IDCT(" << i << "): " << display_differences(output_new[i], output_old[i]).str();
+    }
 }
 
+
+// TEST(DCTContextTest, new_idct_has_same_results_as_old_api2) {
+//     TransformContext<float> *ctx;
+
+//     float input_new[ARRAY_1D_LEN];
+//     float input_old[ARRAY_1D_LEN];
+//     float output_new[ARRAY_1D_LEN];
+//     float output_old[ARRAY_1D_LEN];
+
+//     Point4D size(ARRAY_1D_LEN, 1, 1, 1);
+
+//     // Seed the random number generator
+//     std::srand(0);
+
+//     // Populate input with random numbers
+//     for (int i = 0; i < ARRAY_1D_LEN; i++) 
+//         input_new[i] = input_old[i] = 256 * (std::rand() / (RAND_MAX * 1.0));
+    
+//     // New API DCT-1D
+//     ctx = new DiscreteCosineTransformContext<float>(ARRAY_1D_LEN);
+//     ctx->forward(input_new, output_new);
+//     std::swap(input_new, output_new);
+//     ctx->inverse(input_new, output_new);
+
+//     // Old API DCT-1D
+//     Transform t(size);
+//     t.dct_4d(input_old, output_old, size, size);
+//     std::swap(output_old, input_old);
+//     t.idct_4d(input_old, output_old, size, size);
+
+//     ASSERT_NEAR(distance<float>(output_new, output_old, ARRAY_1D_LEN), 0, ERROR_EPSILON);
+// }
 
 
 // TEST(TransformContextTesting, CanCreateContext) {
