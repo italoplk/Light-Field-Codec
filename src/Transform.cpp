@@ -20,7 +20,6 @@ float *Transform::generate_dct_coeff(int N) {
     auto *p_output = output;
     for (int k = 0; k < N; k++) {
         // Normalization of parameters
-        // BUG:? The formulae should be sqrt(1 / 2 / N) and sqrt(1 / 4 / N)
         double s = (k == 0) ? 1 / (double) sqrt(N) : (sqrt(((double) 2 / N)));
 
         for (int n = 0; n < N; n++)
@@ -171,6 +170,7 @@ void Transform::idct_1D(const float *in, float *out, float *coeff, const uint of
 
     float *p_table, *p_in, *p_out = out;
     float sum;
+    float partial_sum[size];
 
     for (int k = 0; k < N; ++k) {
         sum = 0;
@@ -178,7 +178,7 @@ void Transform::idct_1D(const float *in, float *out, float *coeff, const uint of
         p_table = &coeff[k];
         for (int n = 0; n < N; ++n) {
             sum += *p_in * *p_table;
-
+            partial_sum[n] = sum;
 
             p_table += N;
             p_in += offset;
