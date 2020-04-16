@@ -6,7 +6,12 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Axis.h"
+enum {
+    X_AXIS,
+    Y_AXIS,
+    U_AXIS,
+    V_AXIS,
+};
 
 class Point4D {
 public:
