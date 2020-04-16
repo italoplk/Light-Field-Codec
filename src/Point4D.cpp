@@ -5,6 +5,16 @@ Point4D::Point4D(uint x, uint y, uint u, uint v) : x(x), y(y), u(u), v(v) {
     this->updateNSamples();
 }
 
+Point4D::Point4D(const uint *array) 
+: Point4D(array[X_AXIS], array[Y_AXIS], array[U_AXIS], array[V_AXIS])
+{
+}
+
+Point4D::Point4D(const float *array) 
+: Point4D(array[X_AXIS], array[Y_AXIS], array[U_AXIS], array[V_AXIS])
+{
+}
+
 uint Point4D::getNSamples() const {
     return this->nSamples;
 }
@@ -34,3 +44,12 @@ bool operator!=(const Point4D &p1, const Point4D &p2) {
 
 
 
+size_t *Point4D::to_array() const {
+    size_t *array = new size_t[4];
+    array[X_AXIS] = x;
+    array[Y_AXIS] = y;
+    array[U_AXIS] = u;
+    array[V_AXIS] = v;
+
+    return array;
+}

@@ -6,9 +6,9 @@
 #include <iostream>
 #include <iomanip>
 
+#include "Axis.h"
 
 class Point4D {
-
 public:
     uint x{8}, y{8}, u{8}, v{8};
     uint nSamples{0};
@@ -17,9 +17,15 @@ public:
 
     Point4D(uint x, uint y, uint u, uint v);
 
+    Point4D(const uint *array);
+    Point4D(const float *array);
+
     void updateNSamples();
 
     uint getNSamples() const;
+
+    // Returns an array containing [.x, .y, .u, .v]. to index the array.
+    size_t *to_array() const;
 
     friend std::ostream &operator<<(std::ostream &os, Point4D const &point);
 
