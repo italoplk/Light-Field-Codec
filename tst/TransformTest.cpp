@@ -156,7 +156,7 @@ TEST(ContextTest, new_dct4d_has_same_results_as_old_api) {
 
     EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the intermediate DCT "
-                             "are bigger then the expected value.";
+                             "is bigger then the expected value.";
     
 
     std::swap(input_new, output_new);
@@ -167,7 +167,7 @@ TEST(ContextTest, new_dct4d_has_same_results_as_old_api) {
     t.idct_4d(input_old, output_old, size, size);
 
     EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
-        0, ERROR_EPSILON) << "The distance between the resulting vectors are "
+        0, ERROR_EPSILON) << "The distance between the resulting vectors is "
                              "bigger then the expected value.";
     #undef SIZE_X
     #undef SIZE_Y
