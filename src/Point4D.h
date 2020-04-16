@@ -5,6 +5,7 @@
 #include <zconf.h>
 #include <iostream>
 #include <iomanip>
+#include <stdexcept>
 
 enum {
     X_AXIS,
@@ -37,6 +38,11 @@ public:
     friend bool operator!=(const Point4D &p1, const Point4D &p2);
 
     friend bool operator==(const Point4D &p1, const Point4D &p2);
+
+    friend Point4D operator+(const Point4D &p, const uint delta);
+    friend Point4D operator-(const Point4D &p, const uint delta);
+    friend Point4D operator+(const Point4D &p, const Point4D &q);
+    friend Point4D operator-(const Point4D &p, const Point4D &q);
 
 };
 
