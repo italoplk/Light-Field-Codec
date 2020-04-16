@@ -47,25 +47,86 @@ public:
         }
     }
 
-public:
-    const size_t size;
-    const size_t stride;
-
-    DiscreteCosineTransformContext(size_t size_, size_t stride_ = 1)
-    : size(size_), stride(stride_)
+    // 1D DCT II implementation.
+    // TODO: Improve this algorithm to use vector notaton.
+    void dct(const T *in, T *out)
     {
+        const T *pin;
+        T *pout = out;
+        const T *coeff = get_coeff(_size);
 
-    }   
+        // out[k] = in[k] * coeff[k][n] for n=0..size
+        for (int k = 0; k < _size; ++k) {
+            double sum = 0;
+            pin = in;
+            
+            for (int n = 0; n < _size; ++n) {
+                sum += *pin * *coeff;
+                pin += _stride;
+                coeff++;
+            }
+
+            *pout = sum;
+            pout += _stride;
+        }
+    }
+
+    // 1D DCT III implementation.
+    // TODO: Improve this algorithm to use vector notaton.
+    void idct(const T *in, T *out)
+    {
+        const T *pin;
+        T *pout = out;
+        const T *pcoeff;
+        const T *coeff = get_coeff(_size);
+
+        // out[k] = in[k] * coeff[n][k] for n=0..size
+        for (int k = 0; k < _size; ++k) {
+            float sum = 0;
+            float partial_sums[_size];
+            pin = in;
+            pcoeff = &coeff[k];
+            for (int n = 0; n < _size; ++n) {
+                sum += *pin * *pcoeff;
+                pin += _stride;
+                pcoeff += _size;
+                partial_sums[n] = sum;
+            }
+            *pout = sum;
+            pout += _stride;
+        }
+    }
+
+    const size_t _size;
+    const size_t _stride;
+
+public:
+    DiscreteCosineTransformContext(size_t size_, size_t stride_ = 1)
+    : _size(size_), _stride(stride_)
+    {
+        // Update parent pointers to correct values.
+        TransformContext<T>::size = &_size;
+        TransformContext<T>::stride = &_stride;
+    }
+    DiscreteCosineTransformContext(size_t * size_, size_t * stride_)
+    {
+        // Update parent pointers to correct values.
+        TransformContext<T>::size = size_;
+        TransformContext<T>::stride = stride_;
+        _size = *TransformContext<T>::size;
+        _stride = *TransformContext<T>::stride;
+    }  
+
     /* Forward application of the DST on a single dimension */
     void forward(const T *input, T *output)
     {
-        dct(input, output, size, stride);
+        dct(input, output);
     }
 
     /* Inverse application of the DST on a single dimension */
     void inverse(const T *input, T *output)
     {   
-        idct(input, output, size, stride);
+        idct(input, output);
     }
 
     // Silently drops every entry in coeff_cache. 
@@ -77,55 +138,7 @@ public:
         }
     }
     
-    // 1D DCT II implementation.
-    // TODO: Improve this algorithm to use vector notaton.
-    static void dct(const T *in, T *out, const size_t size, const size_t stride)
-    {
-        const T *pin;
-        T *pout = out;
-        const T *coeff = get_coeff(size);
 
-        // out[k] = in[k] * coeff[k][n] for n=0..size
-        for (int k = 0; k < size; ++k) {
-            double sum = 0;
-            pin = in;
-            
-            for (int n = 0; n < size; ++n) {
-                sum += *pin * *coeff;
-                pin += stride;
-                coeff++;
-            }
-
-            *pout = sum;
-            pout += stride;
-        }
-    }
-
-    // 1D DCT III implementation.
-    // TODO: Improve this algorithm to use vector notaton.
-    static void idct(const T *in, T *out, const size_t size, const size_t stride)
-    {
-        const T *pin;
-        T *pout = out;
-        const T *pcoeff;
-        const T *coeff = get_coeff(size);
-
-        // out[k] = in[k] * coeff[n][k] for n=0..size
-        for (int k = 0; k < size; ++k) {
-            float sum = 0;
-            float partial_sums[size];
-            pin = in;
-            pcoeff = &coeff[k];
-            for (int n = 0; n < size; ++n) {
-                sum += *pin * *pcoeff;
-                pin += stride;
-                pcoeff += size;
-                partial_sums[n] = sum;
-            }
-            *pout = sum;
-            pout += stride;
-        }
-    }
 };
 
 
