@@ -52,7 +52,7 @@ std::stringstream display_differences(float _a, float _b) {
     return ss;
 }
 
-/* Euclidian distance between two arrays */
+/* Euclidean distance between two arrays */
 template <typename T>
 double distance(const T *a, const T *b, size_t length) 
 {
