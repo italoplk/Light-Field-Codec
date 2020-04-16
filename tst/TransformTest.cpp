@@ -18,7 +18,7 @@
 #include "../src/DiscreteCosineTransformContext4D.h"
 
 
-#define ERROR_EPSILON 1e-5
+#define ERROR_EPSILON 1e-6
 
 auto gtestlog = spdlog::basic_logger_mt("gtestlog", "logs/gtestlog.txt");
 
@@ -70,7 +70,7 @@ double distance(const T *a, const T *b, size_t length)
  * It caused small changes that, if accumulated, grew beyond 1e-5 in arrays for 
  * 100 elements.  
  */
-TEST(ContextTest, new_dct_has_same_results_as_old_api) {
+TEST(ContextTest, new_dct_api_is_consistent_to_old_api) {
     #define FULL_LENGTH 512 
     TransformContext<float> *ctx;
 
@@ -113,10 +113,13 @@ TEST(ContextTest, new_dct_has_same_results_as_old_api) {
     EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the resulting vectors is "
                              "bigger then the expected value.";
+    
+    delete ctx;
+    DiscreteCosineTransformContext<float>::flush_coeff();
     #undef FULL_LENGTH 
 }
 
-TEST(ContextTest, new_dct4d_has_same_results_as_old_api) {
+TEST(ContextTest, new_dct_api_4d_is_consistent_to_old_api) {
     #define SIZE_X  15
     #define SIZE_Y  16
     #define SIZE_U  17
@@ -169,8 +172,83 @@ TEST(ContextTest, new_dct4d_has_same_results_as_old_api) {
     EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the resulting vectors is "
                              "bigger then the expected value.";
+
+    delete ctx;
+    DiscreteCosineTransformContext<float>::flush_coeff();
     #undef SIZE_X
     #undef SIZE_Y
     #undef SIZE_U
     #undef SIZE_V
+}
+
+TEST(ContextTest, new_dct_API_works_for_blocks_of_different_sizes) {
+    #define SIZE_X  15
+    #define SIZE_Y  16
+    #define SIZE_U  17
+    #define SIZE_V  18
+    #define FULL_LENGTH (SIZE_X * SIZE_Y * SIZE_U * SIZE_V)
+    
+    #define DELTA_SIZE 5
+
+    TransformContext<float> *ctx;
+    gtestlog->set_level(spdlog::level::debug);
+
+    Point4D size_lightfield(SIZE_X, SIZE_Y, SIZE_U, SIZE_V);
+    Point4D size_block = size_lightfield - DELTA_SIZE;
+    Point4D stride_lightfield(1,
+                             SIZE_X,
+                             SIZE_X * SIZE_Y, 
+                             SIZE_X * SIZE_Y * SIZE_U);
+    float input_new[FULL_LENGTH];
+    float input_old[FULL_LENGTH];
+    float output_new[FULL_LENGTH];
+    float output_old[FULL_LENGTH];
+
+    // Seed the random number generator
+    std::srand(0);
+
+    // Populate input with random numbers and initialize output arrays.
+    for (int i = 0; i < FULL_LENGTH; i++) {
+        float value = 256 * (std::rand() / (RAND_MAX * 1.0));
+        input_new[i] = value;
+        input_old[i] = value;
+        output_new[i] = 0;
+        output_old[i] = 0;
+    }
+    
+    auto *size_block_array = size_block.to_array();
+
+    Transform t(size_lightfield);
+    ctx = new DiscreteCosineTransformContext4D<float>(size_lightfield,
+                                                      stride_lightfield);
+
+    // Forward DCT
+    ctx->forward(input_new, output_new, size_block_array);
+    t.dct_4d(input_old, output_old, size_block, size_lightfield);
+
+    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+        0, ERROR_EPSILON) << "The distance between the intermediate DCT "
+                             "is bigger then the expected value.";
+    
+
+    std::swap(input_new, output_new);
+    std::swap(input_old, output_old);
+    
+    // Inverse DCT
+    ctx->inverse(input_new, output_new, size_block_array);
+    t.idct_4d(input_old, output_old, size_block, size_lightfield);
+
+    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+        0, ERROR_EPSILON) << "The distance between the resulting vectors is "
+                             "bigger then the expected value.";
+    
+    delete[] size_block_array;
+    delete ctx;
+    DiscreteCosineTransformContext<float>::flush_coeff();
+    #undef SIZE_X
+    #undef SIZE_Y
+    #undef SIZE_U
+    #undef SIZE_V
+    #undef FULL_LENGTH
+    #undef DELTA_SIZE
 }

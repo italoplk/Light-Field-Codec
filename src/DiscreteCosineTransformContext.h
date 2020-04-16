@@ -49,7 +49,7 @@ public:
 
     // 1D DCT II implementation.
     // TODO: Improve this algorithm to use vector notaton.
-    void dct(const T *in, T *out)
+    void dct(const T *in, T *out, const size_t _size)
     {
         const T *pin;
         T *pout = out;
@@ -73,7 +73,7 @@ public:
 
     // 1D DCT III implementation.
     // TODO: Improve this algorithm to use vector notaton.
-    void idct(const T *in, T *out)
+    void idct(const T *in, T *out, const size_t _size)
     {
         const T *pin;
         T *pout = out;
@@ -115,27 +115,34 @@ public:
         TransformContext<T>::stride = stride_;
         _size = *TransformContext<T>::size;
         _stride = *TransformContext<T>::stride;
-    }  
+    } 
 
     /* Forward application of the DST on a single dimension */
     void forward(const T *input, T *output)
     {
-        dct(input, output);
+        dct(input, output, _size);
+    }
+    void forward(const T *input, T *output, const size_t *size)
+    {
+        dct(input, output, *size);
     }
 
     /* Inverse application of the DST on a single dimension */
     void inverse(const T *input, T *output)
     {   
-        idct(input, output);
+        idct(input, output, _size);
+    }
+    void inverse(const T *input, T *output, const size_t *size)
+    {
+        idct(input, output, *size);
     }
 
     // Silently drops every entry in coeff_cache. 
     static void flush_coeff()
     {
-        for (const auto& kv : coeff_cache) {
+        for (const auto& kv : coeff_cache) 
             delete[] kv.second;
-            coeff_cache.erase(kv);
-        }
+        coeff_cache.clear();
     }
     
 

@@ -1,14 +1,16 @@
 #if !defined(__DCTCX4D_H__)
 #define __DCTCX4D_H__
 
+#include <spdlog/spdlog.h>
+
 #include "TransformContext.h"
 #include "DiscreteCosineTransformContext.h"
 #include "Point4D.h"
 
 
-
 #define FORWARD 1
 #define INVERSE 2
+
 
 
 /**
@@ -40,6 +42,8 @@ void separable_transform_across_axis(
             dims[j++] = i;
     }
 
+
+
     // Iterating accross all other axis.
     // Outter loop holds bigger stride steps.
     for (uint d3 = 0; d3 < size[dims[2]]; ++d3) {
@@ -63,15 +67,21 @@ void separable_transform_across_axis(
     }
 }
 
-
 template <typename T>
 class DiscreteCosineTransformContext4D 
 : public TransformContext<T>
 {
 private:
-    DiscreteCosineTransformContext<T> *ctx;
+    bool should_delete_pointers = false;
 
 public:
+
+   ~DiscreteCosineTransformContext4D() {
+        if (should_delete_pointers) {
+            delete[] TransformContext<T>::size;
+            delete[] TransformContext<T>::stride;
+        }
+    }
     DiscreteCosineTransformContext4D(size_t *size_, size_t *stride_) 
     {
         TransformContext<T>::size = size_;
@@ -80,13 +90,17 @@ public:
     DiscreteCosineTransformContext4D(Point4D &size_, Point4D &stride_) {
         TransformContext<T>::size = size_.to_array();
         TransformContext<T>::stride = stride_.to_array();
+        should_delete_pointers = true;
     }
     
-
     void forward(const T *input, T *output)
     {
+        forward(input, output, TransformContext<T>::size);
+    }
+
+    void forward(const T *input, T *output, const size_t * size)
+    {
         TransformContext<T> *ctx;
-        auto *size = TransformContext<T>::size;
         auto *stride = TransformContext<T>::stride;
         size_t FULL_LENGTH = stride[3] * size[3];
         T *partial_result = new T[FULL_LENGTH];
@@ -108,12 +122,16 @@ public:
             delete ctx;
             pout = output;
         }
+        delete[] partial_result;
     }
 
     void inverse(const T *input, T *output)
     {
+        inverse(input, output, TransformContext<T>::size);
+    }
+    void inverse(const T *input, T *output, const size_t * size)
+    {
         TransformContext<T> *ctx;
-        auto *size = TransformContext<T>::size;
         auto *stride = TransformContext<T>::stride;
         size_t FULL_LENGTH = stride[3] * size[3];
         T *partial_result = new T[FULL_LENGTH];
@@ -135,6 +153,7 @@ public:
             delete ctx;
             pout = output;
         }
+        delete[] partial_result;
     }
 };
 
