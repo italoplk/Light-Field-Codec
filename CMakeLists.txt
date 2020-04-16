@@ -11,6 +11,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 enable_testing()
 add_subdirectory(googletest)
+add_subdirectory(spdlog)
 
 
 add_library(${This}lib STATIC
@@ -77,5 +78,5 @@ add_executable(${This}
                 src/EncBitstreamBuffer.cpp
                 src/EncBitstreamBuffer.h
 )
-
+target_link_libraries(${This} PRIVATE spdlog::spdlog)
 add_subdirectory(tst)
