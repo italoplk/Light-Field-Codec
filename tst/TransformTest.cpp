@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <fstream>
 #include <algorithm>
 #include <iostream>
@@ -6,11 +8,22 @@
 #include <cmath>
 #include <sstream>
 
+// Old API
+#include "../src/Point4D.h"
 #include "../src/Transform.h"
+
+// New API
 #include "../src/TransformContext.h"
 #include "../src/DiscreteCosineTransformContext.h"
-#include "../src/Point4D.h"
+#include "../src/DiscreteCosineTransformContext4D.h"
 
+
+#define ERROR_EPSILON 1e-5
+
+auto gtestlog = spdlog::basic_logger_mt("gtestlog", "logs/gtestlog.txt");
+
+
+/* helper union to extract float values. */
 typedef union {
   float f;
   struct {
@@ -19,8 +32,6 @@ typedef union {
     unsigned int sign : 1;
   } parts;
 } float_cast;
-
-#define ARRAY_1D_LEN    12548
 
 /* Helper function to return the representation of two floats if they 
  * are different. Debug porpouses.
@@ -41,6 +52,16 @@ std::stringstream display_differences(float _a, float _b) {
     return ss;
 }
 
+/* Euclidian distance between two arrays */
+template <typename T>
+double distance(const T *a, const T *b, size_t length) 
+{
+    double _distance = 0;
+    for (size_t i = 0; i < length; i++) 
+        _distance += pow(a[i] - b[i], 2);
+    return sqrt(_distance);
+}
+
 
 /**  
  * This tests if the new implementation is identical to the old one.
@@ -49,52 +70,107 @@ std::stringstream display_differences(float _a, float _b) {
  * It caused small changes that, if accumulated, grew beyond 1e-5 in arrays for 
  * 100 elements.  
  */
-TEST(DCTContextTest, new_idct_has_same_results_as_old_api) {
+TEST(ContextTest, new_dct_has_same_results_as_old_api) {
+    #define FULL_LENGTH 512 
     TransformContext<float> *ctx;
 
-    float input_new[ARRAY_1D_LEN];
-    float input_old[ARRAY_1D_LEN];
-    float output_new[ARRAY_1D_LEN];
-    float output_old[ARRAY_1D_LEN];
-    Point4D size(ARRAY_1D_LEN, 1, 1, 1);
+    float input_new[FULL_LENGTH];
+    float input_old[FULL_LENGTH];
+    float output_new[FULL_LENGTH];
+    float output_old[FULL_LENGTH];
+    Point4D size(FULL_LENGTH, 1, 1, 1);
 
     // Seed the random number generator
     std::srand(0);
 
-    // Populate input with random numbers
-    for (int i = 0; i < ARRAY_1D_LEN; i++) {
+    // Populate input with random numbers and initialize output arrays.
+    for (int i = 0; i < FULL_LENGTH; i++) {
         float value = 256 * (std::rand() / (RAND_MAX * 1.0));
         input_new[i] = value;
         input_old[i] = value;
         output_new[i] = 0;
         output_old[i] = 0;
-
     }
     
     Transform t(size);
-    ctx = new DiscreteCosineTransformContext<float>(ARRAY_1D_LEN);
+    ctx = new DiscreteCosineTransformContext<float>(FULL_LENGTH);
 
     // Forward DCT
     ctx->forward(input_new, output_new);
     t.dct_4d(input_old, output_old, size, size);
 
-    for (int i = 0; i < ARRAY_1D_LEN; i++) {
-        ASSERT_FLOAT_EQ(output_new[i], output_old[i]) 
-            << "DCT(" << i << "): " 
-            << display_differences(output_new[i], output_old[i]).str();
-    }
+    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+        0, ERROR_EPSILON) << "The distance between the intermediate DCT "
+                             "are bigger then the expected value.";
 
     std::swap(input_new, output_new);
-    std::swap(output_old, input_old);
+    std::swap(input_old, output_old);
     
     // Inverse DCT
     ctx->inverse(input_new, output_new);
     t.idct_4d(input_old, output_old, size, size);
 
-    for (int i = 0; i < ARRAY_1D_LEN; i++) 
-        ASSERT_FLOAT_EQ(output_new[i], output_old[i]) 
-            << "Inverse DCT(" << i << "): " 
-            << display_differences(output_new[i], output_old[i]).str();
-    
+    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+        0, ERROR_EPSILON) << "The distance between the resulting vectors are "
+                             "bigger then the expected value.";
+    #undef FULL_LENGTH 
 }
 
+TEST(ContextTest, new_dct4d_has_same_results_as_old_api) {
+    #define SIZE_X  15
+    #define SIZE_Y  16
+    #define SIZE_U  17
+    #define SIZE_V  18
+    #define FULL_LENGTH (SIZE_X * SIZE_Y * SIZE_U * SIZE_V)
+
+    TransformContext<float> *ctx;
+
+    Point4D size(SIZE_X, SIZE_Y, SIZE_U, SIZE_V);
+    Point4D stride(1,
+                   SIZE_X,
+                   SIZE_X * SIZE_Y, 
+                   SIZE_X * SIZE_Y * SIZE_U);
+    float input_new[FULL_LENGTH];
+    float input_old[FULL_LENGTH];
+    float output_new[FULL_LENGTH];
+    float output_old[FULL_LENGTH];
+
+    // Seed the random number generator
+    std::srand(0);
+
+    // Populate input with random numbers and initialize output arrays.
+    for (int i = 0; i < FULL_LENGTH; i++) {
+        float value = 256 * (std::rand() / (RAND_MAX * 1.0));
+        input_new[i] = value;
+        input_old[i] = value;
+        output_new[i] = 0;
+        output_old[i] = 0;
+    }
+    
+    Transform t(size);
+    ctx = new DiscreteCosineTransformContext4D<float>(size, stride);
+
+    // Forward DCT
+    ctx->forward(input_new, output_new);
+    t.dct_4d(input_old, output_old, size, size);
+
+    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+        0, ERROR_EPSILON) << "The distance between the intermediate DCT "
+                             "are bigger then the expected value.";
+    
+
+    std::swap(input_new, output_new);
+    std::swap(input_old, output_old);
+    
+    // Inverse DCT
+    ctx->inverse(input_new, output_new);
+    t.idct_4d(input_old, output_old, size, size);
+
+    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+        0, ERROR_EPSILON) << "The distance between the resulting vectors are "
+                             "bigger then the expected value.";
+    #undef SIZE_X
+    #undef SIZE_Y
+    #undef SIZE_U
+    #undef SIZE_V
+}
