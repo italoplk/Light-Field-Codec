@@ -9,6 +9,7 @@ First, clone the repo and its modules dependencies.
 $ mkdir repo
 $ git clone https://github.com/IDSRosler/Light-Field-Codec.git repo
 $ cd repo
+$ git submodule init
 $ git submodule update
 ```
 
