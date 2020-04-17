@@ -1,4 +1,32 @@
 # Light_Field_Codec
+
+## Clone and build
+To build this repository, you should have cmake 3.15 installed in your system.
+
+First, clone the repo and its modules dependencies.
+
+```
+$ mkdir repo
+$ git clone https://github.com/IDSRosler/Light-Field-Codec.git repo
+$ cd repo
+$ git submodule update
+```
+
+Then, make a directory to build the project binaries
+
+```
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make 
+```
+
+From the `build` directory, run the binary `./lfcodec`.
+
+### Running tests
+
+To execute the tests, run the binary `build/tst/lfcodec-test`.
+
 ## Encoder Parameters (CLI)
 
 **Use:**  -**flag** *value*
@@ -28,7 +56,7 @@
 - **lfu** *int*: light field size in u dimension
 - **lfv** *int*: light field size in v dimension 
 
-##
+
 ### Scripts 
 - Scripts to run the Light Field Codec for different **QPs** and different dataset
 ##### Run simulation.py:
@@ -37,4 +65,5 @@
     - **output_file:** Output directory for the encoded *.ppm
 2. Execute
     - taskset -c 0 python3 simulation.py
+
 
