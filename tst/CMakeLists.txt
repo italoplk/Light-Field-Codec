@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.15)
 set(This lfcodec-tests)
 
 set(Sources
-    TransformTest.cpp
+    TransformContextTest.cpp
     OldAPITest.cpp
 )
 
