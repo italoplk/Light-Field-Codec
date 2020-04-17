@@ -10,7 +10,7 @@
 
 // Old API
 #include "../src/Point4D.h"
-#include "../src/Transform.h"
+#include "../src/deprecated/Transform.h"
 
 // New API
 #include "../src/TransformContext.h"
@@ -92,7 +92,7 @@ TEST(ContextTest, new_dct_api_is_consistent_to_old_api) {
         output_old[i] = 0;
     }
     
-    Transform t(size);
+    old::Transform t(size);
     ctx = new DiscreteCosineTransformContext<float>(FULL_LENGTH);
 
     // Forward DCT
@@ -150,7 +150,7 @@ TEST(ContextTest, new_dct_api_4d_is_consistent_to_old_api) {
         output_old[i] = 0;
     }
     
-    Transform t(size);
+    old::Transform t(size);
     ctx = new DiscreteCosineTransformContext4D<float>(size, stride);
 
     // Forward DCT
@@ -218,7 +218,7 @@ TEST(ContextTest, new_dct_API_works_for_blocks_of_different_sizes) {
     
     auto *size_block_array = size_block.to_array();
 
-    Transform t(size_lightfield);
+    old::Transform t(size_lightfield);
     ctx = new DiscreteCosineTransformContext4D<float>(size_lightfield,
                                                       stride_lightfield);
 
