@@ -10,9 +10,6 @@
 template <typename T>
 class _DiscreteCosineTransformContext : public TransformContext<T>
 {
-private:
-    const size_t _size;
-    const size_t _stride;
 protected:
     static std::map<int, const T*> coeff_cache;
 
@@ -30,21 +27,6 @@ protected:
         }
         return output;
     }
-    _DiscreteCosineTransformContext(size_t size_, size_t stride_ = 1)
-    : _size(size_), _stride(stride_)
-    {
-        // Update parent pointers to correct values.
-        TransformContext<T>::size = &_size;
-        TransformContext<T>::stride = &_stride;
-    }
-    _DiscreteCosineTransformContext(size_t * size_, size_t * stride_)
-    {
-        // Update parent pointers to correct values.
-        _size = *size_;
-        _stride = *stride_;
-        TransformContext<T>::size = &_size;
-        TransformContext<T>::stride = &_stride;
-    } 
 };
 
 

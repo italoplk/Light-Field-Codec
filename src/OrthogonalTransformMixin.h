@@ -62,18 +62,25 @@ private:
         }
     }
 
+    const size_t _size;
+    const size_t _stride;
    
 public:
-    const size_t *size;
-    const size_t *stride;
     
-    OrthogonalTransformMixin(size_t size_, size_t stride_ = 1)
-    : BASE{ size_, stride_ }
-    { }
+    OrthogonalTransformMixin(const size_t size_, const size_t stride_ = 1)
+    :  _size(size_), _stride(stride_)
+    {
+        // Update parent pointers to correct values.
+        BASE::size = &_size;
+        BASE::stride = &_stride;
+    }
 
-    OrthogonalTransformMixin(size_t *size_, size_t *stride_)
-    : BASE{ size_, stride_ }
-    { }
+    OrthogonalTransformMixin(const size_t *size_, const size_t *stride_)
+    {
+        OrthogonalTransformMixin(*size_, *stride_);
+    }
+
+    
 
 
 
