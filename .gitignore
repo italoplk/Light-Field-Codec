@@ -2,7 +2,7 @@
 
 output
 Datasets
-build-vscode
+build*
 bin
 .vscode
 .idea
