@@ -49,7 +49,7 @@ TEST(BackwardsCompatibilityWithOldAPI, new_dct_1d_is_consistent)
     ctx->forward(input_new, output_new);
     t.dct_4d(input_old, output_old, size, size);
 
-    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+    EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the intermediate DCT "
                              "is bigger then the expected value.";
 
@@ -60,7 +60,7 @@ TEST(BackwardsCompatibilityWithOldAPI, new_dct_1d_is_consistent)
     ctx->inverse(input_new, output_new);
     t.idct_4d(input_old, output_old, size, size);
 
-    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+    EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the resulting vectors is "
                              "bigger then the expected value.";
     
@@ -108,7 +108,7 @@ TEST(BackwardsCompatibilityWithOldAPI, new_dct_4d_is_consistent)
     ctx->forward(input_new, output_new);
     t.dct_4d(input_old, output_old, size, size);
 
-    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+    EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the intermediate DCT "
                              "is bigger then the expected value.";
     
@@ -120,7 +120,7 @@ TEST(BackwardsCompatibilityWithOldAPI, new_dct_4d_is_consistent)
     ctx->inverse(input_new, output_new);
     t.idct_4d(input_old, output_old, size, size);
 
-    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+    EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the resulting vectors is "
                              "bigger then the expected value.";
 
@@ -177,7 +177,7 @@ TEST(BackwardsCompatibilityWithOldAPI, new_api_accepts_blocks_of_smaller_sizes)
     ctx->forward(input_new, output_new, size_block_array);
     t.dct_4d(input_old, output_old, size_block, size_lightfield);
 
-    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+    EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the intermediate DCT "
                              "is bigger then the expected value.";
     
@@ -189,7 +189,7 @@ TEST(BackwardsCompatibilityWithOldAPI, new_api_accepts_blocks_of_smaller_sizes)
     ctx->inverse(input_new, output_new, size_block_array);
     t.idct_4d(input_old, output_old, size_block, size_lightfield);
 
-    EXPECT_NEAR(distance<float>(output_new, output_old, FULL_LENGTH), 
+    EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 
         0, ERROR_EPSILON) << "The distance between the resulting vectors is "
                              "bigger then the expected value.";
     
