@@ -5,6 +5,7 @@
 
 #include "TransformContext.h"
 #include "DiscreteCosineTransformContext.h"
+#include "DiscreteSineTransformContext.h"
 #include "DiscreteCosineTransformContext4D.h"
 #include "utils.h"
 
@@ -12,7 +13,7 @@
 #include <spdlog/spdlog.h>
 #include <xtensor/xarray.hpp>
 
-#define ERROR_REC_EPSILON   1e-7
+#define ERROR_REC_EPSILON   1e-3
 
 auto gtestlog = spdlog::basic_logger_mt("gtestlog", "logs/gtestlog.txt");
 
@@ -71,8 +72,43 @@ public:
 
 TEST_F(TransformContextTest, dct_recovered_signal_within_error_margin)
 {
-    const size_t FULL_LENGTH = 8;
+    const size_t FULL_LENGTH = 1024;
     ctx = new DiscreteCosineTransformContext<float>(FULL_LENGTH);
+
+    init_arrays(FULL_LENGTH);
+
+    // Forward DCT
+    ctx->forward(signal, transformed_signal);
+    ctx->inverse(transformed_signal, recovered_signal);
+
+    EXPECT_NEAR(distance_percent<float>(signal, recovered_signal, FULL_LENGTH), 
+        0, ERROR_REC_EPSILON) << "Distance between original and recovered is "
+                                 "bigger than 0.0001%.";
+    
+    DiscreteCosineTransformContext<float>::flush_coeff();
+}
+
+TEST_F(TransformContextTest, dct_4d_recovered_signal_within_error_margin)
+{
+    init_arrays_4d({15,18,14,8});
+    ctx = new DiscreteCosineTransformContext4D<float>(lf_size, lf_stride);
+
+    // Forward DCT
+    ctx->forward(signal, transformed_signal);
+    ctx->inverse(transformed_signal, recovered_signal);
+
+    EXPECT_NEAR(distance_percent<float>(signal, recovered_signal, (2,2,2,2)), 
+        0, ERROR_REC_EPSILON) << "Distance between original and recovered is "
+                                 "bigger than 0.0001%.";
+    
+
+    DiscreteCosineTransformContext<float>::flush_coeff();
+}
+
+TEST_F(TransformContextTest, dst_recovered_signal_within_error_margin)
+{
+    const size_t FULL_LENGTH = 1024;
+    ctx = new DiscreteSineTransformContext<float>(FULL_LENGTH);
 
     init_arrays(FULL_LENGTH);
 
@@ -84,23 +120,30 @@ TEST_F(TransformContextTest, dct_recovered_signal_within_error_margin)
         0, ERROR_REC_EPSILON) << "Distance between original and recovered is "
                                  "bigger than 1%.";
     
-    DiscreteCosineTransformContext<float>::flush_coeff();
+    DiscreteSineTransformContext<float>::flush_coeff();
 }
 
-TEST_F(TransformContextTest, dct_4d_recovered_signal_within_error_margin)
+TEST_F(TransformContextTest, ensure_dct_and_dst_generate_different_coefficients)
 {
-    init_arrays_4d({2,2,2,2});
-    ctx = new DiscreteCosineTransformContext4D<float>(lf_size, lf_stride);
+    const size_t FULL_LENGTH = 2014;
+    init_arrays(FULL_LENGTH);
 
-    // Forward DCT
+    ctx = new DiscreteSineTransformContext<float>(FULL_LENGTH);
+    TransformContext<float> * ctx_evil_twin = 
+        new DiscreteCosineTransformContext<float>(FULL_LENGTH);
+
+    // Use the already allocated arrays 
+    auto *transformed_signal_evil = recovered_signal;
+
     ctx->forward(signal, transformed_signal);
-    ctx->inverse(transformed_signal, recovered_signal);
+    ctx_evil_twin->forward(signal, transformed_signal_evil);
 
-    EXPECT_NEAR(distance_percent<float>(signal, recovered_signal, (2,2,2,2)), 
-        0, ERROR_REC_EPSILON) << "Distance between original and recovered is "
-                                 "bigger than 1%.";
-    
+    delete ctx_evil_twin;
 
-    DiscreteCosineTransformContext<float>::flush_coeff();
-}
 
+    ASSERT_GE(distance_percent<float>(transformed_signal,
+                                      transformed_signal_evil,
+                                      FULL_LENGTH),
+             0.01) << "The proportional distance between the DST and DCT "
+                      " coefficients should be at least 1";
+}   

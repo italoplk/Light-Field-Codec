@@ -5,6 +5,7 @@ set(This lfcodec-tests)
 
 set(Sources
     TransformContextTest.cpp
+    OrthogonalContextMixinTest.cpp
     OldAPITest.cpp
 )
 

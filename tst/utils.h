@@ -5,6 +5,7 @@
 #include <cmath>
 
 
+
 /* Euclidean distance between two arrays */
 template <typename T>
 double distance(const T *a, const T *b, size_t length) 
