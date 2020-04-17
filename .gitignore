@@ -6,6 +6,8 @@ build-vscode
 bin
 .vscode
 .idea
+JupyterNotebooks
+logs
 
 # Created by https://www.gitignore.io/api/c,c++,cmake,python,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=c,c++,cmake,python,visualstudiocode
