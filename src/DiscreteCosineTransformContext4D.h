@@ -1,7 +1,6 @@
 #if !defined(__DCTCX4D_H__)
 #define __DCTCX4D_H__
 
-#include <spdlog/spdlog.h>
 
 #include "TransformContext.h"
 #include "DiscreteCosineTransformContext.h"
@@ -87,7 +86,7 @@ public:
         TransformContext<T>::size = size_;
         TransformContext<T>::stride = stride_;
     }
-    DiscreteCosineTransformContext4D(Point4D &size_, Point4D &stride_) {
+    DiscreteCosineTransformContext4D(const Point4D &size_, const Point4D &stride_) {
         TransformContext<T>::size = size_.to_array();
         TransformContext<T>::stride = stride_.to_array();
         should_delete_pointers = true;
