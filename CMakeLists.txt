@@ -10,8 +10,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
 enable_testing()
-add_subdirectory(googletest)
-add_subdirectory(spdlog)
+add_subdirectory(extern/googletest)
+add_subdirectory(extern/spdlog)
+add_subdirectory(extern/xtensor)
+add_subdirectory(tst)
 
 
 add_library(${This}lib STATIC
@@ -82,5 +84,12 @@ add_executable(${This}
                 src/EncBitstreamBuffer.cpp
                 src/EncBitstreamBuffer.h
 )
-target_link_libraries(${This} PRIVATE spdlog::spdlog)
-add_subdirectory(tst)
+target_link_libraries(${This} PUBLIC
+                      spdlog::spdlog
+                      xtensor
+)
+
+target_link_libraries(${This}lib PUBLIC
+                      spdlog::spdlog
+                      xtensor
+)
