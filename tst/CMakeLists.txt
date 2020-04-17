@@ -5,9 +5,13 @@ set(This lfcodec-tests)
 
 set(Sources
     TransformTest.cpp
+    OldAPITest.cpp
 )
 
 add_executable(${This} ${Sources})
+target_include_directories(${This} PUBLIC
+    ../src
+)
 target_link_libraries(${This} PUBLIC
     gtest_main
     lfcodeclib
