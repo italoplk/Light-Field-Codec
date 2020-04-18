@@ -5,10 +5,9 @@
 #include "DiscreteCosineTransformContext.h"
 #include "DiscreteSineTransformContext.h"
 
-#define ERROR_ENERGY_EPSILON   1
+#define ERROR_ENERGY_EPSILON 1
 
-
-class OrthogonalContextMixinTest: public ::testing::Test
+class OrthogonalContextMixinTest : public ::testing::Test
 {
 public:
     TransformContext<float> *ctx;
@@ -31,18 +30,18 @@ public:
         std::srand(0);
 
         // Populate and initialize arrays for a clean environment.
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++)
+        {
             float value = 256 * (std::rand() / (RAND_MAX * 1.0));
             signal[i] = value;
             transformed_signal[i] = 0;
         }
     }
 
-
     double calculate_energy(float *array, size_t size)
     {
         double energy = 0;
-        for (int i = 0; i < size; i++) 
+        for (int i = 0; i < size; i++)
             energy += pow(array[i], 2);
         return sqrt(energy);
     }
@@ -50,7 +49,7 @@ public:
 
 TEST_F(OrthogonalContextMixinTest, dct_is_orthogonal)
 {
-    const size_t FULL_LENGTH = 1024; 
+    const size_t FULL_LENGTH = 1024;
     init_arrays(FULL_LENGTH);
 
     ctx = new DiscreteCosineTransformContext<float>(FULL_LENGTH);
@@ -63,7 +62,7 @@ TEST_F(OrthogonalContextMixinTest, dct_is_orthogonal)
 
 TEST_F(OrthogonalContextMixinTest, dst_is_orthogonal)
 {
-    const size_t FULL_LENGTH = 1024; 
+    const size_t FULL_LENGTH = 1024;
     init_arrays(FULL_LENGTH);
 
     ctx = new DiscreteSineTransformContext<float>(FULL_LENGTH);

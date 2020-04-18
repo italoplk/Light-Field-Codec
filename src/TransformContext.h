@@ -5,7 +5,8 @@
 #include "Point4D.h"
 
 template <typename T>
-class TransformContext {
+class TransformContext
+{
 public:
     /* Definition of type */
     typedef T value_type;
@@ -17,8 +18,7 @@ public:
     /* Abstract method to be implemented during inheritance */
     virtual void inverse(const T *input, T *output) = 0;
     virtual void inverse(const T *input, T *output, const size_t *size) = 0;
-    virtual ~TransformContext() { }
-
+    virtual ~TransformContext() {}
 };
 
 #endif // __TRANSFORMCONTEXT_H__

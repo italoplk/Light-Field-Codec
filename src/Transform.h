@@ -8,7 +8,8 @@
 #include "TransformContext.h"
 #include <cmath>
 
-class Transform {
+class Transform
+{
 private:
     Point4D stride_lightfield;
     Point4D size_lightfield;
@@ -21,6 +22,5 @@ public:
     void dct_4d(const float *input, float *output, const Point4D &size, const Point4D &origSize);
     void idct_4d(const float *input, float *output, const Point4D &size, const Point4D &origSize);
 };
-
 
 #endif //TRANSFORM_H

@@ -11,7 +11,7 @@ template <typename T>
 class _DiscreteSineTransformContext : public TransformContext<T>
 {
 protected:
-    static std::map<int, const T*> coeff_cache;
+    static std::map<int, const T *> coeff_cache;
 
     /* Implementation of the helper method to calculate the DCT coefficients */
     static const T *generate_coefficients(const size_t size)
@@ -20,8 +20,10 @@ protected:
         auto *output = new T[N * N];
         auto *p_output = output;
         double s = sqrt(2.0L / (N + 1.0L));
-        for (int k = 0; k < N; k++) {
-            for (int n = 0; n < N; n++) {
+        for (int k = 0; k < N; k++)
+        {
+            for (int n = 0; n < N; n++)
+            {
                 double theta = (M_PI * (k + 1.0L) * (n + 1.0L)) / (N + 1.0L);
                 *p_output++ = s * sin(theta);
             }
@@ -30,10 +32,9 @@ protected:
     }
 };
 
-
 /** Declaration of static member */
 template <typename T>
-std::map<int, const T*> _DiscreteSineTransformContext<T>::coeff_cache;
+std::map<int, const T *> _DiscreteSineTransformContext<T>::coeff_cache;
 
 /** Exports the name DiscreteCosineTransformContext with the mixin 
  * OrthogonalTransformContext */
