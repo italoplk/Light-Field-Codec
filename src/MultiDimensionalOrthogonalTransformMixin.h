@@ -1,8 +1,6 @@
 #if !defined(__MULTIDIMORTHOGONALTRANSFORMMIXIN_H__)
 #define __MULTIDIMORTHOGONALTRANSFORMMIXIN_H__
 
-
-
 #define FORWARD 1
 #define INVERSE 2
 
@@ -21,10 +19,10 @@ private:
      * As long as `size` is consistent, all strides can be
      * calculated correctly. 
      */
-    void ortho_transform_multidim(
+    void ortho_transform_multidim_step(
         const T *input,
         T *output,
-        const size_t * size,
+        const size_t *size,
         size_t axis)
     {
         // dims are all other dimensions but the one given to the function.
@@ -64,6 +62,54 @@ private:
             }
         }
     }
+
+    void ortho_transform_multidim(
+        const T *input,
+        T *output,
+        const size_t *size)
+    {
+        int start_at;
+        int end_at;
+        int step;
+
+        auto *stride = BASE::stride;
+        size_t FULL_LENGTH = stride[3] * size[3];
+        T *partial_result = new T[FULL_LENGTH];
+
+        switch (direction)
+        {
+        case FORWARD:
+            start_at = 0;
+            end_at = 4;
+            step = 1;
+            break;
+        case INVERSE:
+            start_at = 3;
+            end_at = -1;
+            step = -1;
+        default:
+            break;
+        }
+
+        // For the first round, the "last round output" is simple
+        // the input values to be calculated.
+        T *pout = (T *)input;
+
+        for (size_t dim = start_at; dim != end_at; dim += step)
+        {
+            ctx = new CTX(size[dim], stride[dim]);
+
+            // Copy all values from last round into`partial_result`.
+            std::copy(pout, pout + FULL_LENGTH, partial_result);
+
+            ortho_transform_multidim_step(partial_result, output, size, dim);
+
+            delete ctx;
+            pout = output;
+        }
+        delete[] partial_result;
+    }
+
 public:
     ~MultiDimensionalOrthogonalTransformMixin()
     {
@@ -92,28 +138,8 @@ public:
 
     void forward(const T *input, T *output, const size_t *size)
     {
-        auto *stride = BASE::stride;
-        size_t FULL_LENGTH = stride[3] * size[3];
-        T *partial_result = new T[FULL_LENGTH];
-
-        // For the first round, the "last round output" is simple
-        // the input values to be calculated.
-        T *pout = (T *)input;
         direction = FORWARD;
-
-        for (size_t dim = 0; dim < 4; dim++)
-        {
-            ctx = new CTX(size[dim], stride[dim]);
-
-            // Copy all values from last round into`partial_result`.
-            std::copy(pout, pout + FULL_LENGTH, partial_result);
-
-            ortho_transform_multidim(partial_result, output, size, dim);
-
-            delete ctx;
-            pout = output;
-        }
-        delete[] partial_result;
+        ortho_transform_multidim(input, output, size);
     }
 
     void inverse(const T *input, T *output)
@@ -122,27 +148,8 @@ public:
     }
     void inverse(const T *input, T *output, const size_t *size)
     {
-        auto *stride = BASE::stride;
-        size_t FULL_LENGTH = stride[3] * size[3];
-        T *partial_result = new T[FULL_LENGTH];
-
-        // For the first round, the "last round output" is simple
-        // the input values to be calculated.
-        T *pout = (T *)input;
         direction = INVERSE;
-        for (int dim = 3; dim >= 0; dim--)
-        {
-            ctx = new CTX(size[dim], stride[dim]);
-
-            // Copy all values from last round into`partial_result`.
-            std::copy(pout, pout + FULL_LENGTH, partial_result);
-
-            ortho_transform_multidim(partial_result, output, size, dim);
-
-            delete ctx;
-            pout = output;
-        }
-        delete[] partial_result;
+        ortho_transform_multidim(input, output, size);
     }
 };
 
