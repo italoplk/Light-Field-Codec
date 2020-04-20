@@ -19,6 +19,9 @@ public:
         delete ctx;
         delete[] signal;
         delete[] transformed_signal;
+        
+        DiscreteCosineTransformContext<float>::flush_coeff();
+        DiscreteSineTransformContext<float>::flush_coeff();
     }
 
     void init_arrays(size_t size)
