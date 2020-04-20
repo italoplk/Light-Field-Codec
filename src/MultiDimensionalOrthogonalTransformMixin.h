@@ -91,7 +91,7 @@ private:
             break;
         }
 
-        // For the first round, the "last round output" is simple
+        // For the first round, the "last round output" is simply
         // the input values to be calculated.
         T *pout = (T *)input;
 
