@@ -7,6 +7,7 @@
 #include "DiscreteCosineTransformContext.h"
 #include "DiscreteSineTransformContext.h"
 #include "DiscreteCosineTransformContext4D.h"
+#include "DiscreteSineTransformContext4D.h"
 #include "utils.h"
 
 #include <spdlog/spdlog.h>
@@ -81,7 +82,7 @@ TEST_F(TransformContextTest, dct_recovered_signal_within_error_margin)
     EXPECT_NEAR(distance_percent<float>(signal, recovered_signal, FULL_LENGTH),
                 0, ERROR_REC_EPSILON)
         << "Distance between original and recovered is "
-           "bigger than 0.0001%.";
+           "bigger than " << ERROR_REC_EPSILON * 100 << "%.";
 
     DiscreteCosineTransformContext<float>::flush_coeff();
 }
@@ -98,9 +99,26 @@ TEST_F(TransformContextTest, dct_4d_recovered_signal_within_error_margin)
     EXPECT_NEAR(distance_percent<float>(signal, recovered_signal, (2, 2, 2, 2)),
                 0, ERROR_REC_EPSILON)
         << "Distance between original and recovered is "
-           "bigger than 0.0001%.";
+           "bigger than " << ERROR_REC_EPSILON * 100 << "%.";
 
     DiscreteCosineTransformContext<float>::flush_coeff();
+}
+
+TEST_F(TransformContextTest, dst_4d_recovered_signal_within_error_margin)
+{
+    init_arrays_4d({15, 18, 14, 8});
+    ctx = new DiscreteSineTransformContext4D<float>(lf_size, lf_stride);
+
+    // Forward DCT
+    ctx->forward(signal, transformed_signal);
+    ctx->inverse(transformed_signal, recovered_signal);
+
+    EXPECT_NEAR(distance_percent<float>(signal, recovered_signal, (2, 2, 2, 2)),
+                0, ERROR_REC_EPSILON)
+        << "Distance between original and recovered is "
+           "bigger than " << ERROR_REC_EPSILON * 100 << "%.";
+
+    DiscreteSineTransformContext<float>::flush_coeff();
 }
 
 TEST_F(TransformContextTest, dst_recovered_signal_within_error_margin)
@@ -117,7 +135,7 @@ TEST_F(TransformContextTest, dst_recovered_signal_within_error_margin)
     EXPECT_NEAR(distance_percent<float>(signal, recovered_signal, FULL_LENGTH),
                 0, ERROR_REC_EPSILON)
         << "Distance between original and recovered is "
-           "bigger than 1%.";
+           "bigger than " << ERROR_REC_EPSILON * 100 << "%.";
 
     DiscreteSineTransformContext<float>::flush_coeff();
 }
