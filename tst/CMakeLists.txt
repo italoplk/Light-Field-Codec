@@ -17,7 +17,6 @@ target_link_libraries(${This} PUBLIC
     gtest_main
     lfcodeclib
     spdlog::spdlog
-    xtensor
 )
 
 add_test(

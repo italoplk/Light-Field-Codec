@@ -12,7 +12,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 enable_testing()
 add_subdirectory(extern/googletest)
 add_subdirectory(extern/spdlog)
-add_subdirectory(extern/xtensor)
 add_subdirectory(tst)
 
 
@@ -86,10 +85,8 @@ add_executable(${This}
 )
 target_link_libraries(${This} PUBLIC
                       spdlog::spdlog
-                      xtensor
 )
 
 target_link_libraries(${This}lib PUBLIC
                       spdlog::spdlog
-                      xtensor
 )
