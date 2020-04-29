@@ -37,7 +37,10 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             this->path_output = argv[++it];
         } else if (flag == "-qp") {
             this->qp = strtof(argv[++it], nullptr);
-        } else {
+        } else if (flag == "-transform") {
+            this->transform = argv[++it];
+        }
+        else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;
         }
@@ -66,6 +69,8 @@ void EncoderParameters::report() {
     std::cout << std::endl;
     std::cout << "LF Dim: " << this->dim_LF << std::endl;
     std::cout << "Block Dim: " << this->dim_block << std::endl;
+    std::cout << std::endl;
+    std::cout << "Transform: " << this->transform << std::endl;
     std::cout << std::endl;
     std::cout << "QP: " << this->qp << std::endl;
     std::cout << "Quantization Weight (*100): " << this->quant_weight_100 << std::endl;
