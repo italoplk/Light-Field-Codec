@@ -16,6 +16,7 @@
 
 class Statistics {
 public:
+    float epsilon = 1e-1;
 
     explicit Statistics(const std::string &file = "");
 

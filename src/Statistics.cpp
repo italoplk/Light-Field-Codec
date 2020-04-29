@@ -36,7 +36,7 @@ void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel) {
     std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
 
     output <<
-           it_channel <<
+           it_channel << sep << 
            pos.x << sep <<
            pos.y << sep <<
            pos.u << sep <<
@@ -143,8 +143,11 @@ void Statistics::compute(const std::vector<float> &input, const ushort *scan_ord
 
     for (int i = 0; i < input.size(); ++i) {
         float value = input[scan_order[i]];
-        if (value == 0) ++this->num_zeros;
-        else if (std::abs(value) == 1) {
+
+        if (std::abs(value) <= this->epsilon) {
+            ++this->num_zeros;
+        }
+        else if (std::abs(value - 1) <= this->epsilon) {
             ++this->num_ones;
             this->posSO_last_nzero = scan_order[i];
             this->pos_last_nzero = i;
@@ -182,7 +185,7 @@ void Statistics::compute_sse(float *orig, float *ref, const Point4D &dim_block, 
         for (int it_u = 0; it_u < dim_block.u; ++it_u) {
             for (int it_y = 0; it_y < dim_block.y; ++it_y) {
                 for (int it_x = 0; it_x < dim_block.x; ++it_x) {
-//                    uint pos = it_x + it_y * 15 + it_u * 15 * 15 + it_v * 15 * 15 * 15;
+                    //uint pos = it_x + it_y * 15 + it_u * 15 * 15 + it_v * 15 * 15 * 15;
 
                     error = *it_ref - *it_orig;
                     this->sse += error * error;
