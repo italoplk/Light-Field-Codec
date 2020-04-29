@@ -20,7 +20,8 @@ class Settings:
             if setting.isupper():
                 setting_value = getattr(mod, setting)
                 setattr(self, setting, setting_value)
-        if not self.EXECUTABLE:
+
+        if not getattr(self, 'EXECUTABLE'):
             raise ImproperlyConfigured(
                 "The EXECUTABLE value must not be empty"
             )
@@ -35,9 +36,13 @@ class Settings:
         ref_args = []
         product_args = []
 
-        for arg, value in self.ARGS.items():
+        ARGS = getattr(self, 'ARGS', {})
+        SEQ_ARGS = getattr(self, 'SEQ_ARGS', [])
+        GROUP_TOGETHER_ARGS = getattr(self, 'GROUP_TOGETHER_ARGS', ())
+
+        for arg, value in ARGS.items():
             if type(value) is str:
-                if value in self.ARGS:
+                if value in ARGS:
                     ref_args.append((arg, value))
                 else:
                     inline_args.append((arg, value))
@@ -48,7 +53,7 @@ class Settings:
                 var_args.update({arg: lst_args})
 
         # zip(*args) where args is a list of together values
-        for together_args in self.GROUP_TOGETHER_ARGS:
+        for together_args in GROUP_TOGETHER_ARGS:
             args = [var_args.pop(a) for a in together_args]
             product_args.append(list(zip(*args)))
 
@@ -65,7 +70,7 @@ class Settings:
 
             dargs = dict((*inline_args, *flat))
             rargs = [(rarg, dargs[val]) for rarg, val in ref_args]
-            sargs = [(sarg, '') for sarg in self.SEQ_ARGS]
+            sargs = [(sarg, '') for sarg in SEQ_ARGS]
             args.append((*dargs.items(), *rargs, *sargs))
 
         for arg in args:
@@ -83,7 +88,7 @@ class Settings:
             if value is not None:
                 value = value % variables
                 variables[var] = value
-            
+
             # Update back into args
             if var in args:
                 args.update({var: value})
