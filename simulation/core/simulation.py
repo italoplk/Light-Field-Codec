@@ -52,7 +52,7 @@ class Simulation:
 
             args = map(str, sum(instance.args, ()))
             process_info = [instance.executable, *args]
-            print(' '.join(process_info))
+            print(instance.parse())
 
             if not instance.fake:
                 open_files = {}
