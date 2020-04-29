@@ -1,30 +1,30 @@
-# Module to configure simulation parameters
-# The only required argument is EXECUTABLE
-# Default values are defined inside
-# core.global_settings.py. DO NOT CHANGE THAT
-# FILE. All changes made here overwrite global_settings.py
-# You may create aditional logic, functions, helpers, etc
-# as nedded. It is recomended that you keep this file
-# clean and well documented.
+# Module to configure simulation parameters. The only required argument
+# is EXECUTABLE. Default values are defined inside core.global_settings.py.
+# DO NOT CHANGE THAT FILE FOR SIMULATION PORPUSES. All changes made here 
+# will override global_settings.py.
+# You may create aditional logic, functions, helpers, etc. as nedded.
+# It is recomended that you keep this file clean and well documented.
 
 import os
 from os.path import join, dirname, abspath
 
+
+# Helper method to read from environment variables.
+# If not quiet, it raises an exception when variable is not defined.
 def from_env(variable, quiet=False):
     value = os.getenv(variable)
     if value is None and not quiet:
-        raise KeyError(f'Variable \'{variable}\' not found')
+        raise KeyError(f'Environment variable \'{variable}\' not defined')
     return value
+
 
 # Path to parent directory.
 BASE_DIR = dirname(dirname(abspath(__file__)))
 
-
 # The path to folder containing all datasets
 DATASET_DIR = from_env('DATASET_DIR')
 
-
-# TODO: Get path from os.getenv()
+# The path to folder to save all results
 RESULTS_DIR = from_env('RESULTS_DIR')
 
 # List of datasets to run on this simulation.
