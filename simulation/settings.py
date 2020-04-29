@@ -1,11 +1,11 @@
-# Module to configure simulation parameters 
+# Module to configure simulation parameters
 # The only required argument is EXECUTABLE
 # Default values are defined inside
 # core.global_settings.py. DO NOT CHANGE THAT
 # FILE. All changes made here overwrite global_settings.py
-# You may create aditional logic, functions, helpers, etc 
+# You may create aditional logic, functions, helpers, etc
 # as nedded. It is recomended that you keep this file
-# clean and well documented.  
+# clean and well documented.
 
 
 from os.path import join, dirname, abspath
@@ -28,11 +28,13 @@ DATASETS_TO_RUN = ['Bikes', ]
 
 # Resolved paths for each dataset.
 # The executable expects a trailing slash for folders.
-DATASETS = [join(join(DATASET_DIR, dataset), '') for dataset in DATASETS_TO_RUN]
-RESULTS = [join(join(RESULTS_DIR, dataset), '') for dataset in DATASETS_TO_RUN]
+DATASETS = [join(DATASET_DIR, dataset, '')
+            for dataset in DATASETS_TO_RUN]
+RESULTS = [join(RESULTS_DIR, dataset + '_%(SIMULATION_ID)s', '')
+            for dataset in DATASETS_TO_RUN]
 
 # List of transformation protocols to be used
-TRANSFORMS = ['DST']
+TRANSFORMS = ['DCT']
 
 # Quatizations values
 QUANTIZATIONS = [0.1, 0.25, 0.5, 1, 2, 5, 7, 10, 15, 20, 50, 100]
@@ -42,7 +44,7 @@ QUANTIZATIONS = [0.1, 0.25, 0.5, 1, 2, 5, 7, 10, 15, 20, 50, 100]
 # two arguments X = [A, B] and Y = [1, 2, 3] will produce
 # six combinations (A1, B1, A2, B2, A3, B3). To avoid that,
 # provide the grouping of arguments that should behave
-# as if one.  
+# as if one.
 # They are resolved as follows:
 #
 #   1. Numeric values are inlined.
@@ -68,10 +70,10 @@ QUANTIZATIONS = [0.1, 0.25, 0.5, 1, 2, 5, 7, 10, 15, 20, 50, 100]
 ARGS = {
     '-transform': TRANSFORMS,
     '-qp': QUANTIZATIONS,
-    '-qx': QUANTIZATIONS,
-    '-qy': QUANTIZATIONS,
-    '-qu': QUANTIZATIONS,
-    '-qv': QUANTIZATIONS,
+    '-qx': '-qp',       # Reference to -qp
+    '-qy': '-qp',       # Reference to -qp
+    '-qu': '-qp',       # Reference to -qp
+    '-qv': '-qp',       # Reference to -qp
     '-lfx': 625,
     '-lfy': 434,
     '-lfu': 13,
@@ -81,45 +83,45 @@ ARGS = {
     '-blu': 13,
     '-blv': 13,
     '-input': DATASETS,
-    '-output': RESULTS,
+    '-output': RESULTS, # This parameter uses SIMULATION_ID
 }
 
 # List of groupings. Use this setting to group arguments
 # that should be combined together. Be aware that the number
 # of elements for each member of a grouping should be the same.
-# If their sizes differ, the smaller size will prevail, 
-# leading to unknown behaviour. 
+# If their sizes differ, the smaller size will prevail,
+# leading to unknown behaviour.
 GROUP_TOGETHER_ARGS = (
     ('-input', '-output'),
-    ('-qp', '-qx', '-qy', '-qu', '-qv'),
 )
 
 
 BUILD_DIR = join(BASE_DIR, 'build')
 
 # Binary
-EXECUTABLE = join(BUILD_DIR, 'lfcodec')
+EXECUTABLE =  join(BUILD_DIR, 'lfcodec')
 
 # Variable at module level.
 SIMULATION_ID = '%(-blx)s_%(-bly)s_%(-blu)s_%(-blv)s_' \
                 '%(-qx)s_%(-qy)s_%(-qu)s_%(-qv)s_' \
                 '%(-transform)s'
 
+
 # Redirects stdout to a file inside the result of each
 # simulation. Notice that it uses the value of '-output'
-# to locate the directory where results are saved. It 
+# to locate the directory where results are saved. It
 # also uses the module level variable SIMULATION_ID
 STDOUT = join('%(-output)s', '%(SIMULATION_ID)s.txt')
 
 # List here the variables defined at module level to parse
 # before using in the simulation. All variables defined in
-# ARGS are also available. You may reference this variables 
-# for constructing STDIN, STDOUT and STDERR. By default, they
-# are always parsed. 
+# ARGS are also available for referencing and parsing.
+# You may reference this variables for customizing
+# STDIN, STDOUT and STDERR. By default, they are always parsed.
 VARIABLES_TO_PARSE = [
     'SIMULATION_ID',
+    '-output',
 ]
 
 # Number of parallel instaces to run the simulation
 PARALLEL_INSTANCES = 6
-

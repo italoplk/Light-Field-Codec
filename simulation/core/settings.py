@@ -67,11 +67,9 @@ class Settings:
             rargs = [(rarg, dargs[val]) for rarg, val in ref_args]
             sargs = [(sarg, '') for sarg in self.SEQ_ARGS]
             args.append((*dargs.items(), *rargs, *sargs))
-        
+
         for arg in args:
             self.args.append(dict(arg))
-        
-        
 
     def parse_variables(self, args):
 
@@ -81,10 +79,13 @@ class Settings:
         variables = dict(vars(self), **args)
 
         for var in to_parse:
-            value = getattr(self, var)
+            value = variables.get(var)
             if value is not None:
                 value = value % variables
                 variables[var] = value
-        
-        return variables
-        
+            
+            # Update back into args
+            if var in args:
+                args.update({var: value})
+
+        return variables, args

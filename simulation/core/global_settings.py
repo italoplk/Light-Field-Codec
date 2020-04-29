@@ -45,7 +45,7 @@ STDERR = None
 
 
 # Number of parallel instaces used on the simulation.
-# Internally, the implementation uses subprocesses to 
-# spawn instances. Avoid using more than the number of 
-# cpus available 
+# Internally, the implementation uses subprocesses to
+# spawn instances. Avoid using more than the number of
+# cpus available
 PARALLEL_INSTANCES = 1

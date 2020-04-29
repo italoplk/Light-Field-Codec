@@ -66,7 +66,7 @@ class Simulation:
 def build_simulations(settings):
     simulations = []
     for args in settings.args:
-        parsed_values = settings.parse_variables(args)
+        parsed_values, args = settings.parse_variables(args)
         sim = Simulation(settings.EXECUTABLE,
                          list(args.items()),
                          stdin=parsed_values['STDIN'],
