@@ -7,21 +7,25 @@
 # as nedded. It is recomended that you keep this file
 # clean and well documented.
 
-
+import os
 from os.path import join, dirname, abspath
+
+def from_env(variable, quiet=False):
+    value = os.getenv(variable)
+    if value is None and not quiet:
+        raise KeyError(f'Variable \'{variable}\' not found')
+    return value
 
 # Path to parent directory.
 BASE_DIR = dirname(dirname(abspath(__file__)))
 
 
 # The path to folder containing all datasets
-# TODO: Get path from os.getenv()
-DATASET_DIR = '/mnt/c/Users/Cristian/Documents/UFPel/lfcodec/Datasets'
+DATASET_DIR = from_env('DATASET_DIR')
 
 
 # TODO: Get path from os.getenv()
-# Path to write the results of each simulation
-RESULTS_DIR = '/mnt/c/Users/Cristian/Documents/UFPel/lfcodec/Results'
+RESULTS_DIR = from_env('RESULTS_DIR')
 
 # List of datasets to run on this simulation.
 DATASETS_TO_RUN = ['Bikes', ]
@@ -96,7 +100,8 @@ GROUP_TOGETHER_ARGS = (
 )
 
 
-BUILD_DIR = join(BASE_DIR, 'build')
+BUILD_DIR = from_env('BUILD_DIR')
+BUILD_DIR = join(BASE_DIR, BUILD_DIR)
 
 # Binary
 EXECUTABLE =  join(BUILD_DIR, 'lfcodec')
@@ -111,7 +116,9 @@ SIMULATION_ID = '%(-blx)s_%(-bly)s_%(-blu)s_%(-blv)s_' \
 # simulation. Notice that it uses the value of '-output'
 # to locate the directory where results are saved. It
 # also uses the module level variable SIMULATION_ID
-STDOUT = join('%(-output)s', '%(SIMULATION_ID)s.txt')
+# Because -output has a trailing slash, it suffices just
+# concatenate both strings
+STDOUT = '%(-output)s' + '%(SIMULATION_ID)s.txt'
 
 # List here the variables defined at module level to parse
 # before using in the simulation. All variables defined in
