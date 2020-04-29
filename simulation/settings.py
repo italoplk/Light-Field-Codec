@@ -40,7 +40,7 @@ QUANTIZATIONS = [0.1, 0.25, 0.5, 1, 2, 5, 7, 10, 15, 20, 50, 100]
 # Argument that are used to create simulation objects.
 # All list-like objects will be combined. For instance,
 # two arguments X = [A, B] and Y = [1, 2, 3] will produce
-# six combinations (A1, B1, A2, B2, C1, C2). To avoid that,
+# six combinations (A1, B1, A2, B2, A3, B3). To avoid that,
 # provide the grouping of arguments that should behave
 # as if one.  
 # They are resolved as follows:
