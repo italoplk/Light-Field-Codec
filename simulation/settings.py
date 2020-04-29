@@ -57,7 +57,7 @@ QUANTIZATIONS = [0.1, 0.25, 0.5, 1, 2, 5, 7, 10, 15, 20, 50, 100]
 #     'y': [10, 20, 30],              # Create one simulation for
 #                                     # each value of y
 #     'logfile': '~/mylog.txt'        # As there is no previous entry with
-#                                     # the key `logfile`, the string
+#                                     # the key `~/mylog.txt`, the string
 #                                     # '~/mylog.txt' is inlined.
 #                                     # It evaluates to "logfile ~/mylog.txt"
 #     'other_x': 'x',                 # Because `x` is a previous key,
