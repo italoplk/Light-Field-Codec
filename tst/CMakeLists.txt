@@ -7,6 +7,7 @@ set(Sources
     TransformContextTest.cpp
     OrthogonalContextMixinTest.cpp
     OldAPITest.cpp
+    BlockTest.cpp
 )
 
 add_executable(${This} ${Sources})

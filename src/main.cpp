@@ -324,7 +324,7 @@ int main(int argc, char **argv) {
 
 #if STATISTICS_LOCAL
 #if TRANSF_QUANT
-                        statistics_tf.compute(std::vector<float>(tf4D, tf4D + dimBlock.getNSamples()), lre.getScanOrder());
+                        statistics_tf.compute(std::vector<float>(tf4D, tf4D + dimBlock.getNSamples()), nullptr);
                         statistics_tf.write(it_pos, dimBlock, it_channel, lre_result, bits_per_4D_Block);
 #if QUANTIZATION
                         statistics_qf.compute(
