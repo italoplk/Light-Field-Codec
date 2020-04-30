@@ -108,26 +108,23 @@ TEST(BlockTests, create_view_of_view) {
   Block<int> b(array, 8 * 8 * 8);
 
   b.reshape({8, 8, 8});
-  x0 = 3;
-  x1 = 6;
-  dx = x1 - x0;
-  y0 = 2;
-  y1 = 7;
+  x0 = 3;  x1 = 6;
+  y0 = 2;  y1 = 7;
+  z0 = 1;  z1 = 5;
   dy = y1 - y0;
-  z0 = 1;
-  z1 = 5;
+  dx = x1 - x0;
   dz = z1 - z0;
 
   // Initialize array
   for (int i = 0; i < 8 * 8 * 8; i++)
     array[i] = i;
 
-  // Slicing b three consecutive times
+  // Slice b three times
   auto v1 = b.view({Range(x0, x1), Range(0, 8), Range(0, 8)});
   auto v2 = v1.view({Range(0, dx), Range(y0, y1), Range(0, 8)});
   auto v3 = v2.view({Range(0, dx), Range(0, dy), Range(z0, z1)});
 
-  // Slicing b at once.
+  // Slice b at once.
   auto v = b.view({Range(x0, x1), Range(y0, y1), Range(z0, z1)});
 
   for (size_t x = 0; x < dx; x++)
