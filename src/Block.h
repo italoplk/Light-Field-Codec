@@ -177,6 +177,7 @@ public:
                 message = ".end can't be smaller than .begin";
                 throw std::invalid_argument(message);
             }
+            i++;
         }
         return Block(*this, ranges);
     }
