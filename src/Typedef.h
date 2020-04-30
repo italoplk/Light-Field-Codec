@@ -19,4 +19,4 @@
 
 #define DPCM_DC true
 
-#endif //TYPEDEF_H
+#endif // TYPEDEF_H
