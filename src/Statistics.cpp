@@ -3,6 +3,7 @@
 #include "Statistics.h"
 
 #include <cmath>
+#include <cassert>
 
 Statistics::Statistics(const std::string &file) {
     if (!file.empty()) {
@@ -134,37 +135,42 @@ Statistics::~Statistics() {
     }
 }
 
+
 void Statistics::compute(const std::vector<float> &input, const ushort *scan_order) {
     std::vector<float> values;
-    this->dc = input[scan_order[0]];
+    this->dc = input[scan_order ? scan_order[0] : 0];
     this->num_zeros = this->num_ones = 0;
     this->posSO_last_nzero = this->posSO_last_nzeroone = -1;
     this->pos_last_nzero = this->pos_last_nzeroone = -1;
 
     for (int i = 0; i < input.size(); ++i) {
-        float value = input[scan_order[i]];
-
+        float value = input[scan_order ? scan_order[i] : i];
+        assert(!std::isnan(value));
         if (std::abs(value) <= this->epsilon) {
             ++this->num_zeros;
         }
-        else if (std::abs(value - 1) <= this->epsilon) {
+        else if (std::abs(value - 1) <= this->epsilon) { // epsilon = 0.1
             ++this->num_ones;
-            this->posSO_last_nzero = scan_order[i];
+            this->posSO_last_nzero = scan_order ? scan_order[i] : i;
             this->pos_last_nzero = i;
         } else {
             values.push_back(value);
-            this->posSO_last_nzero = this->posSO_last_nzeroone = scan_order[i];
+            this->posSO_last_nzero = this->posSO_last_nzeroone = scan_order ? scan_order[i] : i;
             this->pos_last_nzero = this->pos_last_nzeroone = i;
         }
     }
 
     this->v_mean = Statistics::mean(values);
+    // BUG: values arent sorted
     this->v_median = Statistics::median(values);
     this->v_variance = Statistics::variance(values, this->v_mean);
     this->v_std = sqrt(this->v_variance);
 
     this->v_energy = Statistics::energy(input);
     this->v_entropy = Statistics::entropy_vector(std::vector<int>(input.begin(), input.end()));
+
+    assert(!std::isnan(this->v_mean));
+
 
     this->v_min = this->v_max = this->v_minAbs = this->v_maxAbs = 0;
     if (!values.empty()) {
@@ -259,8 +265,11 @@ double Statistics::mean(std::vector<float> const &vet) {
     if (vet.empty()) return 0;
 
     float sum = 0.0;
+    float old_sum = 0.0;
     for (auto &i : vet) {
         sum += i;
+        assert(!std::isnan(sum));
+        old_sum = sum;
     }
 
     return sum / (float) vet.size();
