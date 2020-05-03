@@ -60,9 +60,9 @@ int main(int argc, char **argv) {
   Point4D size = encoderParameters.dim_block;
   Point4D stride;
   stride.x = 1;
-  stride.y = size.y;
-  stride.u = stride.y * size.u;
-  stride.v = stride.u * size.v;
+  stride.y = size.x;
+  stride.u = stride.y * size.y;
+  stride.v = stride.u * size.u;
 
   TransformContext<float> *tx =
       create_transform(encoderParameters.transform, size, stride);
@@ -83,8 +83,7 @@ int main(int argc, char **argv) {
   // encoder.writeHeader();
 
 #if STATISTICS_LOCAL
-  Statistics statistics_tf(encoderParameters.getPathOutput() +
-                           "localStatistics_transform.csv");
+
   Statistics statistics_qf(encoderParameters.getPathOutput() +
                            "localStatistics_quantization.csv");
 #endif
@@ -290,7 +289,7 @@ int main(int argc, char **argv) {
             ti.tic();
 #endif
 
-            tx->inverse(orig4D, tf4D, size_array);
+            tx->inverse(qi4D, ti4D, size_array);
 
 #if STATISTICS_TIME
             ti.toc();
@@ -313,12 +312,12 @@ int main(int argc, char **argv) {
 
 #if STATISTICS_LOCAL
 #if TRANSF_QUANT
-            // TODO: move to the correct place (before inverse)
-            statistics_tf.compute(
-                std::vector<float>(tf4D, tf4D + dimBlock.getNSamples()),
-                nullptr);
-            statistics_tf.write(it_pos, dimBlock, it_channel, lre_result,
-                                bits_per_4D_Block);
+            // // TODO: move to the correct place (before inverse)
+            // statistics_tf.compute(
+            //     std::vector<float>(tf4D, tf4D + dimBlock.getNSamples()),
+            //     nullptr);
+            // statistics_tf.write(it_pos, dimBlock, it_channel, lre_result,
+            //                     bits_per_4D_Block);
 #if QUANTIZATION
             statistics_qf.compute(
                 std::vector<float>(
