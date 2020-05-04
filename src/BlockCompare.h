@@ -2,8 +2,11 @@
 #define __BLOCKCOMPARATOR_H_
 
 template <typename T> class BlockComparator {
+  const T *ptr;
+  const size_t size;
 
 public:
+  BlockComparator(T *ptr, size_t size) : ptr(ptr), size(size) {}
   /**
    * Method to compare two blocks.
    * It relies on comparing features and statistical data
@@ -18,12 +21,35 @@ public:
    *      1 if lhs is bigger than rhs
    *
    */
-  int compare(const T *lhs, const T *rhs);
+  static int compare(const T *lhs, const T *rhs);
+
+  /* Operator overloads */
+  inline bool operator==(const T *other) {
+    return compare(this->ptr, other) == 0;
+  }
+  inline bool operator!=(const T *other) {
+    return compare(this->ptr, other) != 0;
+  }
+  inline bool operator<(const T *other) {
+    return compare(this->ptr, other) < 0;
+  }
+  inline bool operator>(const T *other) {
+    return compare(this->ptr, other) > 0;
+  }
+  inline bool operator<=(const T *other) {
+    return compare(this->ptr, other) <= 0;
+  }
+  inline bool operator>=(const T *other) {
+    return compare(this->ptr, other) >= 0;
+  }
 };
 
 template <typename T>
 int BlockComparator<T>::compare(const T *lhs, const T *rhs) {
   // Código aqui.
+  // O tamanho dos arrays é dado pela variavel interna this->size.
+  // Podes usar ela para fazer os loops, caso necessário.
+  return 0;
 }
 
 #endif // __BLOCKCOMPARATOR_H_
