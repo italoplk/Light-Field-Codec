@@ -23,6 +23,7 @@ void printVector(const std::string &msg, T *vet, int size) {
     std::cout << std::endl;
 }
 
+#if HEXADECA_TREE
 vector<string> Split(const string& s, char delimiter) {
     vector<string> tokens;
     string token;
@@ -33,6 +34,7 @@ vector<string> Split(const string& s, char delimiter) {
     }
     return tokens;
 }
+#endif
 
 int main(int argc, char **argv) {
     EncoderParameters encoderParameters;
@@ -83,19 +85,23 @@ int main(int argc, char **argv) {
     Node *root = nullptr;
     string light_field_name = Split(encoderParameters.getPathInput(), '/').back();
     ofstream file_hexadeca_tree;
-    file_hexadeca_tree.open(encoderParameters.getPathOutput() + light_field_name + "_hexadecaTree.csv");
+    file_hexadeca_tree.open(encoderParameters.getPathOutput() + "HexadecaTree.csv");
+    file_hexadeca_tree <<
+                       "Light_Field" << sep <<
+                       "Hypercubo" << sep <<
+                       "Pos_x" << sep <<
+                       "Pos_y" << sep <<
+                       "Pos_u" << sep <<
+                       "Pos_v" << sep <<
+                       "Channel" << sep <<
+                       "Level" << sep <<
+                       "Hypercubo_Size" << sep <<
+                       "N_Zero" << sep <<
+                       "N_One" << sep <<
+                       "N_Two" << sep <<
+                       "N_Greater_Than_Two" << sep <<
+                       "Total_Values" << sep << endl;
     if (file_hexadeca_tree.is_open()){
-        file_hexadeca_tree <<
-                           "Light_Field" << sep <<
-                           "Hypercubo" << sep <<
-                           "Channel" << sep <<
-                           "Level" << sep <<
-                           "Hypercubo_Size" << sep <<
-                           "N_Zero" << sep <<
-                           "N_One" << sep <<
-                           "N_Two" << sep <<
-                           "N_Greater_Than_Two" << sep <<
-                           "Total_Values" << sep << endl;
     }
 #endif
 
@@ -150,11 +156,22 @@ int main(int argc, char **argv) {
     total_time.tic();
 #endif
 
+#if HEXADECA_TREE
+    Point4D hypercubo_pos;
+
+    for (it_pos.v = 0, hypercubo_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v, hypercubo_pos.v++) { // angular
+        for (it_pos.u = 0, hypercubo_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u, hypercubo_pos.u++) {
+
+            for (it_pos.y = 0, hypercubo_pos.y = 0; it_pos.y < dimLF.y; it_pos.y += dimBlock.y, hypercubo_pos.y++) { // spatial
+                for (it_pos.x = 0, hypercubo_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x, hypercubo_pos.x++) {
+#else
+
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) { // angular
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
 
             for (it_pos.y = 0; it_pos.y < dimLF.y; it_pos.y += dimBlock.y) { // spatial
                 for (it_pos.x = 0; it_pos.x < dimLF.x; it_pos.x += dimBlock.x) {
+#endif
 
                     dimBlock = Point4D(std::min(encoderParameters.dim_block.x, dimLF.x - it_pos.x),
                                        std::min(encoderParameters.dim_block.y, dimLF.y - it_pos.y),
@@ -246,12 +263,13 @@ int main(int argc, char **argv) {
 
 #if HEXADECA_TREE
                         root = tree.CreateRoot(temp_lre, encoderParameters.dim_block.getNSamples());
-                        tree.CreateTree(root, file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0);
+                        tree.CreateTree(root, file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0, it_pos, hypercubo_pos);
                         tree.DeleteTree(root);
 
                         root = nullptr;
 
-                        //exit(1);
+                        /*if (hypercubo == 1)
+                            exit(1);*/
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
@@ -368,7 +386,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    lf.write(encoderParameters.getPathOutput());
+    //lf.write(encoderParameters.getPathOutput());
     encoder.finish_and_write();
     encoder.~EncBitstreamWriter();
 

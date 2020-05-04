@@ -8,11 +8,21 @@
 #include <fstream>
 
 #include "EncoderParameters.h"
+#include "Point4D.h"
 
 #define HEXADECA 16
 #define SEP ","
+#define IS_ORIGINAL false
+#define IS_4X4X4X4 true
+#define IS_8X8X8X8 false
+#define IS_16x16x16x16 false
 
 using namespace std;
+
+
+struct Ponto4D{
+    float x = 0, y = 0, u = 0, v = 0;
+};
 
 struct Node{
     vector<int> bitstream;
@@ -34,10 +44,14 @@ struct Node{
         this->SetNGreaterThanTwo(gttow);
         this->SetTotalValues(zero + one + two + gttow);
     }
-    void SetFileValues(ofstream& file, string light_field, uint hypercubo, uint channel, uint level){
+    void SetFileValues(ofstream& file, string light_field, uint hypercubo, uint channel, uint level, Ponto4D &pos){
         file <<
              light_field << SEP <<
              hypercubo << SEP <<
+             pos.x << SEP <<
+             pos.y << SEP <<
+             pos.u << SEP <<
+             pos.v << SEP <<
              channel << SEP <<
              level << SEP <<
              this->hypercubo_size << SEP <<
@@ -72,7 +86,7 @@ public:
     Tree();
 
     Node* CreateRoot(int *bitstream, uint nsamples);
-    void CreateTree(Node * root,ofstream& file, string light_field, uint hypercubo, uint channel, uint level);
+    void CreateTree(Node * root,ofstream& file, string light_field, uint hypercubo, uint channel, uint level, const Point4D &pos, const Point4D &hypercubo_pos);
     void DeleteTree(Node *root);
 
     ~Tree();
@@ -80,6 +94,9 @@ public:
 
 private:
     Node* NewNode(vector<int> bitstream);
+    Ponto4D prox_pos;
+    uint x, y, u, v;
+    uint size = 0;
 
     //void Print(vector<int> const &input);
     //void PrintValues();

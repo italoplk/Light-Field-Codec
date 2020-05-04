@@ -14,6 +14,7 @@ Node* Tree::CreateRoot(int *bitstream, uint nsamples) {
     for (int j = 0; j < HEXADECA; ++j) {
         root->child.push_back(nullptr);
     }
+    this->x = this->y = this->u = this->v = 0;
     return root;
 }
 
@@ -26,15 +27,56 @@ Node* Tree::NewNode(vector<int> bitstream) {
     return node;
 }
 
-void Tree::CreateTree(Node* root, ofstream& file, string light_filed, uint hypercubo, uint channel, uint level) {
-    if (root->bitstream.size() < (4*4*4*4)) {
+void Tree::CreateTree(Node* root, ofstream& file, string light_filed, uint hypercubo, uint channel, uint level, const Point4D &pos, const Point4D &hypercubo_pos) {
+    if (IS_ORIGINAL)
+        this->size = root->bitstream.size();
+    else if (IS_4X4X4X4)
+        this->size = 4*4*4*4;
+    else if (IS_8X8X8X8)
+        this->size = 8*8*8*8;
+    else return;
+
+    if (root->bitstream.size() <= this->size) {
         root->CountValues();
-        root->SetFileValues(file, light_filed, hypercubo, channel, level);
+
+        if (IS_ORIGINAL){
+            this->prox_pos.x = (float)pos.x;
+            this->prox_pos.y = (float)pos.y;
+            this->prox_pos.u = (float)pos.u;
+            this->prox_pos.v = (float)pos.v;
+        }
+        else if (IS_4X4X4X4){
+            this->prox_pos.x = this->x + (16 * hypercubo_pos.x);
+            this->prox_pos.y = this->y + (16 * hypercubo_pos.y);
+            this->prox_pos.u = this->u + (16 * hypercubo_pos.u);
+            this->prox_pos.v = this->v + (16 * hypercubo_pos.v);
+        }
+        else if (IS_8X8X8X8){ //TODO
+            this->prox_pos.x = (float)pos.x;
+            this->prox_pos.y = (float)pos.y;
+            this->prox_pos.u = (float)pos.u;
+            this->prox_pos.v = (float)pos.v;
+        }
+        else if (IS_16x16x16x16){ //TODO
+            this->prox_pos.x = (float)pos.x;
+            this->prox_pos.y = (float)pos.y;
+            this->prox_pos.u = (float)pos.u;
+            this->prox_pos.v = (float)pos.v;
+        }
+        root->SetFileValues(file, light_filed, hypercubo, channel, level, prox_pos);
+
+        if (IS_4X4X4X4) {
+            this->x++;
+            if (this->x == 16) {
+                this->y++;
+                this->x = 0;
+            }
+            if (this->y == 16)
+                this->y = 0;
+        }
         return;
     }
     else{
-        root->CountValues();
-        root->SetFileValues(file, light_filed, hypercubo, channel, level);
         int n = ceil((double)root->bitstream.size()/HEXADECA);
         vector<int> vec[HEXADECA];
         for (int i = 0; i < HEXADECA; ++i) {
@@ -52,7 +94,7 @@ void Tree::CreateTree(Node* root, ofstream& file, string light_filed, uint hyper
         uint next_level = level + 1;
         for (int j = 0; j < root->child.size(); ++j) {
             root->child[j] = NewNode(vec[j]);
-            this->CreateTree(root->child[j], file, light_filed, hypercubo, channel, next_level);
+            this->CreateTree(root->child[j], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
         }
     }
 }
