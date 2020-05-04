@@ -51,3 +51,4 @@ if __name__ == "__main__":
         curses.wrapper(tui)
     else:
         Simulation.dispatch_all(settings.PARALLEL_INSTANCES)
+        Simulation.join()

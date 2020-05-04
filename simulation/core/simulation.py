@@ -13,13 +13,14 @@ class Simulation:
     instances_status = {}
     status = None
 
-    def __init__(self, executable, args, stdin=None, stdout=None, stderr=None, fake=None):
+    def __init__(self, executable, args, stdin=None, stdout=None, stderr=None, fake=None, use_tui=None):
         self.executable = executable
         self.args = args
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
         self.fake = fake
+        self.use_tui = use_tui
         self.id = next(Simulation._id_seed)
 
         Simulation.instances.put(self)
@@ -76,7 +77,9 @@ class Simulation:
 
             args = map(str, sum(instance.args, ()))
             process_info = [instance.executable, *args]
-
+            if not instance.use_tui:
+                print(instance.parse())
+                
             if not instance.fake:
                 open_files = {}
                 for stream in ['stdin', 'stdout', 'stderr']:
@@ -134,7 +137,8 @@ def build_simulations(settings, options):
                          stdin=parsed_values['STDIN'],
                          stdout=parsed_values['STDOUT'],
                          stderr=parsed_values['STDERR'],
-                         fake=options.fake)
+                         fake=options.fake,
+                         use_tui=options.use_tui)
         simulations.append(sim)
 
         # only runs one simulation
