@@ -1,6 +1,9 @@
 #if !defined(__ORTHOGONALTRANSFORMMixin_H__)
 #define __ORTHOGONALTRANSFORMMixin_H__
 
+#include <cstddef>
+#include <stdexcept>
+
 /** Orthogonal Transforms follow these two steps:
  * 1) Calculate its coefficients matrix
  * 2) Multiplication between input array and coefficients matrix
