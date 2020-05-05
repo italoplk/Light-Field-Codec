@@ -7,12 +7,24 @@
 #include <map>
 #include <stdexcept>
 
+/**
+ * @brief Incomplete class that implements generate_coefficients
+ * specific for the Discrete Cosine Transform.
+ *
+ * @tparam T Numeric type for inner elements.
+ */
 template <typename T>
 class _DiscreteSineTransformContext : public TransformContext<T> {
 protected:
+/** Store previously calculated DST coefficients for further reuse. */
   static std::map<int, const T *> coeff_cache;
 
-  /* Implementation of the helper method to calculate the DCT coefficients */
+  /**
+   * @brief Generate the DST coefficients matrix.
+   * 
+   * @param size size of the array to be transformed.
+   * @return const T* pointer to an array of `size`^2 elements.
+   */
   static const T *generate_coefficients(const size_t size) {
     auto N = size;
     auto *output = new T[N * N];
@@ -28,12 +40,14 @@ protected:
   }
 };
 
-/** Declaration of static member */
+/** Specialization and declaration of DST cache. */
 template <typename T>
 std::map<int, const T *> _DiscreteSineTransformContext<T>::coeff_cache;
 
-/** Exports the name DiscreteCosineTransformContext with the mixin
- * OrthogonalTransformContext */
+/**
+ * @brief The *complete* Discrete Sine Transform Class implementation.
+ * @tparam T Numeric type for inner elements.
+ */
 template <typename T>
 using DiscreteSineTransformContext =
     OrthogonalTransformMixin<_DiscreteSineTransformContext<T>>;

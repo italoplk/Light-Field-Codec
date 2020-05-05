@@ -6,6 +6,13 @@
 #define FORWARD 1
 #define INVERSE 2
 
+/**
+ * @brief Mixin to Calculate Orthogonal Transforms across many dimensions
+ *
+ * @tparam BASE Class defining the interface to inherit from.
+ * @tparam CTX Correct context to apply across dimensions
+ * @tparam T Numeric type deduced from `BASE::value_type`
+ */
 template <typename BASE, typename CTX, typename T = typename BASE::value_type>
 class MultiDimensionalOrthogonalTransformMixin : public BASE {
 private:
@@ -97,36 +104,74 @@ private:
   }
 
 public:
+  /**
+   * @brief Destroy the Multi Dimensional Orthogonal Transform Mixin object
+   * and free allocated inner variables.
+   */
   ~MultiDimensionalOrthogonalTransformMixin() {
     if (should_delete_pointers) {
       delete[] BASE::size;
       delete[] BASE::stride;
     }
   }
+  /**
+   * @brief Construct a new Multi Dimensional Orthogonal Transform Mixin object
+   *
+   * @param size_ Pointer to array containing the size of each dimension. It
+   * assumes 4.
+   * @param stride_ Pointer to array containing the stride for each dimension.
+   * It assumes 4.
+   */
   MultiDimensionalOrthogonalTransformMixin(size_t *size_, size_t *stride_) {
     BASE::size = size_;
     BASE::stride = stride_;
   }
+  /**
+   * @brief Construct a new Multi Dimensional Orthogonal Transform Mixin object
+   *
+   * @param size_ Point4D with size of the 4 dimensions
+   * @param stride_ Point4D with stride of the 4 dimensions
+   */
   MultiDimensionalOrthogonalTransformMixin(const Point4D &size_,
                                            const Point4D &stride_) {
     BASE::size = size_.to_array();
     BASE::stride = stride_.to_array();
     should_delete_pointers = true;
   }
-
-  void forward(const T *input, T *output) {
+  /**
+   * @brief Performs forward transform on `input`.
+   * @param input pointer to memory region to be transformed.
+   * @param output pointer to allocated memory to store the result.
+   */
+  inline void forward(const T *input, T *output) {
     forward(input, output, BASE::size);
   }
-
-  void forward(const T *input, T *output, const size_t *size) {
+  /**
+   * @brief Performs forward transform on `input`.
+   * @param input pointer to memory region to be transformed.
+   * @param output pointer to allocated memory to store the result.
+   * @param size array pointing to dimension sizes of both `input` and `output`
+   */
+  inline void forward(const T *input, T *output, const size_t *size) {
     direction = FORWARD;
     ortho_transform_multidim(input, output, size);
   }
-
-  void inverse(const T *input, T *output) {
+  /**
+   * @brief Performs inverse transform on `input`.
+   * @param input pointer to memory region to be transformed.
+   * @param output pointer to allocated memory to store the result.
+   */
+  inline void inverse(const T *input, T *output) {
     inverse(input, output, BASE::size);
   }
-  void inverse(const T *input, T *output, const size_t *size) {
+  /**
+   * @brief Performs inverse transform on `input`.
+   * @param input pointer to memory region to be transformed.
+   * @param output pointer to allocated memory to store the result.
+   * @param size array pointing to dimension sizes of both `input` and
+   * `output`
+   */
+  inline void inverse(const T *input, T *output, const size_t *size) {
     direction = INVERSE;
     ortho_transform_multidim(input, output, size);
   }

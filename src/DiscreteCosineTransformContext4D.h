@@ -5,6 +5,10 @@
 #include "MultiDimensionalOrthogonalTransformMixin.h"
 #include "TransformContext.h"
 
+/**
+ * @brief Definition of the 4D Discrete Cosine Transform. 
+ * @tparam T Numeric type for inner elements.
+ */
 template <typename T>
 using DiscreteCosineTransformContext4D =
     MultiDimensionalOrthogonalTransformMixin<TransformContext<T>,

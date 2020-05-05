@@ -13,6 +13,15 @@
 
 auto logger = spdlog::basic_logger_mt("block_logger", "logs/block.txt");
 
+/**
+ * @brief Join container using `delim`
+ *
+ * @tparam T Type of container
+ * @param delim string to be used as delimiter
+ * @param begin start of container
+ * @param end end of container
+ * @return std::string elements joined
+ */
 template <typename T>
 std::string join(const std::string &delim, const T *begin, const T *end) {
   std::stringstream s;
@@ -25,6 +34,14 @@ std::string join(const std::string &delim, const T *begin, const T *end) {
   return s.str();
 }
 
+/**
+ * @brief Join container using `delim`
+ *
+ * @tparam T Type of container
+ * @param delim string to be used as delimiter
+ * @param v container
+ * @return std::string elements joined
+ */
 template <typename T> std::string join(const std::string &delim, const T &v) {
   std::stringstream s;
   for (auto it = std::begin(v); it != std::end(v); it++) {
@@ -36,17 +53,45 @@ template <typename T> std::string join(const std::string &delim, const T &v) {
   return s.str();
 }
 
+/**
+ * @brief Wrapper for contiguous memory spaces
+ *
+ * `Block` provides an interface to access, reshape and iterate over a
+ * contiguous memory region.
+ *
+ * @tparam T Type of elements.
+ */
 template <typename T> class Block {
 public:
+  /**
+   * @brief Slicer across dimensions
+   */
   struct Range {
     int begin;
     int end;
-
+    /**
+     * @brief Construct a new Range object
+     *
+     * @param begin start position
+     * @param end end position
+     */
     Range(int begin = -1, int end = -1) : begin(begin), end(end) {}
+    /**
+     * @brief Friendly representation of a Range.
+     *
+     * @param os outputstream object.
+     * @param r range
+     * @return std::ostream&
+     */
     friend std::ostream &operator<<(std::ostream &os, const Range &r) {
       os << r.str();
       return os;
     }
+    /**
+     * @brief Nice string representation of a Range.
+     *
+     * @return std::string Range representation.
+     */
     std::string str() const {
       std::stringstream s;
 
@@ -118,10 +163,22 @@ private:
   }
 
 public:
-  Block(T *array_, const size_t size) : Block(array_, &size, 1) {}
-
-  Block(T *array_, const size_t *size_, const size_t size_dim_)
-      : array(array_) {
+  /**
+   * @brief Construct a new Block object
+   *
+   * @param array Pointer to contigous memory region
+   * @param size Number of elements
+   */
+  Block(T *array, const size_t size) : Block(array, &size, 1) {}
+  /**
+   * @brief Construct a new Block object
+   * 
+   * @param array Pointer to contigous memory region
+   * @param size_ Number of elements per dimension.
+   * @param size_dim_ number of dimensions
+   */
+  Block(T *array, const size_t *size_, const size_t size_dim_)
+      : array(array) {
     logger->set_level(spdlog::level::debug);
     if (!array) {
       logger->error("Block: Tried to wrap an invalid memory address: {X}",
@@ -139,6 +196,29 @@ public:
     recalculate_ranges();
   }
 
+/**
+ * @brief Copy constructor
+ * 
+ * @param obj object to be copied.
+ */
+  Block(const Block &obj) {
+    size_dim = obj.size_dim;
+    array = obj.array;
+    size = new size_t[size_dim];
+    for (int i = 0; i < size_dim; i++)
+      size[i] = obj.size[i];
+    stride = nullptr;
+    recalculate_stride();
+    recalculate_ranges();
+  }
+
+  /**
+   * @brief Index elements within inner array. 
+   * 
+   * @param index0 first index
+   * @param ... other dimensions.
+   * @return T& Object at indexed position.
+   */
   T &operator()(const size_t index0, ...) {
     // Array to index underlying "tensor"
     size_t index[size_dim];
@@ -154,6 +234,11 @@ public:
     return array[_index(index)];
   }
 
+  /**
+   * @brief Allows reshapping the indexer of inner array.
+   * 
+   * @param dim new shape
+   */
   void reshape(std::initializer_list<size_t> dim) {
     size_t total_elements = 1;
 
@@ -178,6 +263,12 @@ public:
     recalculate_ranges();
   }
 
+  /**
+   * @brief Create a sliced view 
+   * 
+   * @param ranges Range for each dimension
+   * @return view object. 
+   */
   auto view(std::initializer_list<Range> ranges) {
     const char *message;
     if (ranges.size() != size_dim) {
@@ -204,12 +295,19 @@ public:
         throw std::invalid_argument("Decreasing indexing not allowed");
       }
       i++;
-      // auto r = Range();
-      // r.begin = it.begin == -1 ? -1 : it.begin + this->ranges[i].begin - 1;
-      // r.end = it.end == -1 ? -1 : it.end + this->ranges[i].begin - 1;
-      // adjusted_ranges.push_back(r);
     }
     return Block(*this, ranges);
+  }
+
+  /**
+   * @brief Flat view of inner array.
+   * 
+   * @return view object.
+   */
+  auto flat_view() {
+    auto clone = Block(*this);
+    clone.reshape({this->stride[size_dim]});
+    return clone;
   }
 };
 

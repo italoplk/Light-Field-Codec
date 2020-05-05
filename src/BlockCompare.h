@@ -17,9 +17,9 @@ public:
    * @param rhs: pointer to the right block.
    * @param size: length of both arrays
    * @return
-   *     -1 if lhs is smaller than rhs
-   *      0 if lhs equal rhs
-   *      1 if lhs is bigger than rhs
+   *     -1 if lhs is smaller than rhs  <br/>
+   *      0 if lhs equal rhs            <br/>
+   *      1 if lhs is bigger than rhs   <br/>
    *
    */
   static int compare(const T *lhs, const T *rhs, const size_t size);
