@@ -4,6 +4,4 @@
 [submodule "extern/spdlog"]
 	path = extern/spdlog
 	url = https://github.com/gabime/spdlog.git
-[submodule "extern/xtensor"]
-	path = extern/xtensor
-	url = https://github.com/xtensor-stack/xtensor.git
+
