@@ -125,13 +125,13 @@ private:
   std::vector<size_t> stride;
   std::vector<Range> ranges;
 
-  inline size_t _index(const std::vector<size_t> index) {
+  template <typename... Ts> inline size_t _find_index(const Ts &... _index) {
     // Dimension checks
+    std::vector index({_index...});
     for (int i = 0; i < rank; i++)
       if (index[rank - 1 - i] >= size[i]) {
-        logger->error("_index: invalid position. index={{{}}}, shape={{{}}}",
-                      join<std::vector<size_t>>(", ", index),
-                      join<std::vector<size_t>>(", ", size));
+        logger->error("_find_index: invalid position. index={{{}}}, shape={{{}}}",
+                      join(", ", index), join(", ", size));
         throw std::out_of_range("Tried to access invalid position.");
       }
 
@@ -170,8 +170,7 @@ private:
       this->ranges[i].end = ranges[i].end + b.ranges[i].begin;
     }
     logger->debug("Block: got ranges: {}. Updated ranges: {}",
-                  join<std::vector<Range>>(", ", ranges),
-                  join<std::vector<Range>>(", ", this->ranges));
+                  join(", ", ranges), join(", ", this->ranges));
   }
 
 public:
@@ -225,9 +224,9 @@ public:
    * @param ... other dimensions.
    * @return T& Object at indexed position.
    */
-  template <typename... Ts> T &operator()(const Ts... index) {
+  template <typename... Ts> T &operator()(const Ts &... index) {
     // Array to index underlying "tensor"
-    auto i = _index(std::vector<size_t>({index...}));
+    auto i = _find_index(index...);
     return array[i];
   }
 
@@ -244,8 +243,7 @@ public:
 
     if (total_elements != stride[rank]) {
       logger->error("reshape: invalid shape. Current {{{}}}, got {{{}}}",
-                    join<std::vector<size_t>>(", ", size),
-                    join<size_t>(", ", dim.begin(), dim.end()));
+                    join(", ", size), join(", ", dim.begin(), dim.end()));
       throw std::length_error("Invalid shape");
     }
 
