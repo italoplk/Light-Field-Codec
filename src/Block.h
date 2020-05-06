@@ -133,14 +133,32 @@ public:
     bool reverse_order;
 
   public:
-    Iterator(Block& b, int index, bool reverse_order) {
+    Iterator(Block &b, int index, bool reverse_order) {
       this->b = b.flat_view();
       this->reverse_order = reverse_order;
       this->index = index;
     }
+    Iterator(const Iterator& it) {
+      b = it.b;
+      index = it.index;
+      reverse_order = it.reverse_order;
+    }
+    Iterator(const Iterator&& it) {
+      b = it.b;
+      index = it.index;
+      reverse_order = it.reverse_order;
+    }
     T &operator*() { return b(index); }
-    T &operator++() { return b(reverse_order ? --index : ++index); }
-    T &operator++(int) { return b(reverse_order ? index-- : index++); }
+    Iterator operator++() {
+      index += reverse_order ? -1 : 1;
+      auto it = Iterator(*this);
+      return it;
+    }
+    Iterator operator++(int) {
+      auto it = Iterator(*this);
+      index += reverse_order ? -1 : 1;
+      return it;
+    }
     bool operator==(const Iterator &other) { return index == other.index; }
     bool operator!=(const Iterator &other) { return !(*this == other); }
   };
@@ -288,6 +306,12 @@ public:
     size.assign(dim.begin(), dim.end());
     recalculate_stride();
     recalculate_ranges();
+  }
+
+  template <typename ...Ts>
+  void reshape(const Ts& ...dim)
+  {
+    reshape({static_cast<size_t>(dim)...}); 
   }
 
   /**

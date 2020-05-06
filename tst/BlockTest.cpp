@@ -189,3 +189,27 @@ TEST(BlockTest, reverse_iterator_is_consistent)
   }
   ASSERT_EQ(i, -1);
 }
+
+
+TEST(BlockTests, reshape_block_parameter_pack) {
+  int array[100];
+  Block<int> b(array, 100);
+
+  auto shape = b.shape();
+  ASSERT_EQ(shape[0], 100);
+  ASSERT_EQ(shape.size(), 1);
+
+  b.reshape(10, 10);
+  auto new_shape = b.shape();
+
+  ASSERT_EQ(new_shape[0], 10);
+  ASSERT_EQ(new_shape[1], 10);
+  ASSERT_EQ(new_shape.size(), 2);
+}
+
+TEST(BlockTests, invalid_reshape_block_parameter_pack) {
+  int array[100];
+  Block<int> b(array, 100);
+
+  ASSERT_THROW(b.reshape(5, 5), std::length_error);
+}
