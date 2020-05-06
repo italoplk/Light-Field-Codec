@@ -87,6 +87,7 @@ public:
       os << r.str();
       return os;
     }
+
     /**
      * @brief Nice string representation of a Range.
      *
@@ -101,65 +102,76 @@ public:
       return s.str();
     }
   };
+  // /**
+  //  * @brief Iterator over all elements of a block.
+  //  *
+  //  */
+  // template <class IteratorType> class Iterator {
+  //   Block &b;
+  //   size_t index = 0;
+  //   bool reverse_order = false;
+
+  // public:
+  //   Iterator(Block &b) { this->b = b.flat_view(); }
+  //   T &operator*() const { IteratorType::return b(index); }
+  //   T &operator++() { return b(++index); }
+  //   T &operator++(int) { return b(index++); }
+  // };
 
 private:
   T *array;
-  size_t size_dim;
-  size_t *size;
-  size_t *stride = nullptr;
-  Range *ranges = nullptr;
+  size_t rank;
+  std::vector<size_t> size;
+  std::vector<size_t> stride;
+  std::vector<Range> ranges;
 
-  inline size_t _index(const size_t *index) {
+  inline size_t _index(const std::vector<size_t> index) {
     // Dimension checks
-    for (int i = 0; i < size_dim; i++)
-      if (index[size_dim - 1 - i] >= size[i]) {
+    for (int i = 0; i < rank; i++)
+      if (index[rank - 1 - i] >= size[i]) {
         logger->error("_index: invalid position. index={{{}}}, shape={{{}}}",
-                      join<size_t>(", ", index, index + size_dim),
-                      join<size_t>(", ", size, size + size_dim));
+                      join<std::vector<size_t>>(", ", index),
+                      join<std::vector<size_t>>(", ", size));
         throw std::out_of_range("Tried to access invalid position.");
       }
+
+    auto s = stride.begin();
+    auto r = ranges.rbegin();
     size_t idx = 0;
-    for (int i = 0; i < size_dim; i++) {
-      auto rev_i = size_dim - 1 - i;
-      idx += (index[rev_i] + ranges[rev_i].begin) * stride[i];
-    }
+    for (auto i = index.rbegin(); i != index.rend(); i++, s++, r++)
+      idx += (*i + (*r).begin) * *s;
     return idx;
   }
 
   inline void recalculate_stride() {
-    if (stride)
-      delete[] stride;
-    stride = new size_t[size_dim + 1];
-    stride[0] = 1;
-    for (int d = 0; d < size_dim; d++)
-      stride[d + 1] = size[d] * stride[d];
+    stride.resize(rank + 1);
+    auto s = stride.begin();
+    *s = 1;
+    for (const auto &n : size)
+      *++s = *s * n;
   }
 
   inline void recalculate_ranges() {
-    if (ranges)
-      delete[] ranges;
-    ranges = new Range[size_dim];
-    for (int i = 0; i < size_dim; i++) {
-      ranges[i].begin = 0;
-      ranges[i].end = size[i];
-    }
+    ranges.resize(rank);
+    auto s = size.begin();
+    for (auto &r : ranges)
+      r.begin = 0, r.end = *s++;
   }
 
   Block(const Block &b, const std::vector<Range> &ranges) {
     array = b.array;
-    size_dim = b.size_dim;
-    size = new size_t[size_dim];
-    for (int i = 0; i < size_dim; i++)
-      size[i] = b.size[i];
+    rank = b.rank;
+    size = b.size;
     recalculate_stride();
-    this->ranges = new Range[size_dim];
-    for (int i = 0; i < size_dim; i++) {
+    this->ranges.resize(rank);
+
+    for (int i = 0; i < rank; i++) {
       this->ranges[i].begin = ranges[i].begin + b.ranges[i].begin;
       this->ranges[i].end = ranges[i].end + b.ranges[i].begin;
     }
     logger->debug("Block: got ranges: {}. Updated ranges: {}",
                   join<std::vector<Range>>(", ", ranges),
-                  join<Range>(", ", this->ranges, this->ranges + size_dim));
+                  join<std::vector<Range>>(", ", this->ranges));
   }
 
 public:
@@ -172,71 +184,56 @@ public:
   Block(T *array, const size_t size) : Block(array, &size, 1) {}
   /**
    * @brief Construct a new Block object
-   * 
+   *
    * @param array Pointer to contigous memory region
-   * @param size_ Number of elements per dimension.
-   * @param size_dim_ number of dimensions
+   * @param size Number of elements per dimension.
+   * @param rank number of dimensions
    */
-  Block(T *array, const size_t *size_, const size_t size_dim_)
-      : array(array) {
+  Block(T *array, const size_t *size, const size_t rank) {
     logger->set_level(spdlog::level::debug);
     if (!array) {
       logger->error("Block: Tried to wrap an invalid memory address: {X}",
                     (void *)array);
       throw std::invalid_argument("Invalid pointer.");
     }
-    size_dim = size_dim_;
-    size = new size_t[size_dim];
+    this->array = array;
+    this->rank = rank;
+    this->size.resize(rank);
+    this->size.assign(size, size + rank);
 
-    for (int i = 0; i < size_dim; i++)
-      size[i] = size_[i];
-
-    stride = nullptr;
     recalculate_stride();
     recalculate_ranges();
   }
-
-/**
- * @brief Copy constructor
- * 
- * @param obj object to be copied.
- */
+  /**
+   * @brief Copy constructor
+   *
+   * @param obj object to be copied.
+   */
   Block(const Block &obj) {
-    size_dim = obj.size_dim;
+    rank = obj.rank;
     array = obj.array;
-    size = new size_t[size_dim];
-    for (int i = 0; i < size_dim; i++)
-      size[i] = obj.size[i];
-    stride = nullptr;
+    size = obj.size;
+
     recalculate_stride();
     recalculate_ranges();
   }
 
   /**
-   * @brief Index elements within inner array. 
-   * 
+   * @brief Index elements within inner array.
+   *
    * @param index0 first index
    * @param ... other dimensions.
    * @return T& Object at indexed position.
    */
-  T &operator()(const size_t index0, ...) {
+  template <typename... Ts> T &operator()(const Ts... index) {
     // Array to index underlying "tensor"
-    size_t index[size_dim];
-    index[0] = index0;
-
-    // Read variadic argument list into index[]
-    va_list ap;
-    va_start(ap, index0);
-    for (int i = 1; i < size_dim; i++)
-      index[i] = va_arg(ap, size_t);
-    va_end(ap);
-
-    return array[_index(index)];
+    auto i = _index(std::vector<size_t>({index...}));
+    return array[i];
   }
 
   /**
    * @brief Allows reshapping the indexer of inner array.
-   * 
+   *
    * @param dim new shape
    */
   void reshape(std::initializer_list<size_t> dim) {
@@ -245,34 +242,28 @@ public:
     for (auto it = dim.begin(); it != dim.end(); it++)
       total_elements *= *it;
 
-    if (total_elements != stride[size_dim]) {
+    if (total_elements != stride[rank]) {
       logger->error("reshape: invalid shape. Current {{{}}}, got {{{}}}",
-                    join<size_t>(", ", size, size + size_dim),
+                    join<std::vector<size_t>>(", ", size),
                     join<size_t>(", ", dim.begin(), dim.end()));
       throw std::length_error("Invalid shape");
     }
 
-    size_t *new_size = new size_t[dim.size()];
-    size_dim = dim.size();
-    size_t *p = new_size;
-    for (auto it = dim.begin(); it != dim.end(); it++)
-      *p++ = *it;
-    delete[] size;
-    size = new_size;
+    rank = dim.size();
+    size.assign(dim.begin(), dim.end());
     recalculate_stride();
     recalculate_ranges();
   }
 
   /**
-   * @brief Create a sliced view 
-   * 
+   * @brief Create a sliced view
+   *
    * @param ranges Range for each dimension
-   * @return view object. 
+   * @return view object.
    */
   auto view(std::initializer_list<Range> ranges) {
-    const char *message;
-    if (ranges.size() != size_dim) {
-      logger->error("view: nedded {} ranges. Got {}", size_dim, ranges.size());
+    if (ranges.size() != rank) {
+      logger->error("view: nedded {} ranges. Got {}", rank, ranges.size());
       throw std::invalid_argument(
           "Number of Range instances does not match dimension");
     }
@@ -285,8 +276,7 @@ public:
           (it.end != -1 && it.end > end)) {
         logger->error("view: invalid range. Current {}, got {}",
                       this->ranges[i].str(), it.str());
-        message = "Invalid Range";
-        throw std::out_of_range(message);
+        throw std::out_of_range("Invalid Range");
       }
       if (it.begin != -1 && it.end != -1 && it.end < it.begin) {
         logger->error(
@@ -301,12 +291,12 @@ public:
 
   /**
    * @brief Flat view of inner array.
-   * 
+   *
    * @return view object.
    */
   auto flat_view() {
     auto clone = Block(*this);
-    clone.reshape({this->stride[size_dim]});
+    clone.reshape({this->stride[rank]});
     return clone;
   }
 };
