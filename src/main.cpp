@@ -262,14 +262,12 @@ int main(int argc, char **argv) {
                         }
 
 #if HEXADECA_TREE
-                        root = tree.CreateRoot(temp_lre, encoderParameters.dim_block.getNSamples());
+                        root = tree.CreateRoot(temp_lre, encoderParameters.dim_block);
                         tree.CreateTree(root, file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0, it_pos, hypercubo_pos);
-                        tree.DeleteTree(root);
 
-                        root = nullptr;
+                        tree.DeleteTree(&root);
 
-                        /*if (hypercubo == 1)
-                            exit(1);*/
+                        exit(1);
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 

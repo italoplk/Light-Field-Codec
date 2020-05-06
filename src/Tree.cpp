@@ -6,10 +6,18 @@ Tree::Tree() {
 Tree::~Tree() {
 }
 
-Node* Tree::CreateRoot(int *bitstream, uint nsamples) {
-    Node *root = new Node;
-    for (int i = 0; i < nsamples; ++i) {
-        root->bitstream.push_back(bitstream[i]);
+Node* Tree::CreateRoot(int *bitstream, const Point4D &dim_block) {
+    Node *root = new Node(dim_block.x, dim_block.y, dim_block.u, dim_block.v);
+    int i=0;
+    for (int it_v = 0; it_v < root->hypercube->dim.v; ++it_v) {
+        for (int it_u = 0; it_u < root->hypercube->dim.u; ++it_u) {
+            for (int it_y = 0; it_y < root->hypercube->dim.y; ++it_y) {
+                for (int it_x = 0; it_x < root->hypercube->dim.x; ++it_x) {
+                    root->hypercube->data[it_x][it_y][it_u][it_v] = bitstream[i];
+                    i++;
+                }
+            }
+        }
     }
     for (int j = 0; j < HEXADECA; ++j) {
         root->child.push_back(nullptr);
@@ -18,9 +26,11 @@ Node* Tree::CreateRoot(int *bitstream, uint nsamples) {
     return root;
 }
 
-Node* Tree::NewNode(vector<int> bitstream) {
-    Node *node = new Node();
-    node->bitstream = bitstream;
+
+
+Node* Tree::NewNode(Hypercube *block) {
+    Node *node = new Node(block->dim.x, block->dim.y, block->dim.u, block->dim.v);
+    node->hypercube =  block;
     for (int i = 0; i < HEXADECA; ++i) {
         node->child.push_back(nullptr);
     }
@@ -29,14 +39,14 @@ Node* Tree::NewNode(vector<int> bitstream) {
 
 void Tree::CreateTree(Node* root, ofstream& file, string light_filed, uint hypercubo, uint channel, uint level, const Point4D &pos, const Point4D &hypercubo_pos) {
     if (IS_ORIGINAL)
-        this->size = root->bitstream.size();
+        this->size = 15;
     else if (IS_4X4X4X4)
-        this->size = 4*4*4*4;
+        this->size = 4;
     else if (IS_8X8X8X8)
-        this->size = 8*8*8*8;
+        this->size = 8;
     else return;
 
-    if (root->bitstream.size() <= this->size) {
+    if (root->hypercube->dim.x <= this->size || root->hypercube->dim.y <= this->size || root->hypercube->dim.u <= this->size || root->hypercube->dim.v <= this->size) {
         root->CountValues();
 
         if (IS_ORIGINAL){
@@ -46,10 +56,10 @@ void Tree::CreateTree(Node* root, ofstream& file, string light_filed, uint hyper
             this->prox_pos.v = (float)pos.v;
         }
         else if (IS_4X4X4X4){
-            this->prox_pos.x = this->x + (16 * hypercubo_pos.x);
-            this->prox_pos.y = this->y + (16 * hypercubo_pos.y);
-            this->prox_pos.u = this->u + (16 * hypercubo_pos.u);
-            this->prox_pos.v = this->v + (16 * hypercubo_pos.v);
+            this->prox_pos.x = (float)pos.x;
+            this->prox_pos.y = (float)pos.y;
+            this->prox_pos.u = (float)pos.u;
+            this->prox_pos.v = (float)pos.v;
         }
         else if (IS_8X8X8X8){ //TODO
             this->prox_pos.x = (float)pos.x;
@@ -57,89 +67,153 @@ void Tree::CreateTree(Node* root, ofstream& file, string light_filed, uint hyper
             this->prox_pos.u = (float)pos.u;
             this->prox_pos.v = (float)pos.v;
         }
-        else if (IS_16x16x16x16){ //TODO
-            this->prox_pos.x = (float)pos.x;
-            this->prox_pos.y = (float)pos.y;
-            this->prox_pos.u = (float)pos.u;
-            this->prox_pos.v = (float)pos.v;
-        }
         root->SetFileValues(file, light_filed, hypercubo, channel, level, prox_pos);
 
-        if (IS_4X4X4X4) {
-            this->x++;
-            if (this->x == 16) {
-                this->y++;
-                this->x = 0;
-            }
-            if (this->y == 16)
-                this->y = 0;
-        }
         return;
     }
     else{
-        int n = ceil((double)root->bitstream.size()/HEXADECA);
-        vector<int> vec[HEXADECA];
-        for (int i = 0; i < HEXADECA; ++i) {
-            auto start_itr = next(root->bitstream.cbegin(), i*n);
-            auto end_itr = next(root->bitstream.cbegin(), i*n + n);
-            vec[i].resize(n);
+        int middle_x = ceil((double)root->hypercube->dim.x/2);
+        int middle_y = ceil((double)root->hypercube->dim.y/2);
+        int middle_u = ceil((double)root->hypercube->dim.u/2);
+        int middle_v = ceil((double)root->hypercube->dim.v/2);
 
-            if(i*n + n > root->bitstream.size()){
-                end_itr = root->bitstream.cend();
-                vec[i].resize(root->bitstream.size() - i*n);
-            }
-
-            copy(start_itr, end_itr, vec[i].begin());
-        }
+        Hypercube *block;
         uint next_level = level + 1;
-        for (int j = 0; j < root->child.size(); ++j) {
-            root->child[j] = NewNode(vec[j]);
-            this->CreateTree(root->child[j], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
-        }
-    }
+
+        // Block partition 0
+        block = new Hypercube(middle_x, middle_y, middle_u, middle_v);
+        get_block_partition( block->data, root->hypercube->data, 0, middle_x, 0, middle_y, 0, middle_u, 0, middle_v);
+        root->child[0] = NewNode(block);
+        this->CreateTree(root->child[0], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 1
+        block = new Hypercube(root->hypercube->dim.x - middle_x, middle_y, middle_u, middle_v);
+        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, 0, middle_y, 0, middle_u, 0, middle_v);
+        root->child[1] = NewNode(block);
+        this->CreateTree(root->child[1], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 2
+        block = new Hypercube(middle_x, root->hypercube->dim.y - middle_y, middle_u, middle_v);
+        get_block_partition( block->data, root->hypercube->data, 0, middle_x, middle_y, root->hypercube->dim.y, 0, middle_u, 0, middle_v);
+        root->child[2] = NewNode(block);
+        this->CreateTree(root->child[2], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 3
+        block = new Hypercube(root->hypercube->dim.x - middle_x, root->hypercube->dim.y - middle_y, middle_u, middle_v);
+        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, middle_y, root->hypercube->dim.y, 0, middle_u, 0, middle_v);
+        root->child[3] = NewNode(block);
+        this->CreateTree(root->child[3], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 4
+        block = new Hypercube(middle_x, middle_y, root->hypercube->dim.u - middle_u, middle_v);
+        get_block_partition( block->data, root->hypercube->data, 0, middle_x, 0, middle_y, middle_u, root->hypercube->dim.u, 0, middle_v);
+        root->child[4] = NewNode(block);
+        this->CreateTree(root->child[4], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 5
+        block = new Hypercube(root->hypercube->dim.x - middle_x, middle_y, root->hypercube->dim.u - middle_u, middle_v);
+        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, 0, middle_y, middle_u, root->hypercube->dim.u, 0, middle_v);
+        root->child[5] = NewNode(block);
+        this->CreateTree(root->child[5], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 6
+        block = new Hypercube(middle_x, root->hypercube->dim.y - middle_y, root->hypercube->dim.u - middle_u, middle_v);
+        get_block_partition( block->data, root->hypercube->data, 0, middle_x, middle_y, root->hypercube->dim.y, middle_u, root->hypercube->dim.u, 0, middle_v);
+        root->child[6] = NewNode(block);
+        this->CreateTree(root->child[6], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 7
+        block = new Hypercube(root->hypercube->dim.x - middle_x, root->hypercube->dim.y - middle_y, root->hypercube->dim.u - middle_u, middle_v);
+        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, middle_y, root->hypercube->dim.y, middle_u, root->hypercube->dim.u, 0, middle_v);
+        root->child[7] = NewNode(block);
+        this->CreateTree(root->child[7], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 8
+        block = new Hypercube(middle_x, middle_y, middle_u, root->hypercube->dim.v - middle_v);
+        get_block_partition( block->data, root->hypercube->data, 0, middle_x, 0, middle_y, 0, middle_u, middle_v, root->hypercube->dim.v);
+        root->child[8] = NewNode(block);
+        this->CreateTree(root->child[8], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 9
+        block = new Hypercube(root->hypercube->dim.x - middle_x, middle_y, middle_u, root->hypercube->dim.v - middle_v);
+        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, 0, middle_y, 0, middle_u, middle_v, root->hypercube->dim.v);
+        root->child[9] = NewNode(block);
+        this->CreateTree(root->child[9], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 10
+        block = new Hypercube(middle_x, root->hypercube->dim.y - middle_y, middle_u, root->hypercube->dim.v - middle_v);
+        get_block_partition( block->data, root->hypercube->data, 0, middle_x, middle_y, root->hypercube->dim.y, 0, middle_u, middle_v, root->hypercube->dim.v);
+        root->child[10] = NewNode(block);
+        this->CreateTree(root->child[10], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 11
+        block = new Hypercube(root->hypercube->dim.x - middle_x, root->hypercube->dim.y - middle_y, middle_u, root->hypercube->dim.v - middle_v);
+        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, middle_y, root->hypercube->dim.y, 0, middle_u, middle_v, root->hypercube->dim.v);
+        root->child[11] = NewNode(block);
+        this->CreateTree(root->child[11], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 12
+        block = new Hypercube(middle_x, middle_y, root->hypercube->dim.u - middle_u, root->hypercube->dim.v - middle_v);
+        get_block_partition( block->data, root->hypercube->data, 0, middle_x, 0, middle_y, middle_u, root->hypercube->dim.u, middle_v, root->hypercube->dim.v);
+        root->child[12] = NewNode(block);
+        this->CreateTree(root->child[12], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 13
+        block = new Hypercube(root->hypercube->dim.x - middle_x, middle_y, root->hypercube->dim.u - middle_u, root->hypercube->dim.v - middle_v);
+        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, 0, middle_y, middle_u, root->hypercube->dim.u, middle_v, root->hypercube->dim.v);
+        root->child[13] = NewNode(block);
+        this->CreateTree(root->child[13], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 14
+        block = new Hypercube(middle_x, root->hypercube->dim.y - middle_y, root->hypercube->dim.u - middle_u, root->hypercube->dim.v - middle_v);
+        get_block_partition( block->data, root->hypercube->data, 0, middle_x, middle_y, root->hypercube->dim.y, middle_u, root->hypercube->dim.u, middle_v, root->hypercube->dim.v);
+        root->child[14] = NewNode(block);
+        this->CreateTree(root->child[14], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+
+        // Block partition 15
+        block = new Hypercube(root->hypercube->dim.x - middle_x, root->hypercube->dim.y - middle_y, root->hypercube->dim.u - middle_u, root->hypercube->dim.v - middle_v);
+        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, middle_y, root->hypercube->dim.y, middle_u, root->hypercube->dim.u, middle_v, root->hypercube->dim.v);
+        root->child[15] = NewNode(block);
+        this->CreateTree(root->child[15], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos);
+      }
 }
 
-void Tree::DeleteTree(Node *root) {
-    if (root != nullptr){
-        for (int i = 0; i < root->child.size(); ++i) {
-            this->DeleteTree(root->child[i]);
-            free(root->child[i]);
-        }
-    }
-}
-
-/*void Tree::PrintLevelOrder() {
-    if (this == NULL) return;
-    queue<Tree *> q;
-    q.push(this);
-    while (!q.empty()){
-        uint nodeCount = q.size();
-        while (nodeCount > 0){
-            Tree *node = q.front();
-            node->PrintValues();
-            q.pop();
-            for (int i = 0; i < this->child.size(); ++i) {
-                if (this->child[i] != NULL)
-                    q.push(this->child[i]);
+void Tree::get_block_partition(int ****block, int ****data, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v) {
+    for (int block_it_v = start_v, pos_v = 0; block_it_v < end_v; ++block_it_v, ++pos_v) {
+        for (int block_it_u = start_u, pos_u = 0; block_it_u < end_u; ++block_it_u, ++pos_u) {
+            for (int block_it_y = start_y, pos_y = 0; block_it_y < end_y; ++block_it_y, ++pos_y) {
+                for (int block_it_x = start_x, pos_x = 0; block_it_x < end_x; ++block_it_x, ++pos_x) {
+                    block[pos_x][pos_y][pos_u][pos_v] = data[block_it_x][block_it_y][block_it_u][block_it_v]; //SEGMENTATION HERE
+                }
             }
-            nodeCount--;
         }
-        cout << endl;
     }
 }
 
-void Tree::PrintValues() {
-    cout << "Bitstaream_Size: " << this->bitstream.size() << endl;
-    cout << "N_Zero: " << this->n_zero << endl;
-    cout << "N_One: " << this->n_one << endl;
-    cout << "N_Two: " << this->n_two << endl;
-    cout << "N_Greater_Than_Two: " << this->n_greater_than_two << endl;
-    cout << "Total_Values: " << this->n_zero + this->n_one + this->n_two + this->n_greater_than_two << "\n" << endl;
+void Tree::_deleteTree(Node* node)
+{
+    if (node == nullptr) return;
+
+    for (int i = 0; i < node->hypercube->dim.x; ++i) {
+        for (int k = 0; k < node->hypercube->dim.y; ++k) {
+            for (int l = 0; l < node->hypercube->dim.u; ++l) {
+                delete [] node->hypercube->data[i][k][l];
+            }
+            delete [] node->hypercube->data[i][k];
+        }
+        delete [] node->hypercube->data[i];
+    }
+    delete [] node->hypercube->data;
+    
+    for (int i = 0; i < node->child.size(); ++i) {
+        _deleteTree(node->child[i]);
+    }
+    delete node;
 }
 
-void Tree::Print(vector<int> const &input){
-    for (int i = 0; i < input.size(); i++) {
-        cout << input.at(i) << ' ';
-    }
-    cout << endl;
-}*/
+/* Deletes a tree and sets the root as NULL */
+void Tree::DeleteTree(Node** node_ref)
+{
+    _deleteTree(*node_ref);
+    *node_ref = nullptr;
+}

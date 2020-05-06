@@ -72,10 +72,6 @@ iostream
 vector
 -
 
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.cpp
-LightField.h
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.h
-
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.h
 Typedef.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
@@ -98,12 +94,6 @@ zconf.h
 iostream
 -
 iomanip
--
-
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.cpp
-Quantization.h
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.h
-cmath
 -
 
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.h
@@ -144,12 +134,6 @@ chrono
 iostream
 -
 
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.cpp
-cassert
--
-Transform.h
-/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.h
-
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Transform.h
 zconf.h
 -
@@ -159,6 +143,10 @@ Point4D.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
 cmath
 -
+
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.cpp
+Tree.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
 
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
 vector
