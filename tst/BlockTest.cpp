@@ -29,20 +29,30 @@ TEST(BlockTests, reshape_block) {
   int array[100];
   Block<int> b(array, 100);
 
-  // Initialize array
-  for (int i = 0; i < 100; i++) {
-    array[i] = i;
-  }
+  auto shape = b.shape();
+  ASSERT_EQ(shape[0], 100);
+  ASSERT_EQ(shape.size(), 1);
 
   b.reshape({10, 10});
+  auto new_shape = b.shape();
 
-  bool same_values = true;
+  ASSERT_EQ(new_shape[0], 10);
+  ASSERT_EQ(new_shape[1], 10);
+  ASSERT_EQ(new_shape.size(), 2);
+}
+
+TEST(BlockTests, index_multidimensional_block) {
+  int array[100];
+  Block<int> b(array, 100);
+
+  // Initialize array
+  for (int i = 0; i < 100; i++)
+    array[i] = i;
+
+  b.reshape({10, 10});
   for (int i = 0; i < 10; i++)
     for (int j = 0; j < 10; j++)
-      if (b(i, j) != array[i * 10 + j])
-        same_values = false;
-
-  ASSERT_TRUE(same_values);
+      ASSERT_EQ(b(i, j), array[i * 10 + j]);
 }
 
 TEST(BlockTests, reshape_invalid_size_throws_exception) {
@@ -108,9 +118,12 @@ TEST(BlockTests, create_view_of_view) {
   Block<int> b(array, 8 * 8 * 8);
 
   b.reshape({8, 8, 8});
-  x0 = 3;  x1 = 6;
-  y0 = 2;  y1 = 7;
-  z0 = 1;  z1 = 5;
+  x0 = 3;
+  x1 = 6;
+  y0 = 2;
+  y1 = 7;
+  z0 = 1;
+  z1 = 5;
   dy = y1 - y0;
   dx = x1 - x0;
   dz = z1 - z0;
@@ -131,4 +144,48 @@ TEST(BlockTests, create_view_of_view) {
     for (size_t y = 0; y < dy; y++)
       for (size_t z = 0; z < dz; z++)
         ASSERT_EQ(v3(x, y, z), v(x, y, z));
+}
+
+TEST(BlockTest, flat_size_is_constant_regardless_of_reshaping) {
+  int array[120];
+  Block<int> b(array, 120);
+
+  b.reshape({3, 40});
+  ASSERT_EQ(b.flat_size(), 120);
+  b.reshape({40, 3});
+  ASSERT_EQ(b.flat_size(), 120);
+  b.reshape({5, 4, 6});
+  ASSERT_EQ(b.flat_size(), 120);
+  b.reshape({120});
+  ASSERT_EQ(b.flat_size(), 120);
+  b.reshape({1, 1, 120});
+  ASSERT_EQ(b.flat_size(), 120);
+}
+
+TEST(BlockTest, forward_iterator_is_consistent)
+{
+  int array[120];
+  Block<int> b(array, 120);
+
+  b.reshape({2,5,3,4});
+  int i = 0;
+  for (auto it = b.begin(); it != b.end(); i++, it++) {
+    *it = i * i;
+    ASSERT_EQ(array[i], i*i);
+  }
+  ASSERT_EQ(i, 120);
+}
+
+TEST(BlockTest, reverse_iterator_is_consistent)
+{
+  int array[120];
+  Block<int> b(array, 120);
+
+  b.reshape({2,5,3,4});
+  int i = 119;
+  for (auto it = b.rbegin(); it != b.rend(); i--, it++) {
+    *it = i * i;
+    ASSERT_EQ(array[i], i*i);
+  }
+  ASSERT_EQ(i, -1);
 }

@@ -4,6 +4,7 @@
 #include <cstdarg>
 #include <initializer_list>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -67,15 +68,19 @@ public:
    * @brief Slicer across dimensions
    */
   struct Range {
+    static const int OPEN_INTERVAL;
+    static const int NOT_DEFINED;
     int begin;
     int end;
-    /**
-     * @brief Construct a new Range object
-     *
-     * @param begin start position
-     * @param end end position
-     */
-    Range(int begin = -1, int end = -1) : begin(begin), end(end) {}
+    int step;
+    int scalar;
+
+    Range(const int scalar = NOT_DEFINED)
+        : begin(NOT_DEFINED), end(NOT_DEFINED), step(NOT_DEFINED),
+          scalar(scalar) {}
+    explicit Range(int begin, int end = NOT_DEFINED, int step = NOT_DEFINED)
+        : begin(begin), end(end), step(step), scalar(NOT_DEFINED) {}
+
     /**
      * @brief Friendly representation of a Range.
      *
@@ -95,28 +100,50 @@ public:
      */
     std::string str() const {
       std::stringstream s;
-
-      s << "Range(begin=" << (begin == -1 ?: begin)
-        << (begin == -1 ? "None" : "") << ", end=" << (end == -1 ?: end)
-        << (end == -1 ? "None" : "") << ")";
+      s << "Range(";
+      if (scalar != NOT_DEFINED) {
+        s << "scalar=" << scalar;
+      } else {
+        s << "begin=";
+        if (begin != NOT_DEFINED)
+          s << begin << ", end=";
+        else
+          s << "None, end=";
+        if (end != NOT_DEFINED)
+          s << end << ", step=";
+        else
+          s << "None, end=";
+        if (step != NOT_DEFINED)
+          s << step << "";
+        else
+          s << "None";
+      }
+      s << ")";
       return s.str();
     }
   };
-  // /**
-  //  * @brief Iterator over all elements of a block.
-  //  *
-  //  */
-  // template <class IteratorType> class Iterator {
-  //   Block &b;
-  //   size_t index = 0;
-  //   bool reverse_order = false;
 
-  // public:
-  //   Iterator(Block &b) { this->b = b.flat_view(); }
-  //   T &operator*() const { IteratorType::return b(index); }
-  //   T &operator++() { return b(++index); }
-  //   T &operator++(int) { return b(index++); }
-  // };
+  /**
+   * @brief Iterator over all elements of a block.
+   *
+   */
+  class Iterator {
+    Block b;
+    int index;
+    bool reverse_order;
+
+  public:
+    Iterator(Block& b, int index, bool reverse_order) {
+      this->b = b.flat_view();
+      this->reverse_order = reverse_order;
+      this->index = index;
+    }
+    T &operator*() { return b(index); }
+    T &operator++() { return b(reverse_order ? --index : ++index); }
+    T &operator++(int) { return b(reverse_order ? index-- : index++); }
+    bool operator==(const Iterator &other) { return index == other.index; }
+    bool operator!=(const Iterator &other) { return !(*this == other); }
+  };
 
 private:
   T *array;
@@ -130,8 +157,9 @@ private:
     std::vector index({_index...});
     for (int i = 0; i < rank; i++)
       if (index[rank - 1 - i] >= size[i]) {
-        logger->error("_find_index: invalid position. index={{{}}}, shape={{{}}}",
-                      join(", ", index), join(", ", size));
+        logger->error(
+            "_find_index: invalid position. index={{{}}}, shape={{{}}}",
+            join(", ", index), join(", ", size));
         throw std::out_of_range("Tried to access invalid position.");
       }
 
@@ -174,6 +202,7 @@ private:
   }
 
 public:
+  Block() = default;
   /**
    * @brief Construct a new Block object
    *
@@ -216,6 +245,14 @@ public:
     recalculate_stride();
     recalculate_ranges();
   }
+  /** Iterator to beginner of block. */
+  auto begin() { return Iterator(*this, 0, false); }
+  /** Reverse Iterator to end of block. */
+  auto rbegin() { return Iterator(*this, flat_size() - 1, true); }
+  /** Iterator to end of block. */
+  auto end() { return Iterator(*this, flat_size(), false); }
+  /** Reverse Iterator to beginner of block. */
+  auto rend() { return Iterator(*this, -1, true); }
 
   /**
    * @brief Index elements within inner array.
@@ -297,6 +334,16 @@ public:
     clone.reshape({this->stride[rank]});
     return clone;
   }
+
+  const auto &shape() { return size; }
+
+  const size_t flat_size() { return stride[rank]; }
 };
+
+template <typename T>
+const int Block<T>::Range::OPEN_INTERVAL = std::numeric_limits<int>::max();
+
+template <typename T>
+const int Block<T>::Range::NOT_DEFINED = std::numeric_limits<int>::min();
 
 #endif // __BLOCK_H__
