@@ -48,10 +48,10 @@ RM = /home/ubuntu/Downloads/CLion-2019.3.4/clion-2019.3.4/bin/cmake/linux/bin/cm
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ubuntu/Documentos/Git/LF_Codec
+CMAKE_SOURCE_DIR = /home/ubuntu/Documentos/Git/Light-Field-Codec
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug
+CMAKE_BINARY_DIR = /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug/CMakeFiles /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/LF_Codec/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -366,6 +366,33 @@ src/Point4D.cpp.s:
 	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Point4D.cpp.s
 .PHONY : src/Point4D.cpp.s
 
+src/Prediction.o: src/Prediction.cpp.o
+
+.PHONY : src/Prediction.o
+
+# target to build an object file
+src/Prediction.cpp.o:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Prediction.cpp.o
+.PHONY : src/Prediction.cpp.o
+
+src/Prediction.i: src/Prediction.cpp.i
+
+.PHONY : src/Prediction.i
+
+# target to preprocess a source file
+src/Prediction.cpp.i:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Prediction.cpp.i
+.PHONY : src/Prediction.cpp.i
+
+src/Prediction.s: src/Prediction.cpp.s
+
+.PHONY : src/Prediction.s
+
+# target to generate assembly for a file
+src/Prediction.cpp.s:
+	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Prediction.cpp.s
+.PHONY : src/Prediction.cpp.s
+
 src/Quantization.o: src/Quantization.cpp.o
 
 .PHONY : src/Quantization.o
@@ -537,6 +564,9 @@ help:
 	@echo "... src/Point4D.o"
 	@echo "... src/Point4D.i"
 	@echo "... src/Point4D.s"
+	@echo "... src/Prediction.o"
+	@echo "... src/Prediction.i"
+	@echo "... src/Prediction.s"
 	@echo "... src/Quantization.o"
 	@echo "... src/Quantization.i"
 	@echo "... src/Quantization.s"
