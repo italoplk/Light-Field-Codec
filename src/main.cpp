@@ -10,6 +10,7 @@
 #include "EncBitstreamWriter.h"
 #include "Typedef.h"
 #include "Time.h"
+#include "Prediction.h"
 #include "Tree.h"
 
 using namespace std;
@@ -52,11 +53,14 @@ int main(int argc, char **argv) {
             ti4D[encoderParameters.dim_block.getNSamples()],
             qf4D[encoderParameters.dim_block.getNSamples()],
             tf4D[encoderParameters.dim_block.getNSamples()],
-            qi4D[encoderParameters.dim_block.getNSamples()];
+            qi4D[encoderParameters.dim_block.getNSamples()],
+            pf4D[encoderParameters.dim_block.getNSamples()],
+            pi4D[encoderParameters.dim_block.getNSamples()];
 
     int temp_lre[encoderParameters.dim_block.getNSamples()];
     uint bits_per_4D_Block = 0;
 
+    Prediction predictor;
     Transform transform(encoderParameters.dim_block);
     Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
                               encoderParameters.quant_weight_100);
@@ -213,8 +217,10 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         t.tic();
 #endif
+                        predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
+                        transform.dct_4d(pf4D, tf4D, dimBlock, encoderParameters.dim_block);
 
-                        transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
+                        //transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
 
 #if STATISTICS_TIME
                         t.toc();
@@ -337,6 +343,7 @@ int main(int argc, char **argv) {
 #endif
 
                         transform.idct_4d(qi4D, ti4D, dimBlock, encoderParameters.dim_block);
+                        predictor.rec(ti4D, pi4D, dimBlock);
 
 #if STATISTICS_TIME
                         ti.toc();
@@ -350,8 +357,8 @@ int main(int argc, char **argv) {
                         rebuild.tic();
 #endif
 
-                        lf.rebuild(ti4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf,
-                                   it_channel);
+                        //lf.rebuild(ti4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
+                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
 
 #if STATISTICS_TIME
                         rebuild.toc();

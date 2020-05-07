@@ -36,4 +36,6 @@ add_executable(Light_Field_Codec
         src/Transform.h
         src/Tree.cpp
         src/Tree.h
-        src/Typedef.h)
+        src/Typedef.h
+        src/Prediction.cpp
+        src/Prediction.h)
