@@ -8,6 +8,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/Light_Field_Codec.dir/src/LRE.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/LightField.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/Point4D.cpp.o"
+  "CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/Quantization.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/Statistics.cpp.o"
   "CMakeFiles/Light_Field_Codec.dir/src/Time.cpp.o"

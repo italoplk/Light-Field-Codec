@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     int temp_lre[encoderParameters.dim_block.getNSamples()];
     uint bits_per_4D_Block = 0;
 
-    Prediction predictor;
+    //Prediction predictor;
     Transform transform(encoderParameters.dim_block);
     Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
                               encoderParameters.quant_weight_100);
@@ -217,10 +217,10 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         t.tic();
 #endif
-                        predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
-                        transform.dct_4d(pf4D, tf4D, dimBlock, encoderParameters.dim_block);
+                        /*predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
+                        transform.dct_4d(pf4D, tf4D, dimBlock, encoderParameters.dim_block);*/
 
-                        //transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
+                        transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
 
 #if STATISTICS_TIME
                         t.toc();
@@ -269,11 +269,12 @@ int main(int argc, char **argv) {
 
 #if HEXADECA_TREE
                         root = tree.CreateRoot(temp_lre, encoderParameters.dim_block);
-                        tree.CreateTree(root, file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0, it_pos, hypercubo_pos);
+                        tree.CreateTree(root, file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0, it_pos, hypercubo_pos, {0,0,0,0});
 
                         tree.DeleteTree(&root);
 
-                        exit(1);
+                        /*if (hypercubo == 2)
+                            exit(1);*/
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
@@ -343,7 +344,7 @@ int main(int argc, char **argv) {
 #endif
 
                         transform.idct_4d(qi4D, ti4D, dimBlock, encoderParameters.dim_block);
-                        predictor.rec(ti4D, pi4D, dimBlock);
+                        //predictor.rec(ti4D, pi4D, dimBlock);
 
 #if STATISTICS_TIME
                         ti.toc();

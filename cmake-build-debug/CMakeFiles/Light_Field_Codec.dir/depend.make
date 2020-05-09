@@ -44,6 +44,12 @@ CMakeFiles/Light_Field_Codec.dir/src/LightField.cpp.o: ../src/clip.h
 CMakeFiles/Light_Field_Codec.dir/src/Point4D.cpp.o: ../src/Point4D.cpp
 CMakeFiles/Light_Field_Codec.dir/src/Point4D.cpp.o: ../src/Point4D.h
 
+CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o: ../src/Point4D.h
+CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o: ../src/Prediction.cpp
+CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o: ../src/Prediction.h
+CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o: ../src/Typedef.h
+CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o: ../src/clip.h
+
 CMakeFiles/Light_Field_Codec.dir/src/Quantization.cpp.o: ../src/Point4D.h
 CMakeFiles/Light_Field_Codec.dir/src/Quantization.cpp.o: ../src/Quantization.cpp
 CMakeFiles/Light_Field_Codec.dir/src/Quantization.cpp.o: ../src/Quantization.h
@@ -76,6 +82,7 @@ CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/EncoderParameters.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/LRE.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/LightField.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/Point4D.h
+CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/Prediction.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/Quantization.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/Statistics.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/Time.h

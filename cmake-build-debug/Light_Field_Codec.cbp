@@ -140,6 +140,12 @@
 		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h">
 			<Option target="Light_Field_Codec"/>
 		</Unit>
+		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Prediction.cpp">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
+		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Prediction.h">
+			<Option target="Light_Field_Codec"/>
+		</Unit>
 		<Unit filename="/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.cpp">
 			<Option target="Light_Field_Codec"/>
 		</Unit>

@@ -119,7 +119,7 @@ public:
     Tree();
 
     Node* CreateRoot(int *bitstream, const Point4D &dim_block);
-    void CreateTree(Node * root,ofstream& file, string light_field, uint hypercubo, uint channel, uint level, const Point4D &pos, const Point4D &hypercubo_pos);
+    void CreateTree(Node * root,ofstream& file, string light_field, uint hypercubo, uint channel, uint level, const Point4D &pos, const Point4D &hypercubo_pos, Point4D middle_before);
     void DeleteTree(Node** node_ref);
 
     ~Tree();
@@ -128,8 +128,7 @@ private:
     Node* NewNode(Hypercube *block);
     void get_block_partition(int ****block, int ****data, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v);
     void _deleteTree(Node* node);
-    Ponto4D prox_pos;
-    uint x, y, u, v;
+    Ponto4D prox_pos = {0,0,0,0};
     uint size = 0;
 };
 

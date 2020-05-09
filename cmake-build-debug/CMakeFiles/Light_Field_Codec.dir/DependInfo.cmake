@@ -13,6 +13,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.cpp" "/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/LRE.cpp.o"
   "/home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.cpp" "/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/LightField.cpp.o"
   "/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.cpp" "/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/Point4D.cpp.o"
+  "/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Prediction.cpp" "/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o"
   "/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.cpp" "/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/Quantization.cpp.o"
   "/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Statistics.cpp" "/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/Statistics.cpp.o"
   "/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.cpp" "/home/ubuntu/Documentos/Git/Light-Field-Codec/cmake-build-debug/CMakeFiles/Light_Field_Codec.dir/src/Time.cpp.o"

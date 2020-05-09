@@ -96,6 +96,18 @@ iostream
 iomanip
 -
 
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Prediction.h
+Typedef.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
+clip.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/clip.h
+Point4D.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
+string
+-
+cstring
+-
+
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.h
 cmath
 -
@@ -191,6 +203,8 @@ Typedef.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 Time.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.h
+Prediction.h
+/home/ubuntu/Documentos/Git/Light-Field-Codec/src/Prediction.h
 Tree.h
 /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
 

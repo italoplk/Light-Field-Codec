@@ -372,7 +372,7 @@ src/Prediction.o: src/Prediction.cpp.o
 
 # target to build an object file
 src/Prediction.cpp.o:
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Prediction.cpp.o
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o
 .PHONY : src/Prediction.cpp.o
 
 src/Prediction.i: src/Prediction.cpp.i
@@ -381,7 +381,7 @@ src/Prediction.i: src/Prediction.cpp.i
 
 # target to preprocess a source file
 src/Prediction.cpp.i:
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Prediction.cpp.i
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.i
 .PHONY : src/Prediction.cpp.i
 
 src/Prediction.s: src/Prediction.cpp.s
@@ -390,7 +390,7 @@ src/Prediction.s: src/Prediction.cpp.s
 
 # target to generate assembly for a file
 src/Prediction.cpp.s:
-	$(MAKE) -f CMakeFiles/LF_Codec.dir/build.make CMakeFiles/LF_Codec.dir/src/Prediction.cpp.s
+	$(MAKE) -f CMakeFiles/Light_Field_Codec.dir/build.make CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.s
 .PHONY : src/Prediction.cpp.s
 
 src/Quantization.o: src/Quantization.cpp.o

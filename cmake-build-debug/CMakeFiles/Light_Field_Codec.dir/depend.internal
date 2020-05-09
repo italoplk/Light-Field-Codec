@@ -44,6 +44,12 @@ CMakeFiles/Light_Field_Codec.dir/src/LightField.cpp.o
 CMakeFiles/Light_Field_Codec.dir/src/Point4D.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.cpp
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
+CMakeFiles/Light_Field_Codec.dir/src/Prediction.cpp.o
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Prediction.cpp
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Prediction.h
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/clip.h
 CMakeFiles/Light_Field_Codec.dir/src/Quantization.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.cpp
@@ -77,6 +83,7 @@ CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/LRE.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/LightField.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Prediction.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Quantization.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Statistics.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Time.h
