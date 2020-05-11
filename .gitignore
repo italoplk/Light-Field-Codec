@@ -8,6 +8,10 @@ bin
 .idea
 JupyterNotebooks
 logs
+latex
+html
+PSNR/Statistics
+*/*.env
 
 # Created by https://www.gitignore.io/api/c,c++,cmake,python,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=c,c++,cmake,python,visualstudiocode
