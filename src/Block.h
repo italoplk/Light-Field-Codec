@@ -123,45 +123,136 @@ public:
     }
   };
 
-  /**
-   * @brief Iterator over all elements of a block.
-   *
-   */
-  class Iterator {
+  class ABCIterator {
+  protected:
     Block b;
     int index;
-    bool reverse_order;
 
   public:
-    Iterator(Block &b, int index, bool reverse_order) {
+    virtual void next() = 0;
+    bool operator==(const ABCIterator &other) {
+      return this->index == other.index;
+    }
+    bool operator!=(const ABCIterator &other) { return !(*this == other); }
+  };
+
+  template <typename BASE> class BaseIteratorMixin : public BASE {
+
+  public:
+    BaseIteratorMixin(Block &b) {
       this->b = b.flat_view();
-      this->reverse_order = reverse_order;
+      this->index = 0;
+    }
+    BaseIteratorMixin(Block &b, int index) {
+      this->b = b.flat_view();
       this->index = index;
     }
-    Iterator(const Iterator& it) {
-      b = it.b;
-      index = it.index;
-      reverse_order = it.reverse_order;
+    BaseIteratorMixin(const BaseIteratorMixin &it) {
+      this->b = it.b;
+      this->index = it.index;
     }
-    Iterator(const Iterator&& it) {
-      b = it.b;
-      index = it.index;
-      reverse_order = it.reverse_order;
+    BaseIteratorMixin(const BaseIteratorMixin &&it) {
+      this->b = it.b;
+      this->index = it.index;
     }
-    T &operator*() { return b(index); }
-    Iterator operator++() {
-      index += reverse_order ? -1 : 1;
-      auto it = Iterator(*this);
+    T &operator*() { return this->b(this->index); }
+    auto operator++() {
+      BASE::next();
+      return *this;
+    }
+    auto operator++(int) {
+      auto it = *this;
+      BASE::next();
       return it;
     }
-    Iterator operator++(int) {
-      auto it = Iterator(*this);
-      index += reverse_order ? -1 : 1;
-      return it;
-    }
-    bool operator==(const Iterator &other) { return index == other.index; }
-    bool operator!=(const Iterator &other) { return !(*this == other); }
   };
+
+  class _ReverseIteratorMixin : public ABCIterator {
+  public:
+    void next() { ABCIterator::index--; }
+  };
+
+  class _ForwardIteratorMixin : public ABCIterator {
+  public:
+    void next() { ABCIterator::index++; }
+  };
+
+  template <size_t... dim> class _ZigZagIteratorMixin : public ABCIterator {
+    std::vector<size_t> curr_index;
+    std::vector<size_t> next_index;
+    std::vector<size_t> stride;
+    std::vector<size_t> dimension;
+
+    void calculate_next() {
+      logger->debug("ZigZag:calculate_next: next_index={{{}}}",
+                    join(", ", next_index));
+      bool is_valid;
+      size_t iter_count = 0;
+      while (next_index != dimension) {
+        if (curr_index != next_index) {
+          is_valid = true;
+          size_t sum_idx = 0;
+          size_t sum_size = 0;
+          for (int i = 0; i < dimension.size(); i++){
+            if (next_index[dimension.size() - 1 - i] >= dimension[i])
+              is_valid = is_valid && false;
+            sum_idx += next_index[dimension.size() - 1 - i];
+            sum_size += dimension[i];
+          }
+          assert(sum_idx <= sum_size);
+          if (is_valid) {
+            logger->debug("ZigZag:calculate_next: valid {{{}}} with {} iterations",
+                          join(", ", next_index), iter_count);
+            return;
+          } else {
+            iter_count++;
+          }
+        }
+        if (next_index[0] > 0) {
+          next_index[1]++;
+          next_index[0]--;
+        } else {
+          int i = 1;
+          for (; i < stride.size() - 1; i++)
+            if (next_index[i] > 0) {
+              next_index[i + 1]++;
+              next_index[0] = next_index[i] - 1;
+              next_index[i] = 0;
+              break;
+            }
+          if (i == stride.size() - 1) {
+            next_index[0] = next_index[i] + 1;
+            next_index[i] = 0;
+          }
+        }
+      }
+    }
+
+  public:
+    _ZigZagIteratorMixin() {
+      dimension = std::vector({dim...});
+      stride.resize(dimension.size());
+      curr_index.resize(dimension.size());
+      next_index.resize(dimension.size());
+      for (int i = 0; i < dimension.size(); i++) {
+        curr_index[i] = 0;
+        next_index[i] = 0;
+        stride[i] = i == 0 ? 1 : stride[i - 1] * dimension[i - 1];
+      }
+    }
+    void next() {
+      calculate_next();
+      int idx = 0;
+      for (int i = 0; i < stride.size(); i++)
+        idx += curr_index[stride.size() - 1 - i] * stride[i];
+      curr_index = next_index;
+      ABCIterator::index = idx;
+    }
+  };
+
+  using ForwardIterator = BaseIteratorMixin<_ForwardIteratorMixin>;
+  using ReverseIterator = BaseIteratorMixin<_ReverseIteratorMixin>;
+  template <size_t... dim>
 
 private:
   T *array;
@@ -263,20 +354,21 @@ public:
     recalculate_stride();
     recalculate_ranges();
   }
-  /** Iterator to beginner of block. */
-  auto begin() { return Iterator(*this, 0, false); }
+  /** Iterator to beginning of block. */
+  auto begin() { return ForwardIterator(*this, 0); }
   /** Reverse Iterator to end of block. */
-  auto rbegin() { return Iterator(*this, flat_size() - 1, true); }
+  auto rbegin() { return ReverseIterator(*this, flat_size() - 1); }
   /** Iterator to end of block. */
-  auto end() { return Iterator(*this, flat_size(), false); }
-  /** Reverse Iterator to beginner of block. */
-  auto rend() { return Iterator(*this, -1, true); }
+  auto end() { return ForwardIterator(*this, flat_size()); }
+  /** Reverse Iterator to beginning of block. */
+  auto rend() { return ReverseIterator(*this, -1); }
+
+ 
 
   /**
    * @brief Index elements within inner array.
    *
-   * @param index0 first index
-   * @param ... other dimensions.
+   * @param index parameter pack representing an index.
    * @return T& Object at indexed position.
    */
   template <typename... Ts> T &operator()(const Ts &... index) {
@@ -305,13 +397,11 @@ public:
     rank = dim.size();
     size.assign(dim.begin(), dim.end());
     recalculate_stride();
-    recalculate_ranges();
+    recalculate_ranges(); // BUG: reshape views
   }
 
-  template <typename ...Ts>
-  void reshape(const Ts& ...dim)
-  {
-    reshape({static_cast<size_t>(dim)...}); 
+  template <typename... Ts> void reshape(const Ts &... dim) {
+    reshape({static_cast<size_t>(dim)...});
   }
 
   /**
@@ -320,14 +410,13 @@ public:
    * @param ranges Range for each dimension
    * @return view object.
    */
-  auto view(std::initializer_list<Range> ranges) {
+  const auto view(std::initializer_list<Range> ranges) {
     if (ranges.size() != rank) {
       logger->error("view: nedded {} ranges. Got {}", rank, ranges.size());
       throw std::invalid_argument(
           "Number of Range instances does not match dimension");
     }
     int i = 0;
-    std::vector<Range> adjusted_ranges;
     for (auto &it : ranges) {
       auto begin = 0;
       auto end = this->ranges[i].end - this->ranges[i].begin;
@@ -359,7 +448,13 @@ public:
     return clone;
   }
 
-  const auto &shape() { return size; }
+  auto shape() {
+    std::vector<size_t> shape;
+    shape.resize(rank);
+    for (int i = 0; i < rank; i++)
+      shape[i] = ranges[i].end - ranges[i].begin;
+    return shape;
+  }
 
   const size_t flat_size() { return stride[rank]; }
 };

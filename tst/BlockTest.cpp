@@ -162,34 +162,31 @@ TEST(BlockTest, flat_size_is_constant_regardless_of_reshaping) {
   ASSERT_EQ(b.flat_size(), 120);
 }
 
-TEST(BlockTest, forward_iterator_is_consistent)
-{
+TEST(BlockTest, forward_iterator_is_consistent) {
   int array[120];
   Block<int> b(array, 120);
 
-  b.reshape({2,5,3,4});
+  b.reshape({2, 5, 3, 4});
   int i = 0;
   for (auto it = b.begin(); it != b.end(); i++, it++) {
     *it = i * i;
-    ASSERT_EQ(array[i], i*i);
+    ASSERT_EQ(array[i], i * i);
   }
   ASSERT_EQ(i, 120);
 }
 
-TEST(BlockTest, reverse_iterator_is_consistent)
-{
+TEST(BlockTest, reverse_iterator_is_consistent) {
   int array[120];
   Block<int> b(array, 120);
 
-  b.reshape({2,5,3,4});
+  b.reshape({2, 5, 3, 4});
   int i = 119;
   for (auto it = b.rbegin(); it != b.rend(); i--, it++) {
     *it = i * i;
-    ASSERT_EQ(array[i], i*i);
+    ASSERT_EQ(array[i], i * i);
   }
   ASSERT_EQ(i, -1);
 }
-
 
 TEST(BlockTests, reshape_block_parameter_pack) {
   int array[100];
@@ -213,3 +210,45 @@ TEST(BlockTests, invalid_reshape_block_parameter_pack) {
 
   ASSERT_THROW(b.reshape(5, 5), std::length_error);
 }
+
+TEST(BlockTests, cant_reshape_view) {
+  using Range = Block<int>::Range;
+  int array[8 * 8 * 8];
+  Block b(array, 8 * 8 * 8);
+
+  b.reshape({8, 8, 8});
+
+  auto v = b.view({Range(0, 4), Range(0, 4), Range(0, 4)});
+  ASSERT_THROW(v.reshape(8, 8), std::logic_error);
+}
+
+TEST(BlockTests, reshape_with_fake_dimension) {
+  using Range = Block<int>::Range;
+  int array[10];
+  Block b(array, 10);
+
+  // Initialize array
+  for (int i = 0; i < 10; i++)
+    array[i] = i + 1;
+
+  b.reshape(1, 10, 1);
+  ASSERT_EQ(array[5], b(0, 5, 0));
+}
+
+TEST(BlockTests, shape_of_view_is_consistent) {
+  using Range = Block<int>::Range;
+  int array[8 * 8 * 8];
+  Block b(array, 8 * 8 * 8);
+
+  b.reshape({8, 8, 8});
+
+  auto v = b.view({Range(0, 4), Range(1, 4), Range(2, 7)});
+  auto shape = v.shape();
+
+  ASSERT_EQ(shape.size(), 3);
+  ASSERT_EQ(shape[0], 4);
+  ASSERT_EQ(shape[1], 3);
+  ASSERT_EQ(shape[2], 5);
+}
+
+

@@ -18,7 +18,7 @@ target_include_directories(${This} PUBLIC
 target_link_libraries(${This} PUBLIC
     gtest_main
     lfcodeclib
-    spdlog::spdlog
+    spdlog
 )
 
 add_test(

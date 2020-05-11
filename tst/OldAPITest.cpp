@@ -5,6 +5,7 @@
 #include "DiscreteCosineTransformContext.h"
 #include "DiscreteCosineTransformContext4D.h"
 #include "TransformContext.h"
+#include "Time.h"
 
 #include "deprecated/Transform.h"
 #include "utils.h"
@@ -198,4 +199,69 @@ TEST(BackwardsCompatibilityWithOldAPI,
 #undef SIZE_V
 #undef FULL_LENGTH
 #undef DELTA_SIZE
+}
+
+TEST(BackwardsCompatibilityWithOldAPI, DISABLED_speed_test) {
+#define SIZE_X 15
+#define SIZE_Y 16
+#define SIZE_U 17
+#define SIZE_V 18
+#define FULL_LENGTH (SIZE_X * SIZE_Y * SIZE_U * SIZE_V)
+
+  TransformContext<float> *ctx;
+  Time new_fwd, new_inv, trx_fwd, old_fwd, old_inv;
+
+  Point4D size(SIZE_X, SIZE_Y, SIZE_U, SIZE_V);
+  Point4D stride(1, SIZE_X, SIZE_X * SIZE_Y, SIZE_X * SIZE_Y * SIZE_U);
+  float input[FULL_LENGTH];
+  float inverse[FULL_LENGTH];
+  float output[FULL_LENGTH];
+
+  // Seed the random number generator
+  std::srand(0);
+
+  // Populate input with random numbers and initialize output arrays.
+  for (int i = 0; i < FULL_LENGTH; i++) {
+    float value = 256 * (std::rand() / (RAND_MAX * 1.0));
+    input[i] = value;
+  }
+
+  old::Transform t(size);
+  ctx = new DiscreteCosineTransformContext4D<float>(size, stride);
+
+  for (int run = 0; run < 1000; run++) {
+
+    // Forward DCT
+    new_fwd.tic();
+    ctx->forward(input, inverse);
+    new_fwd.toc();
+    old_fwd.tic();
+    t.dct_4d(input, inverse, size, size);
+    old_fwd.toc();
+
+    // Inverse DCT
+    new_inv.tic();
+    ctx->inverse(inverse, output);
+    new_inv.toc();
+    old_inv.tic();
+    t.idct_4d(inverse, output, size, size);
+    old_inv.toc();
+  }
+
+  // EXPECT_TRUE(false) << "new_fwd: " << new_fwd.getTotalTime() << "\t"
+  //                    << "old_fwd: " << old_fwd.getTotalTime() << "\t"
+  //                    << "new_inv: " << new_inv.getTotalTime() << "\t"
+  //                    << "old_inv: " << old_inv.getTotalTime();
+
+
+  // Expect new api to be faster than ond api
+  EXPECT_LT(new_fwd.getTotalTime(), old_fwd.getTotalTime());
+  EXPECT_LT(new_inv.getTotalTime(), old_inv.getTotalTime());
+
+  delete ctx;
+  DiscreteCosineTransformContext<float>::flush_coeff();
+#undef SIZE_X
+#undef SIZE_Y
+#undef SIZE_U
+#undef SIZE_V
 }
