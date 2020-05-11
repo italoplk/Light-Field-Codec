@@ -44,9 +44,9 @@ TEST_F(BlockCompareTest, block_with_least_energy_wins)
 
     for (int i = 0; i < 1000; i++) {
         a[i] = b[i] = 1;
-        if (i % 5)
+        if (i % 5 == 0)
             a[i] = 2;   // More multiples of 5 means more 2s
-        if (i % 7)
+        if (i % 7 == 0)
             b[i] = 2;   
     }
 
