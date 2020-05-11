@@ -15,6 +15,7 @@
 #include "DiscreteCosineTransformContext4D.h"
 #include "DiscreteSineTransformContext4D.h"
 #include "TransformContext.h"
+#include "Prediction.h"
 
 using namespace std;
 
@@ -52,7 +53,9 @@ int main(int argc, char **argv) {
       ti4D[encoderParameters.dim_block.getNSamples()],
       qf4D[encoderParameters.dim_block.getNSamples()],
       tf4D[encoderParameters.dim_block.getNSamples()],
-      qi4D[encoderParameters.dim_block.getNSamples()];
+      qi4D[encoderParameters.dim_block.getNSamples()],
+            pf4D[encoderParameters.dim_block.getNSamples()],
+            pi4D[encoderParameters.dim_block.getNSamples()];
 
   int temp_lre[encoderParameters.dim_block.getNSamples()];
   uint bits_per_4D_Block = 0;
@@ -64,6 +67,7 @@ int main(int argc, char **argv) {
   stride.u = stride.y * size.y;
   stride.v = stride.u * size.u;
 
+  Prediction predictor;
   TransformContext<float> *tx =
       create_transform(encoderParameters.transform, size, stride);
   Quantization quantization(encoderParameters.dim_block,
@@ -186,6 +190,7 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
             t.tic();
 #endif
+predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
             auto size_array = dimBlock.to_array();
             tx->forward(orig4D, tf4D, size_array);
 
@@ -290,6 +295,7 @@ int main(int argc, char **argv) {
 #endif
 
             tx->inverse(qi4D, ti4D, size_array);
+            predictor.rec(ti4D, pi4D, dimBlock);
 
 #if STATISTICS_TIME
             ti.toc();
@@ -303,8 +309,8 @@ int main(int argc, char **argv) {
             rebuild.tic();
 #endif
 
-            lf.rebuild(ti4D, it_pos, dimBlock, stride_block,
-                       encoderParameters.dim_block, stride_lf, it_channel);
+                        //lf.rebuild(ti4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
+                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
 
 #if STATISTICS_TIME
             rebuild.toc();

@@ -44,6 +44,8 @@ add_library(${This}lib STATIC
                 src/EncBitstreamVLC.h
                 src/EncBitstreamBuffer.cpp
                 src/EncBitstreamBuffer.h
+                src/Prediction.cpp
+                src/Prediction.h
 
                 # Deprecated Classes
                 src/deprecated/Transform.h
