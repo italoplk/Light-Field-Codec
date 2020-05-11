@@ -252,7 +252,6 @@ public:
 
   using ForwardIterator = BaseIteratorMixin<_ForwardIteratorMixin>;
   using ReverseIterator = BaseIteratorMixin<_ReverseIteratorMixin>;
-  template <size_t... dim>
 
 private:
   T *array;
