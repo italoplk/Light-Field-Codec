@@ -23,7 +23,7 @@ Statistics::Statistics(const std::string &file) {
            "zeros" << sep << "ones" << sep <<
 
            "mean" << sep << "median" << sep << "std" << sep << "variance" << sep <<
-           "energy" << sep << "entropy" << sep << "sse" << sep <<
+           "energy" << sep << "entropy" << sep << "sse" << sep <<  "mse" << sep << "PSNR" << sep <<
 
            "run_count" << sep << "run_max" << sep << "run_mean" << sep << "run_std" << sep << "run_var" << sep <<
 
@@ -62,8 +62,9 @@ void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel) {
            this->v_variance << sep <<
            this->v_energy << sep <<
            this->v_entropy << sep <<
-           this->sse <<
-
+           this->sse << sep <<
+           this->mse << sep << 
+           this->psnr << 
            std::endl;
 }
 
@@ -111,6 +112,8 @@ void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel, std::ve
            this->v_entropy << sep <<
 
            this->sse << sep <<
+           this->mse << sep <<
+           this->psnr << sep <<
 
            lre_result.size() << sep <<
            max_run << sep <<
@@ -209,6 +212,9 @@ void Statistics::compute_sse(float *orig, float *ref, const Point4D &dim_block, 
         it_orig += stride_block.v;
         it_ref += stride_block.v;
     }
+
+    this->mse = this->sse / (double) dim_block.getNSamples();
+    this->psnr = 120 - std::log10(this->mse); // 20 * std::log10(1e6) = 120
 }
 
 float Statistics::entropy_vector(std::vector<int> values) {
