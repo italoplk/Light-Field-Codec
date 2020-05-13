@@ -1,6 +1,8 @@
 #if !defined(__BLOCKCOMPARATOR_H_)
 #define __BLOCKCOMPARATOR_H_
 
+#include <stddef.h>
+
 template <typename T> class BlockComparator {
   const T *ptr;
   const size_t size;
@@ -47,9 +49,23 @@ public:
 
 template <typename T>
 int BlockComparator<T>::compare(const T *lhs, const T *rhs, const size_t size) {
-  // Código aqui.
-  // O tamanho dos arrays é dado pela variavel size.
-  // Podes usar ela para fazer os loops, caso necessário.
+  int acc = 0, i;
+
+  for (i = 0; i < size; i++) {
+    if (lhs[i] < rhs[i]) {
+      acc--;
+    }
+    if (lhs[i] > rhs[i]) {
+      acc++;
+    }
+  }
+
+  if (acc) {
+    if (acc < 0) {
+      return -1;
+    }
+    return 1;
+  }
   return 0;
 }
 
