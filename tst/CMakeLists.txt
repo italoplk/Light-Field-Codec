@@ -9,6 +9,7 @@ set(Sources
     OldAPITest.cpp
     BlockTest.cpp
     BlockCompareTest.cpp
+    TransformProtocolTest.cpp
 )
 
 add_executable(${This} ${Sources})
@@ -20,6 +21,8 @@ target_link_libraries(${This} PUBLIC
     lfcodeclib
     spdlog
 )
+
+target_compile_options(${This} PRIVATE "-O3")
 
 add_test(
     NAME ${This}
