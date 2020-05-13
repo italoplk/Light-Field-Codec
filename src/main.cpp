@@ -14,8 +14,8 @@
 
 #include "DiscreteCosineTransformContext4D.h"
 #include "DiscreteSineTransformContext4D.h"
-#include "TransformContext.h"
 #include "Prediction.h"
+#include "TransformContext.h"
 
 using namespace std;
 
@@ -54,8 +54,8 @@ int main(int argc, char **argv) {
       qf4D[encoderParameters.dim_block.getNSamples()],
       tf4D[encoderParameters.dim_block.getNSamples()],
       qi4D[encoderParameters.dim_block.getNSamples()],
-            pf4D[encoderParameters.dim_block.getNSamples()],
-            pi4D[encoderParameters.dim_block.getNSamples()];
+      pf4D[encoderParameters.dim_block.getNSamples()],
+      pi4D[encoderParameters.dim_block.getNSamples()];
 
   int temp_lre[encoderParameters.dim_block.getNSamples()];
   uint bits_per_4D_Block = 0;
@@ -74,9 +74,8 @@ int main(int argc, char **argv) {
                             encoderParameters.getQp(),
                             encoderParameters.quant_weight_100);
   // TODO: Entropy entropy(...)
-  LRE lre(encoderParameters.dim_block.getNSamples() ==
-          15 * 15 * 15 *
-              15); // todo: fixed block size (15x15x15x15) or (15x15x13x13)
+  LRE lre(encoderParameters.dim_block.getNSamples() == 15 * 15 * 15 * 15);
+  // todo: fixed block size (15x15x15x15) or (15x15x13x13)
 #if DPCM_DC
   DpcmDC dpcmDc[3]{{encoderParameters.dim_LF.x},
                    {encoderParameters.dim_LF.x},
@@ -87,7 +86,8 @@ int main(int argc, char **argv) {
   // encoder.writeHeader();
 
 #if STATISTICS_LOCAL
-
+  Statistics statistics_tf(encoderParameters.getPathOutput() +
+                           "localStatistics_transform.csv");
   Statistics statistics_qf(encoderParameters.getPathOutput() +
                            "localStatistics_quantization.csv");
 #endif
@@ -185,14 +185,14 @@ int main(int argc, char **argv) {
             getBlock.toc();
 #endif
 
-#if TRANSF_QUANT
+#if TRANSF_QUANT  
 
 #if STATISTICS_TIME
             t.tic();
 #endif
-predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
+            predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
             auto size_array = dimBlock.to_array();
-            tx->forward(orig4D, tf4D, size_array);
+            tx->forward(pf4D, tf4D, size_array);
 
 #if STATISTICS_TIME
             t.toc();
@@ -309,8 +309,10 @@ predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
             rebuild.tic();
 #endif
 
-                        //lf.rebuild(ti4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
-                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
+            // lf.rebuild(ti4D, it_pos, dimBlock, stride_block,
+            // encoderParameters.dim_block, stride_lf, it_channel);
+            lf.rebuild(pi4D, it_pos, dimBlock, stride_block,
+                       encoderParameters.dim_block, stride_lf, it_channel);
 
 #if STATISTICS_TIME
             rebuild.toc();
@@ -319,19 +321,24 @@ predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
 #if STATISTICS_LOCAL
 #if TRANSF_QUANT
             // // TODO: move to the correct place (before inverse)
-            // statistics_tf.compute(
-            //     std::vector<float>(tf4D, tf4D + dimBlock.getNSamples()),
-            //     nullptr);
-            // statistics_tf.write(it_pos, dimBlock, it_channel, lre_result,
-            //                     bits_per_4D_Block);
+            statistics_tf.compute(
+                std::vector<float>(tf4D, tf4D + dimBlock.getNSamples()),
+                nullptr);
+            statistics_tf.compute_sse(orig4D, pi4D, dimBlock, stride_block);
 #if QUANTIZATION
-            statistics_qf.compute(
-                std::vector<float>(
-                    qf4D, qf4D + encoderParameters.dim_block.getNSamples()),
-                lre.getScanOrder());
-            statistics_qf.compute_sse(orig4D, qi4D, dimBlock, stride_block);
-            statistics_qf.write(it_pos, dimBlock, it_channel, lre_result,
+            statistics_tf.write(it_pos, dimBlock, it_channel, lre_result,
                                 bits_per_4D_Block);
+#else
+            statistics_tf.write(it_pos, dimBlock, it_channel);
+#endif
+#if QUANTIZATION
+            // statistics_qf.compute(
+            //     std::vector<float>(
+            //         qf4D, qf4D + encoderParameters.dim_block.getNSamples()),
+            //     lre.getScanOrder());
+            // statistics_qf.compute_sse(orig4D, qi4D, dimBlock, stride_block);
+            // statistics_qf.write(it_pos, dimBlock, it_channel, lre_result,
+            //                     bits_per_4D_Block);
 #endif // QUANTIZATION
 #endif // TRANSF_QUANT
 #endif // STATISTICS_LOCAL
