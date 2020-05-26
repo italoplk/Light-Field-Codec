@@ -92,21 +92,30 @@ int main(int argc, char **argv) {
     file_hexadeca_tree.open(encoderParameters.getPathOutput() + "HexadecaTree.csv");
     file_hexadeca_tree <<
                        "Light_Field" << sep <<
+                       "Level" << sep <<
                        "Hypercubo" << sep <<
+                       "Channel" << sep <<
                        "Pos_x" << sep <<
                        "Pos_y" << sep <<
                        "Pos_u" << sep <<
                        "Pos_v" << sep <<
-                       "Channel" << sep <<
-                       "Level" << sep <<
+
+#if HEXADECA_TREE_TYPE == 0
                        "Hypercubo_Size" << sep <<
                        "N_Zero" << sep <<
                        "N_One" << sep <<
                        "N_Two" << sep <<
                        "N_Greater_Than_Two" << sep <<
-                       "Total_Values" << sep << endl;
-    if (file_hexadeca_tree.is_open()){
-    }
+                       "Max_Value" << sep <<
+                       "Mean_value" << sep <<
+                       "Significant_Value" << sep << endl;
+#elif HEXADECA_TREE_TYPE == 1
+                       "X" << sep <<
+                       "Y" << sep <<
+                       "U" << sep <<
+                       "V" << sep <<
+                       "Valor" << sep << endl;
+#endif
 #endif
 
 #if TRACE_TRANSF
@@ -273,7 +282,7 @@ int main(int argc, char **argv) {
 
                         tree.DeleteTree(&root);
 
-                        /*if (hypercubo == 2)
+                        /*if (hypercubo == 1)
                             exit(1);*/
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());

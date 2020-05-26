@@ -9,12 +9,10 @@
 
 #include "EncoderParameters.h"
 #include "Point4D.h"
+#include "Typedef.h"
 
 #define HEXADECA 16
 #define SEP ","
-#define IS_ORIGINAL false
-#define IS_8X8X8X8 true
-#define IS_4X4X4X4 false
 
 using namespace std;
 
@@ -32,16 +30,13 @@ struct Hypercube{
         this->dim.u = u;
         this->dim.v = v;
 
-        this->data = new int***[x];
+        this->data = (int ****) calloc(x, sizeof(int ***));
         for (int i = 0; i < x; ++i) {
-            this->data[i] = new int**[y];
+            this->data[i] = (int ***) calloc(y, sizeof(int **));
             for (int j = 0; j < y; ++j) {
-                this->data[i][j] = new int*[u];
+                this->data[i][j] = (int **) calloc(u, sizeof(int *));
                 for (int k = 0; k < u; ++k) {
-                    this->data[i][j][k] = new int[v];
-                    for (int l = 0; l < v; ++l) {
-                        this->data[i][j][k][l] = 0;
-                    }
+                    this->data[i][j][k] = (int *) calloc(v, sizeof(int));
                 }
             }
         }
@@ -50,68 +45,97 @@ struct Hypercube{
 
 struct Node{
     Hypercube *hypercube;
-    uint n_zero, n_one, n_two, n_greater_than_two, hypercubo_size, total_values;
+    uint n_zero = 0,
+         n_one = 0,
+         n_two = 0,
+         n_greater_than_two = 0,
+         max_value = 0,
+         mean_value = 0, // Absolut mean
+         hypercubo_size = 0;
+    bool significant_value = false; // false - Haven't significant values | true - Have significant values
+
     vector<Node *> child;
 
     Node(int x, int y, int u, int v){
         this->hypercube = new Hypercube(x,y,u,v);
     }
+
+#if HEXADECA_TREE_TYPE == 0
     void CountValues(){
-        uint zero = 0, one = 0, two = 0, gttow = 0;
+        uint acc = 0, max = 0;
         for (int it_v = 0; it_v < this->hypercube->dim.v ; ++it_v) {
             for (int it_u = 0; it_u < this->hypercube->dim.u; ++it_u) {
                 for (int it_y = 0; it_y < this->hypercube->dim.y; ++it_y) {
                     for (int it_x = 0; it_x < this->hypercube->dim.x; ++it_x) {
-                        if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 0) ++zero;
-                        else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 1) ++one;
-                        else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 2) ++two;
-                        else ++gttow;
+                        acc += abs(this->hypercube->data[it_x][it_y][it_u][it_v]);
+                        if (max < this->hypercube->data[it_x][it_y][it_u][it_v]) {max = this->hypercube->data[it_x][it_y][it_u][it_v];}
+                        if (this->hypercube->data[it_x][it_y][it_u][it_v] != 0) {this->significant_value = true;}
+                        if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 0) {++this->n_zero;}
+                        else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 1) {++this->n_one;}
+                        else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 2) {++this->n_two;}
+                        else {++this->n_greater_than_two;}
                     }
                 }
             }
         }
-        this->SetHypercuboSize(this->hypercube->dim.x * this->hypercube->dim.y * this->hypercube->dim.u * this->hypercube->dim.v);
-        this->SetNZero(zero);
-        this->SetNOne(one);
-        this->SetNTwo(two);
-        this->SetNGreaterThanTwo(gttow);
-        this->SetTotalValues(zero + one + two + gttow);
+        this->hypercubo_size = this->hypercube->dim.x * this->hypercube->dim.y * this->hypercube->dim.u * this->hypercube->dim.v;
+        this->max_value = max;
+        this->mean_value = round((float)acc / this->hypercubo_size);
     }
     void SetFileValues(ofstream& file, string light_field, uint hypercubo, uint channel, uint level, Ponto4D &pos){
+        string order = "";
+        order = (level == 0) ? "Origial" : (level == 1) ? "Order_8" : "Order_4";
         file <<
              light_field << SEP <<
+             order << SEP <<
              hypercubo << SEP <<
+             channel << SEP <<
              pos.x << SEP <<
              pos.y << SEP <<
              pos.u << SEP <<
              pos.v << SEP <<
-             channel << SEP <<
-             level << SEP <<
              this->hypercubo_size << SEP <<
              this->n_zero << SEP <<
              this->n_one << SEP <<
              this->n_two << SEP <<
-             this->n_greater_than_two << SEP <<
-             this->total_values << SEP << endl;
+             this->n_greater_than_two <<  SEP <<
+             this->max_value << SEP <<
+             this->mean_value << SEP <<
+             this->significant_value << SEP << endl;
     }
-    void SetNZero(uint n_zero){
-        this->n_zero = n_zero;
+#else
+    void CountValues(ofstream& file, string light_field, uint hypercubo, uint channel, uint level, Ponto4D &hy_pos){
+        uint zero = 0, one = 0, two = 0, gttow = 0;
+        Ponto4D position = {0,0,0,0};
+        for (int it_v = 0; it_v < this->hypercube->dim.v ; ++it_v) {
+            for (int it_u = 0; it_u < this->hypercube->dim.u; ++it_u) {
+                for (int it_y = 0; it_y < this->hypercube->dim.y; ++it_y) {
+                    for (int it_x = 0; it_x < this->hypercube->dim.x; ++it_x) {
+                        position = {float(it_x), float(it_y), float(it_u), float(it_v)};
+                        this->SetFileValues(file,light_field,hypercubo,channel,level, hy_pos, position ,abs(this->hypercube->data[it_x][it_y][it_u][it_v]));
+                    }
+                }
+            }
+        }
     }
-    void SetNOne(uint n_one){
-        this->n_one = n_one;
+
+    void SetFileValues(ofstream& file, string light_field, uint hypercubo, uint channel, uint level, Ponto4D &pos, Ponto4D &position, int value){
+        file <<
+             light_field << SEP <<
+             order << SEP <<
+             hypercubo << SEP <<
+             channel << SEP <<
+             pos.x << SEP <<
+             pos.y << SEP <<
+             pos.u << SEP <<
+             pos.v << SEP <<
+             position.x << SEP <<
+             position.y << SEP <<
+             position.u << SEP <<
+             position.v << SEP <<
+             value << SEP << endl;
     }
-    void SetNTwo(uint n_two){
-        this->n_two = n_two;
-    }
-    void SetNGreaterThanTwo(uint n_gttwo){
-        this->n_greater_than_two = n_gttwo;
-    }
-    void SetHypercuboSize(uint hypercubo_size){
-        this->hypercubo_size = hypercubo_size;
-    }
-    void SetTotalValues(uint total_values){
-        this->total_values = total_values;
-    }
+#endif
 };
 
 class Tree {
@@ -129,6 +153,7 @@ private:
     void get_block_partition(int ****block, int ****data, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v);
     void _deleteTree(Node* node);
     Ponto4D prox_pos = {0,0,0,0};
+    Ponto4D hy_pos = {0,0,0,0};
     uint size = 0;
 };
 

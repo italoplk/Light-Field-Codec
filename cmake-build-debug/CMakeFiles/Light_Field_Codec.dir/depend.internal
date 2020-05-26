@@ -73,6 +73,7 @@ CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Point4D.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.cpp
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Tree.h
+ /home/ubuntu/Documentos/Git/Light-Field-Codec/src/Typedef.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/CAVLC.h
  /home/ubuntu/Documentos/Git/Light-Field-Codec/src/DpcmDC.h

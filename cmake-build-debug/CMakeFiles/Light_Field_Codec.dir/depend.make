@@ -72,6 +72,7 @@ CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o: ../src/EncoderParameters.h
 CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o: ../src/Point4D.h
 CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o: ../src/Tree.cpp
 CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o: ../src/Tree.h
+CMakeFiles/Light_Field_Codec.dir/src/Tree.cpp.o: ../src/Typedef.h
 
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/CAVLC.h
 CMakeFiles/Light_Field_Codec.dir/src/main.cpp.o: ../src/DpcmDC.h
