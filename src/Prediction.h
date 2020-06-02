@@ -7,6 +7,22 @@
 #include "Point4D.h"
 #include <string>
 #include <cstring>
+//EDUARDO BEGIN
+#include <vector>
+
+
+class ValueBlockPred {
+public:
+    bool available{false};
+
+    std::vector<float> block4D;
+
+    ValueBlockPred() = default;
+
+    ValueBlockPred(float *block4D, bool available, uint blockSize);
+
+};
+//EDUARDO END
 
 class Prediction {
 
@@ -21,6 +37,33 @@ public:
 
     uint num_elementos;
 
+    //EDUARDO BEGIN
+    uint resol_x; //tamanho
+
+    std::vector<ValueBlockPred> pred_references;
+
+    void init_references();
+
+    Prediction(uint resol_x);
+
+    int get_reference(uint x, uint y);
+
+    void update(float *curr, bool available, uint blockSize);
+
+    void get_referenceL(uint x, uint y, float *out, const Point4D &origSize);
+
+    void get_referenceA(uint x, uint y, float *out, const Point4D &origSize);
+
+    void get_referenceLA(uint x, uint y, float *out, const Point4D &origSize);
+
+    void predictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+
+    void angularPredictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+
+    void recRef(const float *input, const Point4D &origSize, float *out );
+
+    //const std::vector<ValueBlockPred> &getPredReferences() const;
+    //EDUARDO END
 
     int mNumberOfHorizontalViews, mNumberOfVerticalViews;
 

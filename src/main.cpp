@@ -47,6 +47,12 @@ int main(int argc, char **argv) {
     uint bits_per_4D_Block = 0;
 
     Prediction predictor;
+    //EDUARDO BEGIN
+    Prediction newPredictor[3]{{(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)},
+                               {(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)},
+                               {(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)}};
+    float ref4D[encoderParameters.dim_block.getNSamples()];
+    //EDUARDO END
     Transform transform(encoderParameters.dim_block);
     Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
                               encoderParameters.quant_weight_100);
@@ -166,7 +172,18 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         t.tic();
 #endif
-                        predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
+                        //EDUARDO BEGIN
+
+                        newPredictor[it_channel].get_referenceL(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
+                        //newPredictor[it_channel].get_referenceA(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
+                        //newPredictor[it_channel].get_referenceLA(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
+                        newPredictor[it_channel].predictRef(orig4D, ref4D, encoderParameters.dim_block, pf4D);
+
+                        newPredictor[it_channel].angularPredictRef(orig4D, ref4D, encoderParameters.dim_block, pf4D);
+
+                        //predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
+
+                        //EDUARDO END
                         transform.dct_4d(pf4D, tf4D, dimBlock, encoderParameters.dim_block);
 
                         //transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
@@ -284,7 +301,12 @@ int main(int argc, char **argv) {
 #endif
 
                         transform.idct_4d(qi4D, ti4D, dimBlock, encoderParameters.dim_block);
-                        predictor.rec(ti4D, pi4D, dimBlock);
+                        //EDUARDO BEGIN
+
+                        //predictor.rec(ti4D, pi4D, dimBlock);
+                        newPredictor->recRef(ti4D, dimBlock, pi4D);
+
+                        //EDUARDO END
 
 #if STATISTICS_TIME
                         ti.toc();
@@ -322,6 +344,10 @@ int main(int argc, char **argv) {
 #if DPCM_DC
                         dpcmDc[it_channel].update((int) qf4D[0], true);
 #endif
+
+                        //EDUARDO BEGIN
+                        newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
+                        //EDUARDO END
                         encoder.write_completedBytes();
                     }
                 }
