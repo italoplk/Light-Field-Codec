@@ -18,6 +18,7 @@ public:
             dim_block{0, 0, 0, 0},
             quant_weight_100{1 * 100, 1 * 100, 1 * 100, 1 * 100};
     bool lytro{false};
+    std::string transform;
 
     bool isLytro() const;
 

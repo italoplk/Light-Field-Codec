@@ -1,287 +1,462 @@
 
-#include <cassert>
 #include "Transform.h"
+#include <cassert>
+#include <cmath>
+#include <cstdio>
 
-Transform::Transform(const Point4D &dimBlock) {
-    this->alocate_coeff_dct(dimBlock);
-    this->input_4D_t = new float[dimBlock.getNSamples()];
+std::map<size_t, float *> Transform::_DCT_II_CACHE;
+std::map<size_t, float *> Transform::_DST_II_CACHE;
+std::map<size_t, float *> Transform::_DST_VII_CACHE;
+
+typedef void (*_tx_t)(const float *, float *, size_t, size_t);
+
+template <typename T>
+inline Point4D make_stride(T shape) {
+    Point4D stride;
+    stride.x = 1;
+    stride.y = shape[0];
+    stride.u = stride.y * shape[1];
+    stride.v = stride.u * shape[2];
+    return stride;
 }
 
-void Transform::foward(const LFSample *input, float *output) {
-
-}
-
-void Transform::inverse(const float *input, LFSample *output) {
-
-}
-
-float *Transform::generate_dct_coeff(int N) {
-    auto *output = new float[N * N];
-    auto *p_output = output;
-    for (int k = 0; k < N; k++) {
-        double s = (k == 0) ? 1 / (double) sqrt(N) : (sqrt(((double) 2 / N)));
-
-        for (int n = 0; n < N; n++)
-            *p_output++ = s * (double) cos((double) M_PI * (2 * n + 1) * k / (2 * N));
+template <typename size_type>
+auto make_shapes(const std::vector<size_type> &from_shape,
+                 const std::vector<size_type> &base_shape) {
+    std::vector<std::vector<size_type>> shapes;
+    std::vector<size_type> shape;
+    shape.resize(4);
+    for (int v = 0; v < from_shape[3]; v += shape[3]) {
+        shape[3] = std::min(base_shape[3], from_shape[3] - v);
+        for (int u = 0; u < from_shape[2]; u += shape[2]) {
+            shape[2] = std::min(base_shape[3], from_shape[2] - u);
+            for (int y = 0; y < from_shape[1]; y += shape[1]) {
+                shape[1] = std::min(base_shape[1], from_shape[1] - y);
+                for (int x = 0; x < from_shape[0]; x += shape[0]) {
+                    shape[0] = std::min(base_shape[0], from_shape[0] - x);
+                    shapes.push_back(shape);
+                }
+            }
+        }
     }
+    return shapes;
+}
 
+inline int offset(int x, int y, int u, int v, Point4D &stride) {
+    return x * stride.x + y * stride.y + u * stride.u + v * stride.v;
+}
+
+void flip_axis(float *block, unsigned to_flip, unsigned flat_size, Point4D shape, Point4D stride) {
+    float _block[flat_size];
+    for (int v = 0; v < shape.v; v++) {
+        for (int u = 0; u < shape.u; u++) {
+            for (int y = 0; y < shape.y; y++) {
+                for (int x = 0; x < shape.x; x++) {
+                    auto dx = to_flip & Transform::AXIS_X ? shape.x - 1 - 2 * x : 0;
+                    auto dy = to_flip & Transform::AXIS_Y ? shape.y - 1 - 2 * y : 0;
+                    auto du = to_flip & Transform::AXIS_U ? shape.u - 1 - 2 * u : 0;
+                    auto dv = to_flip & Transform::AXIS_V ? shape.v - 1 - 2 * v : 0;
+                    auto f_offset = offset(x, y, u, v, stride);
+                    auto r_offset = offset(x + dx, y + dy, u + du, v + dv, stride);
+                    _block[r_offset] = block[f_offset];
+                }
+            }
+        }
+    }
+    for (int v = 0; v < shape.v; v++) {
+        for (int u = 0; u < shape.u; u++) {
+            for (int y = 0; y < shape.y; y++) {
+                for (int x = 0; x < shape.x; x++) {
+                    auto index = offset(x, y, u, v, stride);
+                    block[index] = _block[index];
+                }
+            }
+        }
+    }
+}
+
+float *Transform::_get_coefficients(Transform::TransformType type, const size_t size) {
+    float *coeff = nullptr;
+    switch (type) {
+        case DST_II: try { coeff = _DST_II_CACHE.at(size);
+            } catch (...) {
+                coeff = _DST_II(size);
+                _DST_II_CACHE[size] = coeff;
+            }
+            break;
+        case DST_VII: try { coeff = _DST_VII_CACHE.at(size);
+            } catch (...) {
+                coeff = _DST_VII(size);
+                _DST_VII_CACHE[size] = coeff;
+            }
+            break;
+        case BESTMATCH:
+        case DCT:
+        default: try { coeff = _DCT_II_CACHE.at(size);
+            } catch (...) {
+                coeff = _DCT_II(size);
+                _DCT_II_CACHE[size] = coeff;
+            }
+    }
+    return coeff;
+}
+
+void Transform::_forward_1(Transform::TransformType type,
+                           const float *in,
+                           float *out,
+                           const size_t offset,
+                           const size_t size) {
+    float *coeff = _get_coefficients(type, size);
+    auto pout = out;
+    auto pcoeff = coeff;
+    for (int k = 0; k < size; k++, pout += offset) {
+        auto pin = in;
+        *pout = 0;
+        for (int n = 0; n < size; n++, pin += offset, pcoeff++)
+            *pout += *pin * *pcoeff;
+    }
+}
+
+void Transform::_inverse_1(Transform::TransformType type,
+                           const float *in,
+                           float *out,
+                           const size_t offset,
+                           const size_t size) {
+    float *coeff = _get_coefficients(type, size);
+    auto pout = out;
+    for (int k = 0; k < size; k++, pout += offset) {
+        auto pin = in;
+        auto pcoeff = coeff + k;
+        *pout = 0;
+        for (int n = 0; n < size; n++, pin += offset, pcoeff += size)
+            *pout += *pin * *pcoeff;
+    }
+}
+
+Transform::Transform(Point4D &shape) {
+    this->shape = shape;
+    stride = make_stride(shape);
+    flat_size = stride.v * shape.v;
+    partial_values = new float[flat_size];
+}
+
+Transform::~Transform() { delete[] partial_values; }
+
+float *Transform::_DST_VII(size_t size) {
+    auto *output = new float[size * size];
+    auto *pout = output;
+    for (int k = 0; k < size; k++) {
+        double s = (double)2 / (sqrt(2 * size + 1));
+        for (int n = 0; n < size; n++)
+            *pout++ = s * sin((double)M_PI * (n + 1) * (2 * k + 1) / (2 * size + 1));
+    }
+    return output;
+}
+float *Transform::_DST_II(size_t size) {
+    auto *output = new float[size * size];
+    auto *pout = output;
+    double s = sqrt(2.0L / (size + 1.0L));
+    for (int k = 0; k < size; k++) {
+        for (int n = 0; n < size; n++) {
+            double theta = (M_PI * (k + 1.0L) * (n + 1.0L)) / (size + 1.0L);
+            *pout++ = s * sin(theta);
+        }
+    }
     return output;
 }
 
-void Transform::dct_4d(const float *input, float *output, const Point4D &size, const Point4D &origSize) {
-    if (this->dim_block != size) {
-        this->delete_coeff_dct();
-        this->alocate_coeff_dct(size);
+float *Transform::_DCT_II(size_t size) {
+    float *output = new float[size * size];
+    float *pout = output;
+    for (int k = 0; k < size; k++) {
+        double s = (k == 0) ? 1 / (double)sqrt(size) : (sqrt(((double)2 / size)));
+        for (int n = 0; n < size; n++)
+            *pout++ = s * cos((double)M_PI * (2 * n + 1) * k / (2 * size));
+    }
+    return output;
+}
+
+void Transform::_forward(TransformType type, float *input, float *output, Point4D &shape) {
+    size_t axis_arr[4][3] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
+    const float *pin = input;
+    float *pout = output;
+
+    for (int v = 0; v < shape.v; ++v) {
+        for (int u = 0; u < shape.u; ++u) {
+            for (int y = 0; y < shape.y; ++y) {
+                _forward_1(type, pin, pout, stride.x, shape.x);
+                pin += stride.y;
+                pout += stride.y;
+            }
+            pin += (this->shape.y - shape.y) * stride.y;
+            pout += (this->shape.y - shape.y) * stride.y;
+        }
+        pin += (this->shape.u - shape.u) * stride.u;
+        pout += (this->shape.u - shape.u) * stride.u;
+    }
+    std::copy(output, output + flat_size, partial_values);
+    pin = partial_values, pout = output;
+
+    for (int v = 0; v < shape.v; ++v) {
+        for (int u = 0; u < shape.u; ++u) {
+            for (int x = 0; x < shape.x; ++x) {
+                _forward_1(type, pin, pout, stride.y, shape.y);
+
+                ++pin, ++pout;
+            }
+            pin += (stride.u - stride.y) + (this->shape.x - shape.x);
+            pout += (stride.u - stride.y) + (this->shape.x - shape.x);
+        }
+        pin += (this->shape.u - shape.u) * stride.u;
+        pout += (this->shape.u - shape.u) * stride.u;
     }
 
-    const uint size_x = size.x,
-            size_y = size.y,
-            size_u = size.u,
-            size_v = size.v;
+    std::copy(output, output + flat_size, partial_values);
+    pin = partial_values, pout = output;
 
-    const uint offset1 = origSize.x,
-            offset2 = offset1 * origSize.y,
-            offset3 = offset2 * origSize.u,
-            offset4 = offset3 * origSize.v;
+    for (int v = 0; v < shape.v; ++v) {
+        for (int y = 0; y < shape.y; ++y) {
+            for (int x = 0; x < shape.x; ++x) {
+                _forward_1(type, pin, pout, stride.u, shape.u);
 
-    std::copy(input, input + offset4, input_4D_t);
-    float *p_input = input_4D_t, *p_output = output;
-
-    for (int v = 0; v < size_v; ++v) { // TODO: positions
-        for (int u = 0; u < size_u; ++u) {
-            for (int y = 0; y < size_y; ++y) {
-                dct_1D(p_input, p_output, this->coeff_dct1D[0], 1, size_x); // X AXIS
-
-                p_input += offset1;
-                p_output += offset1;
+                ++pin, ++pout;
             }
-            p_input += (origSize.y - size.y) * offset1;
-            p_output += (origSize.y - size.y) * offset1;
+            pin += (this->shape.x - shape.x);
+            pout += (this->shape.x - shape.x);
         }
-        p_input += (origSize.u - size.u) * offset2;
-        p_output += (origSize.u - size.u) * offset2;
+        pin += (stride.v - stride.u) + (this->shape.y - shape.y) * stride.y;
+        pout += (stride.v - stride.u) + (this->shape.y - shape.y) * stride.y;
     }
 
-    std::copy(output, output + offset4, input_4D_t);
-    p_input = input_4D_t, p_output = output;
+    std::copy(output, output + flat_size, partial_values);
+    pin = partial_values, pout = output;
 
-    for (int v = 0; v < size_v; ++v) {
-        for (int u = 0; u < size_u; ++u) {
-            for (int x = 0; x < size_x; ++x) {
-                dct_1D(p_input, p_output, this->coeff_dct1D[1], offset1, size_y); // Y AXIS
+    for (int u = 0; u < shape.u; ++u) {
+        for (int y = 0; y < shape.y; ++y) {
+            for (int x = 0; x < shape.x; ++x) {
+                _forward_1(type, pin, pout, stride.v, shape.v);
 
-                ++p_input, ++p_output;
+                ++pin, ++pout;
             }
-            p_input += (offset2 - offset1) + (origSize.x - size.x);
-            p_output += (offset2 - offset1) + (origSize.x - size.x);
+            pin += (this->shape.x - shape.x);
+            pout += (this->shape.x - shape.x);
         }
-        p_input += (origSize.u - size.u) * offset2;
-        p_output += (origSize.u - size.u) * offset2;
-    }
-
-    std::copy(output, output + offset4, input_4D_t);
-    p_input = input_4D_t, p_output = output;
-
-    for (int v = 0; v < size_v; ++v) {
-        for (int y = 0; y < size_y; ++y) {
-            for (int x = 0; x < size_x; ++x) {
-                dct_1D(p_input, p_output, this->coeff_dct1D[2], offset2, size_u); // U AXIS
-
-                ++p_input, ++p_output;
-            }
-            p_input += (origSize.x - size.x);
-            p_output += (origSize.x - size.x);
-        }
-        p_input += (offset3 - offset2) + (origSize.y - size.y) * offset1;
-        p_output += (offset3 - offset2) + (origSize.y - size.y) * offset1;
-    }
-
-    std::copy(output, output + offset4, input_4D_t);
-    p_input = input_4D_t, p_output = output;
-
-    for (int u = 0; u < size_u; ++u) {
-        for (int y = 0; y < size_y; ++y) {
-            for (int x = 0; x < size_x; ++x) {
-                dct_1D(p_input, p_output, this->coeff_dct1D[3], offset3, size_v); // V AXIS
-
-                ++p_input, ++p_output;
-            }
-            p_input += (origSize.x - size.x);
-            p_output += (origSize.x - size.x);
-        }
-        p_input += (origSize.y - size.y) * offset1;
-        p_output += (origSize.y - size.y) * offset1;
+        pin += (this->shape.y - shape.y) * stride.y;
+        pout += (this->shape.y - shape.y) * stride.y;
     }
 }
 
+void Transform::_inverse(TransformType type, float *input, float *output, Point4D &shape) {
+    size_t axis_arr[4][3] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
 
-void Transform::dct_1D(const float *in, float *out, float *coeff, const uint offset, const uint size) {
-    int N = size;
+    float *pin = (float *)input;
+    float *pout = output;
 
-    float *p_table = coeff, *p_in, *p_out = out;
-    double sum;
+    for (int u = 0; u < shape.u; ++u) {
+        for (int y = 0; y < shape.y; ++y) {
+            for (int x = 0; x < shape.x; ++x) {
+                _inverse_1(type, pin, pout, stride.v, shape.v);
 
-    for (int k = 0; k < N; ++k) {
-        sum = 0;
-        p_in = (float *) in;
-        for (int n = 0; n < N; ++n) {
-            sum += *p_in * *p_table;
-
-            ++p_table;
-            p_in += offset;
-        }
-
-        *p_out = (float) sum;
-        p_out += offset;
-    }
-
-}
-
-void Transform::idct_1D(const float *in, float *out, float *coeff, const uint offset, const uint size) {
-    int N = size;
-
-    float *p_table, *p_in, *p_out = out;
-    float sum;
-
-    for (int k = 0; k < N; ++k) {
-        sum = 0;
-        p_in = (float *) in;
-        p_table = &coeff[k];
-        for (int n = 0; n < N; ++n) {
-            sum += *p_in * *p_table;
-
-
-            p_table += N;
-            p_in += offset;
-        }
-
-        *p_out = sum;
-        p_out += offset;
-    }
-
-}
-
-void Transform::idct_4d(const float *input, float *output, const Point4D &size, const Point4D &origSize) {
-    if (this->dim_block != size) {
-        this->delete_coeff_dct();
-        this->alocate_coeff_dct(size);
-    }
-
-    const uint size_x = size.x,
-            size_y = size.y,
-            size_u = size.u,
-            size_v = size.v;
-
-    const uint offset1 = origSize.x,
-            offset2 = offset1 * origSize.y,
-            offset3 = offset2 * origSize.u,
-            offset4 = offset3 * origSize.v;
-
-    std::copy(input, input + offset4, input_4D_t);
-    float *p_input = input_4D_t, *p_output = output;
-
-    for (int u = 0; u < size_u; ++u) {
-        for (int y = 0; y < size_y; ++y) {
-            for (int x = 0; x < size_x; ++x) {
-                idct_1D(p_input, p_output, this->coeff_dct1D[3], offset3, size_v); // V AXIS
-
-                ++p_input, ++p_output;
+                ++pin, ++pout;
             }
-            p_input += (origSize.x - size.x);
-            p_output += (origSize.x - size.x);
+            pin += (this->shape.x - shape.x);
+            pout += (this->shape.x - shape.x);
         }
-        p_input += (origSize.y - size.y) * offset1;
-        p_output += (origSize.y - size.y) * offset1;
+        pin += (this->shape.y - shape.y) * stride.y;
+        pout += (this->shape.y - shape.y) * stride.y;
     }
 
-    std::copy(output, output + offset4, input_4D_t);
-    p_input = input_4D_t, p_output = output;
+    std::copy(output, output + flat_size, partial_values);
+    pin = partial_values, pout = output;
 
-    for (int v = 0; v < size_v; ++v) {
-        for (int y = 0; y < size_y; ++y) {
-            for (int x = 0; x < size_x; ++x) {
-                idct_1D(p_input, p_output, this->coeff_dct1D[2], offset2, size_u); // U AXIS
+    for (int v = 0; v < shape.v; ++v) {
+        for (int y = 0; y < shape.y; ++y) {
+            for (int x = 0; x < shape.x; ++x) {
+                _inverse_1(type, pin, pout, stride.u, shape.u);
 
-                ++p_input, ++p_output;
+                ++pin, ++pout;
             }
-            p_input += (origSize.x - size.x);
-            p_output += (origSize.x - size.x);
+            pin += (this->shape.x - shape.x);
+            pout += (this->shape.x - shape.x);
         }
-        p_input += (offset3 - offset2) + (origSize.y - size.y) * offset1;
-        p_output += (offset3 - offset2) + (origSize.y - size.y) * offset1;
+        pin += (stride.v - stride.u) + (this->shape.y - shape.y) * stride.y;
+        pout += (stride.v - stride.u) + (this->shape.y - shape.y) * stride.y;
     }
+    std::copy(output, output + flat_size, partial_values);
+    pin = partial_values, pout = output;
+    for (int v = 0; v < shape.v; ++v) {
+        for (int u = 0; u < shape.u; ++u) {
+            for (int x = 0; x < shape.x; ++x) {
+                _inverse_1(type, pin, pout, stride.y, shape.y);
 
-    std::copy(output, output + offset4, input_4D_t);
-    p_input = input_4D_t, p_output = output;
-
-    for (int v = 0; v < size_v; ++v) {
-        for (int u = 0; u < size_u; ++u) {
-            for (int x = 0; x < size_x; ++x) {
-                idct_1D(p_input, p_output, this->coeff_dct1D[1], offset1, size_y); // Y AXIS
-
-                ++p_input, ++p_output;
+                ++pin, ++pout;
             }
-            p_input += (offset2 - offset1) + (origSize.x - size.x);
-            p_output += (offset2 - offset1) + (origSize.x - size.x);
+            pin += (stride.u - stride.y) + (this->shape.x - shape.x);
+            pout += (stride.u - stride.y) + (this->shape.x - shape.x);
         }
-        p_input += (origSize.u - size.u) * offset2;
-        p_output += (origSize.u - size.u) * offset2;
+        pin += (this->shape.u - shape.u) * stride.u;
+        pout += (this->shape.u - shape.u) * stride.u;
     }
-
-    std::copy(output, output + offset4, input_4D_t);
-    p_input = input_4D_t, p_output = output;
-
-    for (int v = 0; v < size_v; ++v) {
-        for (int u = 0; u < size_u; ++u) {
-            for (int y = 0; y < size_y; ++y) {
-                idct_1D(p_input, p_output, this->coeff_dct1D[0], 1, size_x); // X AXIS
-
-                p_input += offset1;
-                p_output += offset1;
+    std::copy(output, output + flat_size, partial_values);
+    pin = partial_values, pout = output;
+    for (int v = 0; v < shape.v; ++v) {
+        for (int u = 0; u < shape.u; ++u) {
+            for (int y = 0; y < shape.y; ++y) {
+                _inverse_1(type, pin, pout, stride.x, shape.x);
+                pin += stride.y;
+                pout += stride.y;
             }
-            p_input += (origSize.y - size.y) * offset1;
-            p_output += (origSize.y - size.y) * offset1;
+            pin += (this->shape.y - shape.y) * stride.y;
+            pout += (this->shape.y - shape.y) * stride.y;
         }
-        p_input += (origSize.u - size.u) * offset2;
-        p_output += (origSize.u - size.u) * offset2;
+        pin += (this->shape.u - shape.u) * stride.u;
+        pout += (this->shape.u - shape.u) * stride.u;
     }
 }
 
-void Transform::delete_coeff_dct() {
-    delete[] this->coeff_dct1D[0];
+void Transform::flush_cache() {}
 
-    if (this->dim_block.y != this->dim_block.x) {
-        delete[] this->coeff_dct1D[1];
+Transform::TransformType Transform::get_type(std::string transform) {
+    if (transform == "DST")
+        return DST;
+    else if (transform == "DST_II")
+        return DST_II;
+    else if (transform == "DST_VII")
+        return DST_VII;
+    else if (transform == "DCT")
+        return DCT;
+    std::cerr << "Unkown " << transform << std::endl;
+    return DCT;
+}
 
-        if (this->dim_block.u != this->dim_block.y) {
-            delete[] this->coeff_dct1D[2];
+void Transform::forward(TransformType transform, float *input, float *output, Point4D &shape) {
+    if (use_segments == NO_SEGMENTS) {
+        _forward(transform, input, output, shape);
+        if (axis_to_flip != NO_AXIS) flip_axis(output, axis_to_flip, flat_size, shape, stride);
+    } else {
+        auto shape_bak = this->shape;
+        auto stride_bak = this->stride;
+        auto flat_size_bak = this->flat_size;
+        float seg_block[flat_size_bak];
+        auto *pout = output;
+        auto *pseg = seg_block;
+        std::vector _shape {shape_bak.x, shape_bak.y, shape_bak.u, shape_bak.v};
+        std::vector base_shape {(shape_bak.x >> use_segments) + (shape_bak.x & 1),
+                                (shape_bak.y >> use_segments) + (shape_bak.y & 1),
+                                (shape_bak.u >> use_segments) + (shape_bak.u & 1),
+                                (shape_bak.v >> use_segments) + (shape_bak.v & 1)};
+        segment_block(input, _shape, seg_block, base_shape);
+        auto shapes = make_shapes(_shape, base_shape);
+        int seg_count = 0;
+        for (auto &curr_shape: shapes) {
+            this->shape = Point4D(curr_shape.data());
+            this->stride = make_stride(curr_shape);
+            this->flat_size = this->shape.getNSamples();
+            _forward(transform, pseg, pout, this->shape);
+            if (axis_to_flip != NO_AXIS)
+                flip_axis(pout, axis_to_flip, flat_size, this->shape, stride);
+            pout += this->flat_size;
+            pseg += this->flat_size;
+        }
+        this->shape = shape_bak;
+        this->stride = stride_bak;
+        this->flat_size = flat_size_bak;
+    }
+}
 
-            if (this->dim_block.v != this->dim_block.u) {
-                delete[] this->coeff_dct1D[3];
+void Transform::inverse(TransformType transform, float *input, float *output, Point4D &shape) {
+    if (use_segments == NO_SEGMENTS) {
+        if (axis_to_flip != NO_AXIS) flip_axis(input, axis_to_flip, flat_size, shape, stride);
+        _inverse(transform, input, output, shape);
+    } else {
+        auto shape_bak = this->shape;
+        auto stride_bak = this->stride;
+        auto flat_size_bak = this->flat_size;
+        float seg_block[flat_size_bak];
+        auto *pout = seg_block;
+        auto *pseg = input;
+        std::vector _shape {shape_bak.x, shape_bak.y, shape_bak.u, shape_bak.v};
+        std::vector base_shape {(shape_bak.x >> use_segments) + (shape_bak.x & 1),
+                                (shape_bak.y >> use_segments) + (shape_bak.y & 1),
+                                (shape_bak.u >> use_segments) + (shape_bak.u & 1),
+                                (shape_bak.v >> use_segments) + (shape_bak.v & 1)};
+        int seg_count = 0;
+        auto shapes = make_shapes(_shape, base_shape);
+        for (auto &curr_shape: shapes) {
+            this->shape = Point4D(curr_shape.data());
+            this->stride = make_stride(curr_shape);
+            this->flat_size = this->shape.getNSamples();
+            if (axis_to_flip != NO_AXIS)
+                flip_axis(pseg, axis_to_flip, flat_size, this->shape, stride);
+            _inverse(transform, pseg, pout, this->shape);
+            pout += this->flat_size;
+            pseg += this->flat_size;
+        }
+
+        join_segments(seg_block, _shape, output, base_shape);
+        this->shape = shape_bak;
+        this->stride = stride_bak;
+        this->flat_size = flat_size_bak;
+    }
+}
+
+template <typename T, typename size_type>
+void Transform::segment_block(const T *from_block,
+                              const std::vector<size_type> &from_shape,
+                              T *into_block,
+                              const std::vector<size_type> &base_shape) {
+    auto *curr_seg = into_block;
+    auto stride = make_stride(from_shape);
+    int seg_index = 0;
+    const auto shapes = make_shapes(from_shape, base_shape);
+    auto shape = shapes[seg_index];
+    for (int v = 0; v < from_shape[3]; v += shape[3]) {
+        for (int u = 0; u < from_shape[2]; u += shape[2]) {
+            for (int y = 0; y < from_shape[1]; y += shape[1]) {
+                for (int x = 0; x < from_shape[0]; x += shape[0]) {
+                    shape = shapes[seg_index++];
+                    auto into_stride = make_stride(shape);
+                    for (int dv = 0; dv < shape[3]; dv++)
+                        for (int du = 0; du < shape[2]; du++)
+                            for (int dy = 0; dy < shape[1]; dy++) {
+                                auto from_offset = stride.x * x + stride.y * (y + dy) +
+                                                   stride.u * (u + du) + stride.v * (v + dv);
+
+                                std::copy(from_block + from_offset,
+                                          from_block + from_offset + shape[0], curr_seg);
+                                curr_seg += shape[0];
+                            }
+                }
             }
         }
     }
 }
-
-Transform::~Transform() {
-    delete[] this->input_4D_t;
-
-    this->delete_coeff_dct();
-}
-
-void Transform::alocate_coeff_dct(const Point4D &dimBlock) {
-    this->dim_block = dimBlock;
-    this->coeff_dct1D[0] = generate_dct_coeff(this->dim_block.x);
-
-    this->coeff_dct1D[1] =
-            (this->dim_block.y == this->dim_block.x) ? this->coeff_dct1D[0] : generate_dct_coeff(this->dim_block.y);
-
-    this->coeff_dct1D[2] =
-            (this->dim_block.u == this->dim_block.x) ? this->coeff_dct1D[0] :
-            (this->dim_block.u == this->dim_block.y) ? this->coeff_dct1D[1] : generate_dct_coeff(this->dim_block.u);
-
-    this->coeff_dct1D[3] =
-            (this->dim_block.v == this->dim_block.x) ? this->coeff_dct1D[0] :
-            (this->dim_block.v == this->dim_block.y) ? this->coeff_dct1D[1] :
-            (this->dim_block.v == this->dim_block.u) ? this->coeff_dct1D[2] : generate_dct_coeff(this->dim_block.v);
+template <typename T, typename size_type>
+void Transform::join_segments(const T *from_block,
+                              const std::vector<size_type> &from_shape,
+                              T *into_block,
+                              const std::vector<size_type> &base_shape) {
+    auto *curr_seg = from_block;
+    auto stride = make_stride(from_shape);
+    int seg_index = 0;
+    const auto shapes = make_shapes(from_shape, base_shape);
+    auto shape = shapes[seg_index];
+    for (int v = 0; v < from_shape[3]; v += shape[3]) {
+        for (int u = 0; u < from_shape[2]; u += shape[2]) {
+            for (int y = 0; y < from_shape[1]; y += shape[1]) {
+                for (int x = 0; x < from_shape[0]; x += shape[0]) {
+                    shape = shapes[seg_index++];
+                    auto into_stride = make_stride(shape);
+                    for (int dv = 0; dv < shape[3]; dv++)
+                        for (int du = 0; du < shape[2]; du++)
+                            for (int dy = 0; dy < shape[1]; dy++) {
+                                auto into_offset = stride.x * x + stride.y * (y + dy) +
+                                                   stride.u * (u + du) + stride.v * (v + dv);
+                                std::copy(curr_seg, curr_seg + shape[0], into_block + into_offset);
+                                curr_seg += shape[0];
+                            }
+                }
+            }
+        }
+    }
 }

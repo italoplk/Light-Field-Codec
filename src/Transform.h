@@ -2,46 +2,90 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-#include <zconf.h>
-#include "Typedef.h"
 #include "Point4D.h"
-#include <cmath>
+#include "Typedef.h"
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
 class Transform {
-private:
-    float *coeff_dct1D[4]{};
-    Point4D dim_block;
-
-    float *input_4D_t;
-
-    static float *generate_dct_coeff(int N);
-
-    static void dct_1D(const float *in, float *out, float *coeff, const uint offset, const uint size);
-
-    static void idct_1D(const float *in, float *out, float *coeff, const uint offset, const uint size);
-
-
 public:
-    explicit Transform(const Point4D &dimBlock);
+  enum TransformType {
+    DCT,
+    DST,
+    DST_VII,
+    BESTMATCH,
+    DST_II = DST,
+  };
+  enum {
+    NO_SEGMENTS,
+    SEGMENTS_8,
+    SEGMENTS_4,
+    SEGMENTS_2,
+  };
 
-    void foward(const float *input, float *output);
+  enum {
+    NO_AXIS = 0,
+    AXIS_X = 1,
+    AXIS_Y = 2,
+    AXIS_U = 4,
+    AXIS_V = 8
+  };
 
-    void inverse(const float *input, float *output);
+  int use_segments = NO_SEGMENTS;
+  int axis_to_flip = NO_AXIS;
+  
+  Transform(Point4D &shape);
+  ~Transform();
 
-    void dct_4d(const float *input, float *output, const Point4D &size, const Point4D &origSize);
+  static void flush_cache();
+  static TransformType get_type(std::string transform);
 
-    void idct_4d(const float *input, float *output, const Point4D &size, const Point4D &origSize);
+  void forward(TransformType transform, float *input, float *output,
+               Point4D &shape);
 
-    ~Transform();
+  void inverse(TransformType transform, float *input, float *output,
+               Point4D &shape);
 
-    void delete_coeff_dct();
 
-    void alocate_coeff_dct(const Point4D &dimBlock);
+private:
+  Point4D shape;
+  Point4D stride;
+  size_t flat_size;
+  float *partial_values;
 
-    void foward(const short *input, float *output);
+  static std::map<size_t, float *> _DCT_II_CACHE;
+  static std::map<size_t, float *> _DST_II_CACHE;
+  static std::map<size_t, float *> _DST_VII_CACHE;
 
-    void inverse(const float *input, short *output);
+  static float *_DCT_II(size_t size);
+  static float *_DST_II(size_t size);
+  static float *_DST_VII(size_t size);
+
+  static auto get_transform(TransformType type, bool is_inverse = false);
+  static float *_get_coefficients(TransformType type, const size_t size);
+  static void _forward_1(TransformType type, const float *in, float *out,
+                         const size_t offset, const size_t size);
+  static void _inverse_1(TransformType type, const float *in, float *out,
+                         const size_t offset, const size_t size);
+
+  void _forward(TransformType transform, float *input, float *output,
+                Point4D &shape);
+
+  void _inverse(TransformType transform, float *input, float *output,
+                Point4D &shape);
+
+
+  template <typename T, typename size_type>
+  void segment_block(const T *from_block,
+                   const std::vector<size_type> &from_shape, T *into_block,
+                   const std::vector<size_type> &base_shape);
+  template <typename T, typename size_type>
+  void join_segments(const T *from_block,
+                   const std::vector<size_type> &from_shape, T *into_block,
+                   const std::vector<size_type> &base_shape);
+
 };
 
-
-#endif //TRANSFORM_H
+#endif // TRANSFORM_H

@@ -3,6 +3,7 @@
 #include "Statistics.h"
 
 #include <cmath>
+#include <cassert>
 
 Statistics::Statistics(const std::string &file) {
     if (!file.empty()) {
@@ -13,46 +14,61 @@ Statistics::Statistics(const std::string &file) {
 
     std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
 
-    output << "channel" << sep <<
-           "pos_x" << sep << "pos_y" << sep << "pos_u" << sep << "pos_v" << sep <<
-           "bl_x" << sep << "bl_y" << sep << "bl_u" << sep << "bl_v" << sep <<
-
-           "dc" << sep << "v_min" << sep << "v_max" << sep << "v_minAbs" << sep << "v_maxAbs" << sep <<
-
-           "zeros" << sep << "ones" << sep <<
-
-           "mean" << sep << "median" << sep << "std" << sep << "variance" << sep <<
-           "energy" << sep << "entropy" << sep << "sse" << sep <<
-
-           "run_count" << sep << "run_max" << sep << "run_mean" << sep << "run_std" << sep << "run_var" << sep <<
-
-           "posSO_last_nzero" << sep << "posSO_last_nzeroone" << sep <<
-           "pos_last_nzero" << sep << "pos_last_nzeroone" << sep << "bits_per_4D_Block" <<
-
-           std::endl;
+    output << 
+            "channel" << sep <<
+            "pos_x" << sep <<  
+            "pos_y" << sep <<  
+            "pos_u" << sep <<  
+            "pos_v" << sep <<
+            "bl_x" << sep <<  
+            "bl_y" << sep <<  
+            "bl_u" << sep <<  
+            "bl_v" << sep <<
+            "dc" << sep <<  
+            "v_min" << sep <<  
+            "v_max" << sep <<  
+            "v_minAbs" << sep <<  
+            "v_maxAbs" << sep <<
+            "zeros" << sep <<  
+            "ones" << sep <<
+            "mean" << sep <<  
+            "median" << sep <<  
+            "std" << sep <<  
+            "variance" << sep <<
+            "energy" << sep <<  
+            "entropy" << sep <<  
+            "sse" << sep <<   
+            "cov" << sep << 
+            "run_count" << sep <<  
+            "run_max" << sep <<  
+            "run_mean" << sep <<  
+            "run_std" << sep <<  
+            "run_var" << sep <<
+            "posSO_last_nzero" << sep <<  
+            "posSO_last_nzeroone" << sep <<
+            "pos_last_nzero" << sep <<  
+            "pos_last_nzeroone" << sep << 
+            "bits_per_4D_Block" << std::endl;
 }
 
 void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel) {
     std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
 
     output <<
-           it_channel <<
+           it_channel << sep << 
            pos.x << sep <<
            pos.y << sep <<
            pos.u << sep <<
            pos.v << sep <<
-
            dimBlock.x << sep <<
            dimBlock.y << sep <<
            dimBlock.u << sep <<
            dimBlock.v << sep <<
-
            this->dc << sep <<
            this->v_min << sep <<
            this->v_max << sep <<
            this->v_minAbs << sep <<
            this->v_maxAbs << sep <<
-
            this->num_zeros << sep <<
            this->num_ones << sep <<
            this->v_mean << sep <<
@@ -61,8 +77,8 @@ void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel) {
            this->v_variance << sep <<
            this->v_energy << sep <<
            this->v_entropy << sep <<
-           this->sse <<
-
+           this->sse << sep <<
+           this->cov << sep << 
            std::endl;
 }
 
@@ -110,6 +126,7 @@ void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel, std::ve
            this->v_entropy << sep <<
 
            this->sse << sep <<
+           this->cov << sep << 
 
            lre_result.size() << sep <<
            max_run << sep <<
@@ -134,34 +151,42 @@ Statistics::~Statistics() {
     }
 }
 
+
 void Statistics::compute(const std::vector<float> &input, const ushort *scan_order) {
     std::vector<float> values;
-    this->dc = input[scan_order[0]];
+    this->dc = input[scan_order ? scan_order[0] : 0];
     this->num_zeros = this->num_ones = 0;
     this->posSO_last_nzero = this->posSO_last_nzeroone = -1;
     this->pos_last_nzero = this->pos_last_nzeroone = -1;
 
     for (int i = 0; i < input.size(); ++i) {
-        float value = input[scan_order[i]];
-        if (value == 0) ++this->num_zeros;
-        else if (std::abs(value) == 1) {
+        float value = input[scan_order ? scan_order[i] : i];
+        assert(!std::isnan(value));
+        if (std::abs(value) <= this->epsilon) {
+            ++this->num_zeros;
+        }
+        else if (std::abs(value - 1) <= this->epsilon) { // epsilon = 0.1
             ++this->num_ones;
-            this->posSO_last_nzero = scan_order[i];
+            this->posSO_last_nzero = scan_order ? scan_order[i] : i;
             this->pos_last_nzero = i;
         } else {
             values.push_back(value);
-            this->posSO_last_nzero = this->posSO_last_nzeroone = scan_order[i];
+            this->posSO_last_nzero = this->posSO_last_nzeroone = scan_order ? scan_order[i] : i;
             this->pos_last_nzero = this->pos_last_nzeroone = i;
         }
     }
 
     this->v_mean = Statistics::mean(values);
+    // BUG: values arent sorted
     this->v_median = Statistics::median(values);
     this->v_variance = Statistics::variance(values, this->v_mean);
     this->v_std = sqrt(this->v_variance);
 
     this->v_energy = Statistics::energy(input);
     this->v_entropy = Statistics::entropy_vector(std::vector<int>(input.begin(), input.end()));
+
+    assert(!std::isnan(this->v_mean));
+
 
     this->v_min = this->v_max = this->v_minAbs = this->v_maxAbs = 0;
     if (!values.empty()) {
@@ -175,6 +200,7 @@ void Statistics::compute(const std::vector<float> &input, const ushort *scan_ord
 void Statistics::compute_sse(float *orig, float *ref, const Point4D &dim_block, const Point4D &stride_block) {
     float error;
     this->sse = 0;
+    this->cov = 0;
     float *it_orig = orig, *it_ref = ref;
 
     int count = 0;
@@ -182,12 +208,12 @@ void Statistics::compute_sse(float *orig, float *ref, const Point4D &dim_block, 
         for (int it_u = 0; it_u < dim_block.u; ++it_u) {
             for (int it_y = 0; it_y < dim_block.y; ++it_y) {
                 for (int it_x = 0; it_x < dim_block.x; ++it_x) {
-//                    uint pos = it_x + it_y * 15 + it_u * 15 * 15 + it_v * 15 * 15 * 15;
+                    //uint pos = it_x + it_y * 15 + it_u * 15 * 15 + it_v * 15 * 15 * 15;
 
                     error = *it_ref - *it_orig;
                     this->sse += error * error;
+                    this->cov += *it_ref * *it_orig;
                     ++count;
-
                     it_orig += stride_block.x;
                     it_ref += stride_block.x;
                 }
@@ -256,8 +282,11 @@ double Statistics::mean(std::vector<float> const &vet) {
     if (vet.empty()) return 0;
 
     float sum = 0.0;
+    float old_sum = 0.0;
     for (auto &i : vet) {
         sum += i;
+        assert(!std::isnan(sum));
+        old_sum = sum;
     }
 
     return sum / (float) vet.size();

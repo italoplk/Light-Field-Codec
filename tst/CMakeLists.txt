@@ -1,28 +1,23 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.10 )
 
 
 set(This lfcodec-tests)
 
 set(Sources
-    TransformContextTest.cpp
-    OrthogonalContextMixinTest.cpp
     OldAPITest.cpp
-    BlockTest.cpp
-    BlockCompareTest.cpp
-    TransformProtocolTest.cpp
+    BlockSegmentation.cpp
+    AxisFlipTest.cpp
 )
 
 add_executable(${This} ${Sources})
 target_include_directories(${This} PUBLIC
     ../src
+    ../src/sim/lfcodec
 )
 target_link_libraries(${This} PUBLIC
     gtest_main
-    lfcodeclib
-    spdlog
+    LF_Codec_Lib
 )
-
-target_compile_options(${This} PRIVATE "-O3")
 
 add_test(
     NAME ${This}

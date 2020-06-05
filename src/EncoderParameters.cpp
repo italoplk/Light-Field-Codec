@@ -37,6 +37,8 @@ void EncoderParameters::parse_cli(int argc, char **argv) {
             this->path_output = argv[++it];
         } else if (flag == "-qp") {
             this->qp = strtof(argv[++it], nullptr);
+        }else if (flag == "-transform") {
+            this->transform = argv[++it];
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;

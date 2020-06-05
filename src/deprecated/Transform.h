@@ -1,10 +1,10 @@
 
-#ifndef TRANSFORM_H
-#define TRANSFORM_H
+#ifndef _OLD_TRANSFORM_H
+#define _OLD_TRANSFORM_H
 
 #include <zconf.h>
 #include <cmath>
-#include "../Typedef.h"
+#include "Typedef.h"
 #include "../Point4D.h"
 
 namespace old {
