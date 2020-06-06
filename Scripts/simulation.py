@@ -9,13 +9,13 @@ if __name__ == '__main__':
 	qps = {0.1, 0.25, 0.5, 1, 2, 5, 7, 10, 15, 20, 50, 100}"""
 
 	light_field = {'Bikes', 'DangerDeMort', 'FountainVincent2', 'StonePillarsOutside'}
-	qps = {0.1, 1, 10, 100}
+	qps = {0.1, 1, 5, 10}
 
 	""" Diretório dos arquivos de entrada .ppm """
 	input_file = '/media/ubuntu/872f3d86-0680-4dea-b351-493e8c7e7054/home/igor/Git/Full_datasets/'
 
 	""" Diretório de saída """
-	output_file = '/media/ubuntu/872f3d86-0680-4dea-b351-493e8c7e7054/home/igor/Git/outputHexadecaTree/'
+	output_file = '/media/ubuntu/872f3d86-0680-4dea-b351-493e8c7e7054/home/igor/Git/output_data_tree/'
 
 	""" Tamanho da partição de bloco """
 	block_particion = '4x4x4x4'
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 	for name in light_field:
 		for qp in qps:
 			#file_out =  name + '_15_15_13_13_' + str(qp) + '_' + str(qp) + '_' + str(qp) + '_' + str(qp) + '_' + str(qp)
-			file_out =  name + '_15_15_13_13_' + str(qp) + "_13_13_" + block_particion
+			file_out =  name + '_16_16_16_16_' + str(qp) + "_13_13"
 
 			cmd = dict()
 			

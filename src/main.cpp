@@ -92,22 +92,21 @@ int main(int argc, char **argv) {
     file_hexadeca_tree.open(encoderParameters.getPathOutput() + "HexadecaTree.csv");
     file_hexadeca_tree <<
                        "Light_Field" << sep <<
-                       "Level" << sep <<
+                       "Partition" << sep <<
                        "Hypercubo" << sep <<
                        "Channel" << sep <<
                        "Pos_x" << sep <<
                        "Pos_y" << sep <<
                        "Pos_u" << sep <<
                        "Pos_v" << sep <<
-
 #if HEXADECA_TREE_TYPE == 0
                        "Hypercubo_Size" << sep <<
                        "N_Zero" << sep <<
                        "N_One" << sep <<
                        "N_Two" << sep <<
                        "N_Greater_Than_Two" << sep <<
-                       "Max_Value" << sep <<
-                       "Mean_value" << sep <<
+                       "Abs_Max_Value" << sep <<
+                       "Abs_Mean_value" << sep <<
                        "Significant_Value" << sep << endl;
 #elif HEXADECA_TREE_TYPE == 1
                        "X" << sep <<
@@ -170,7 +169,7 @@ int main(int argc, char **argv) {
 #endif
 
 #if HEXADECA_TREE
-    Point4D hypercubo_pos;
+    Point_4D hypercubo_pos;
 
     for (it_pos.v = 0, hypercubo_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v, hypercubo_pos.v++) { // angular
         for (it_pos.u = 0, hypercubo_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u, hypercubo_pos.u++) {
@@ -277,12 +276,12 @@ int main(int argc, char **argv) {
                         }
 
 #if HEXADECA_TREE
-                        root = tree.CreateRoot(temp_lre, encoderParameters.dim_block);
-                        tree.CreateTree(root, file_hexadeca_tree, light_field_name, hypercubo,  it_channel, 0, it_pos, hypercubo_pos, {0,0,0,0});
+                        root = tree.CreateRoot(file_hexadeca_tree, light_field_name, hypercubo, it_channel, temp_lre, encoderParameters.dim_block);
+                        tree.CreateTree(root, 0, it_pos, hypercubo_pos, {0,0,0,0});
 
                         tree.DeleteTree(&root);
 
-                        /*if (hypercubo == 1)
+                        /*if (hypercubo == 0)
                             exit(1);*/
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());

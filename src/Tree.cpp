@@ -6,41 +6,34 @@ Tree::Tree() {
 Tree::~Tree() {
 }
 
-Node* Tree::CreateRoot(int *bitstream, const Point4D &dim_block) {
-    //Node *root = new Node(dim_block.x, dim_block.y, dim_block.u, dim_block.v); //Not zero padding
-    Node *root = new Node(16, 16, 16, 16); //Zero padding
+Node* Tree::CreateRoot(ofstream& file, string light_field, uint hypercubo, uint channel, int *bitstream, const Point4D &dim_block) {
+    this->props = new LF_Props(file, light_field, hypercubo, channel);
+
+    //this->hypercube = new Hypercube(dim_block.x, dim_block.y, dim_block.u, dim_block.v); //Not zero padding
+
+    this->hypercube = new Hypercube(16,16,16,16);
+
     int i=0;
-    for (int it_v = 0; it_v < root->hypercube->dim.v; ++it_v) {
-        for (int it_u = 0; it_u < root->hypercube->dim.u; ++it_u) {
-            for (int it_y = 0; it_y < root->hypercube->dim.y; ++it_y) {
-                for (int it_x = 0; it_x < root->hypercube->dim.x; ++it_x) {
+    for (int it_v = 0; it_v < this->hypercube->dim.v; ++it_v) {
+        for (int it_u = 0; it_u < this->hypercube->dim.u; ++it_u) {
+            for (int it_y = 0; it_y < this->hypercube->dim.y; ++it_y) {
+                for (int it_x = 0; it_x < this->hypercube->dim.x; ++it_x) {
                     if (i < (dim_block.x * dim_block.y * dim_block.u * dim_block.v)) {
-                        root->hypercube->data[it_x][it_y][it_u][it_v] = bitstream[i];
+                        this->hypercube->data[it_x][it_y][it_u][it_v] = bitstream[i];
                         i++;
                     }
-                    else root->hypercube->data[it_x][it_y][it_u][it_v] = 0;
+                    else this->hypercube->data[it_x][it_y][it_u][it_v] = 0;
                 }
             }
         }
     }
-    for (int j = 0; j < HEXADECA; ++j) {
-        root->child.push_back(nullptr);
-    }
+
+    Node *root = new Node({0,0,0,0}, this->hypercube->dim, this->hypercube->dim); //Zero padding
+
     return root;
 }
 
-
-
-Node* Tree::NewNode(Hypercube *block) {
-    Node *node = new Node(block->dim.x, block->dim.y, block->dim.u, block->dim.v);
-    node->hypercube = block;
-    for (int i = 0; i < HEXADECA; ++i) {
-        node->child.push_back(nullptr);
-    }
-    return node;
-}
-
-void Tree::CreateTree(Node* root, ofstream& file, string light_filed, uint hypercubo, uint channel, uint level, const Point4D &pos, const Point4D &hypercubo_pos, Point4D middle_before) {
+void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4D &hypercubo_pos, Point_4D middle_before) {
     if (HEXADECA_TREE_PARTITION == 0)
         this->size = 16;
     else if (HEXADECA_TREE_PARTITION == 1)
@@ -49,203 +42,131 @@ void Tree::CreateTree(Node* root, ofstream& file, string light_filed, uint hyper
         this->size = 4;
     else return;
 
-    if (root->hypercube->dim.x <= this->size || root->hypercube->dim.y <= this->size || root->hypercube->dim.u <= this->size || root->hypercube->dim.v <= this->size) {
+    if (root->hypercube_dim.x <= this->size || root->hypercube_dim.y <= this->size || root->hypercube_dim.u <= this->size || root->hypercube_dim.v <= this->size) {
         if (HEXADECA_TREE_PARTITION == 0){
-            this->prox_pos.x = (float)pos.x;
-            this->prox_pos.y = (float)pos.y;
-            this->prox_pos.u = (float)pos.u;
-            this->prox_pos.v = (float)pos.v;
+            this->next_start_position.x = pos.x;
+            this->next_start_position.y = pos.y;
+            this->next_start_position.u = pos.u;
+            this->next_start_position.v = pos.v;
         }
         else if (HEXADECA_TREE_PARTITION == 1 || HEXADECA_TREE_PARTITION == 2){
-            this->prox_pos.x += (float)pos.x;
-            this->prox_pos.y += (float)pos.y;
-            this->prox_pos.u += (float)pos.u;
-            this->prox_pos.v += (float)pos.v;
-
-            this->hy_pos.x = round(this->hy_pos.x);
-            this->hy_pos.y = round(this->hy_pos.y);
-            this->hy_pos.u = round(this->hy_pos.u);
-            this->hy_pos.v = round(this->hy_pos.v);
+            this->next_start_position.x += pos.x;
+            this->next_start_position.y += pos.y;
+            this->next_start_position.u += pos.u;
+            this->next_start_position.v += pos.v;
         }
 #if HEXADECA_TREE_TYPE == 0
-        root->CountValues();
-        root->SetFileValues(file, light_filed, hypercubo, channel, level, this->hy_pos); //prox_pos
+        this->ComputeAttributes(root, root->start.x, root->end.x, root->start.y, root->end.y, root->start.u, root->end.u, root->start.v, root->end.v);
+        this->WriteAttributesInFile(level, this->hy_pos, root);
+        this->hy_pos = {0,0,0,0};
 #endif
 #if HEXADECA_TREE_TYPE == 1
-        if(hypercubo == HYPERCUBE_POSITION && channel == HYPERCUBE_CHANNEL)
-            root->CountValues(file, light_filed, hypercubo, channel, level, this->hy_pos);
+        if(this->props->hypercubo == HYPERCUBE_POSITION && this->props->channel == HYPERCUBE_CHANNEL)
+            this->ComputeValues(root, root->start.x, root->end.x, root->start.y, root->end.y, root->start.u, root->end.u, root->start.v, root->end.v, level, this->hy_pos);
+        this->hy_pos = {0,0,0,0};
 #endif
         return;
     }
     else{
 #if HEXADECA_TREE_TYPE == 0
-        root->CountValues();
-        root->SetFileValues(file, light_filed, hypercubo, channel, level, this->hy_pos); //prox_pos
+        this->ComputeAttributes(root, root->start.x, root->end.x, root->start.y, root->end.y, root->start.u, root->end.u, root->start.v, root->end.v);
+        this->WriteAttributesInFile(level, this->hy_pos, root); //prox_pos
 #endif
-        uint middle_x = ceil((double)root->hypercube->dim.x/2);
-        uint middle_y = ceil((double)root->hypercube->dim.y/2);
-        uint middle_u = ceil((double)root->hypercube->dim.u/2);
-        uint middle_v = ceil((double)root->hypercube->dim.v/2);
+        Point_4D middle = {(int)ceil((double)root->hypercube_dim.x/2),
+                           (int)ceil((double)root->hypercube_dim.y/2),
+                           (int)ceil((double)root->hypercube_dim.u/2),
+                           (int)ceil((double)root->hypercube_dim.v/2)};
 
-        Hypercube *block;
+        Point_4D start = {0,0,0,0};
+
         uint next_level = level + 1;
 
-        // Block partition 0
-        this->prox_pos.x = 0 + middle_before.x, this->prox_pos.y = 0 + middle_before.y, this->prox_pos.u = 0 + middle_before.u, this->prox_pos.v = 0 + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(middle_x, middle_y, middle_u, middle_v);
-        get_block_partition( block->data, root->hypercube->data, 0, middle_x, 0, middle_y, 0, middle_u, 0, middle_v);
-        root->child[0] = NewNode(block);
-        this->CreateTree(root->child[0], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {0,0,0,0});
+        for (int i = 0; i < HEXADECA; ++i) {
+            start = this->ComputeStart(i, middle);
 
-        // Block partition 1
-        this->prox_pos.x = middle_x + middle_before.x, this->prox_pos.y = 0 + middle_before.y, this->prox_pos.u = 0 + middle_before.u, this->prox_pos.v = 0 + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(root->hypercube->dim.x - middle_x, middle_y, middle_u, middle_v);
-        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, 0, middle_y, 0, middle_u, 0, middle_v);
-        root->child[1] = NewNode(block);
-        this->CreateTree(root->child[1], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {middle_x,0,0,0});
+            this->ComputePositions(start, middle_before, middle);
+            this->HypercubePosition(&middle);
 
-        // Block partition 2
-        this->prox_pos.x = 0 + middle_before.x, this->prox_pos.y = middle_y + middle_before.y, this->prox_pos.u = 0 + middle_before.u, this->prox_pos.v = 0 + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(middle_x, root->hypercube->dim.y - middle_y, middle_u, middle_v);
-        get_block_partition( block->data, root->hypercube->data, 0, middle_x, middle_y, root->hypercube->dim.y, 0, middle_u, 0, middle_v);
-        root->child[2] = NewNode(block);
-        this->CreateTree(root->child[2], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {0, middle_y,0,0});
-
-        // Block partition 3
-        this->prox_pos.x = middle_x + middle_before.x, this->prox_pos.y = middle_y + middle_before.y, this->prox_pos.u = 0 + middle_before.u, this->prox_pos.v = 0 + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(root->hypercube->dim.x - middle_x, root->hypercube->dim.y - middle_y, middle_u, middle_v);
-        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, middle_y, root->hypercube->dim.y, 0, middle_u, 0, middle_v);
-        root->child[3] = NewNode(block);
-        this->CreateTree(root->child[3], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {middle_x,middle_y,0,0});
-
-        // Block partition 4
-        this->prox_pos.x = 0 + middle_before.x, this->prox_pos.y = 0 + middle_before.y, this->prox_pos.u = middle_u + middle_before.u, this->prox_pos.v = 0 + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(middle_x, middle_y, root->hypercube->dim.u - middle_u, middle_v);
-        get_block_partition( block->data, root->hypercube->data, 0, middle_x, 0, middle_y, middle_u, root->hypercube->dim.u, 0, middle_v);
-        root->child[4] = NewNode(block);
-        this->CreateTree(root->child[4], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {0,0,middle_u,0});
-
-        // Block partition 5
-        this->prox_pos.x = middle_x +  middle_before.x, this->prox_pos.y = 0 + middle_before.y, this->prox_pos.u = middle_u + middle_before.u, this->prox_pos.v = 0 + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(root->hypercube->dim.x - middle_x, middle_y, root->hypercube->dim.u - middle_u, middle_v);
-        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, 0, middle_y, middle_u, root->hypercube->dim.u, 0, middle_v);
-        root->child[5] = NewNode(block);
-        this->CreateTree(root->child[5], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos,{middle_x,0,middle_u,0});
-
-        // Block partition 6
-        this->prox_pos.x = 0 + middle_before.x, this->prox_pos.y = middle_y + middle_before.y, this->prox_pos.u = middle_u + middle_before.u, this->prox_pos.v = 0 + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(middle_x, root->hypercube->dim.y - middle_y, root->hypercube->dim.u - middle_u, middle_v);
-        get_block_partition( block->data, root->hypercube->data, 0, middle_x, middle_y, root->hypercube->dim.y, middle_u, root->hypercube->dim.u, 0, middle_v);
-        root->child[6] = NewNode(block);
-        this->CreateTree(root->child[6], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {0, middle_y,middle_u,0});
-
-        // Block partition 7
-        this->prox_pos.x = middle_x + middle_before.x, this->prox_pos.y = middle_y + middle_before.y, this->prox_pos.u = middle_u + middle_before.u, this->prox_pos.v = 0 + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(root->hypercube->dim.x - middle_x, root->hypercube->dim.y - middle_y, root->hypercube->dim.u - middle_u, middle_v);
-        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, middle_y, root->hypercube->dim.y, middle_u, root->hypercube->dim.u, 0, middle_v);
-        root->child[7] = NewNode(block);
-        this->CreateTree(root->child[7], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {middle_x,middle_y,middle_u,0});
-
-        // Block partition 8
-        this->prox_pos.x = 0 + middle_before.x, this->prox_pos.y = 0 + middle_before.y, this->prox_pos.u = 0 + middle_before.u, this->prox_pos.v = middle_v + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(middle_x, middle_y, middle_u, root->hypercube->dim.v - middle_v);
-        get_block_partition( block->data, root->hypercube->data, 0, middle_x, 0, middle_y, 0, middle_u, middle_v, root->hypercube->dim.v);
-        root->child[8] = NewNode(block);
-        this->CreateTree(root->child[8], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {0,0,0,middle_v});
-
-        // Block partition 9
-        this->prox_pos.x = middle_x + middle_before.x, this->prox_pos.y = 0 + middle_before.y, this->prox_pos.u = 0 + middle_before.u, this->prox_pos.v = middle_v + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(root->hypercube->dim.x - middle_x, middle_y, middle_u, root->hypercube->dim.v - middle_v);
-        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, 0, middle_y, 0, middle_u, middle_v, root->hypercube->dim.v);
-        root->child[9] = NewNode(block);
-        this->CreateTree(root->child[9], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {middle_x,0,0,middle_v});
-
-        // Block partition 10
-        this->prox_pos.x = 0 + middle_before.x, this->prox_pos.y = middle_y + middle_before.y, this->prox_pos.u = 0 + middle_before.u, this->prox_pos.v = middle_v + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(middle_x, root->hypercube->dim.y - middle_y, middle_u, root->hypercube->dim.v - middle_v);
-        get_block_partition( block->data, root->hypercube->data, 0, middle_x, middle_y, root->hypercube->dim.y, 0, middle_u, middle_v, root->hypercube->dim.v);
-        root->child[10] = NewNode(block);
-        this->CreateTree(root->child[10], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos,{0, middle_y,0,middle_v});
-
-        // Block partition 11
-        this->prox_pos.x = middle_x + middle_before.x, this->prox_pos.y = middle_y + middle_before.y, this->prox_pos.u = 0 + middle_before.u, this->prox_pos.v = middle_v + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(root->hypercube->dim.x - middle_x, root->hypercube->dim.y - middle_y, middle_u, root->hypercube->dim.v - middle_v);
-        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, middle_y, root->hypercube->dim.y, 0, middle_u, middle_v, root->hypercube->dim.v);
-        root->child[11] = NewNode(block);
-        this->CreateTree(root->child[11], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {middle_x,middle_y,0,middle_v});
-
-        // Block partition 12
-        this->prox_pos.x = 0 + middle_before.x, this->prox_pos.y = 0 + middle_before.y, this->prox_pos.u = middle_u + middle_before.u, this->prox_pos.v = middle_v + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(middle_x, middle_y, root->hypercube->dim.u - middle_u, root->hypercube->dim.v - middle_v);
-        get_block_partition( block->data, root->hypercube->data, 0, middle_x, 0, middle_y, middle_u, root->hypercube->dim.u, middle_v, root->hypercube->dim.v);
-        root->child[12] = NewNode(block);
-        this->CreateTree(root->child[12], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {0,0,middle_u,middle_v});
-
-        // Block partition 13
-        this->prox_pos.x = middle_x + middle_before.x, this->prox_pos.y = 0 + middle_before.y, this->prox_pos.u = middle_u + middle_before.u, this->prox_pos.v = middle_v + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(root->hypercube->dim.x - middle_x, middle_y, root->hypercube->dim.u - middle_u, root->hypercube->dim.v - middle_v);
-        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, 0, middle_y, middle_u, root->hypercube->dim.u, middle_v, root->hypercube->dim.v);
-        root->child[13] = NewNode(block);
-        this->CreateTree(root->child[13], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {middle_x,0,middle_u,middle_v});
-
-        // Block partition 14
-        this->prox_pos.x = 0 + middle_before.x, this->prox_pos.y = middle_y + middle_before.y, this->prox_pos.u = middle_u + middle_before.u, this->prox_pos.v = middle_v + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(middle_x, root->hypercube->dim.y - middle_y, root->hypercube->dim.u - middle_u, root->hypercube->dim.v - middle_v);
-        get_block_partition( block->data, root->hypercube->data, 0, middle_x, middle_y, root->hypercube->dim.y, middle_u, root->hypercube->dim.u, middle_v, root->hypercube->dim.v);
-        root->child[14] = NewNode(block);
-        this->CreateTree(root->child[14], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {0, middle_y,middle_u,middle_v});
-
-        // Block partition 15
-        this->prox_pos.x = middle_x + middle_before.x, this->prox_pos.y = middle_y + middle_before.y, this->prox_pos.u = middle_u + middle_before.u, this->prox_pos.v = middle_v + middle_before.v;
-        this->hy_pos.x = (this->prox_pos.x != 0) ? this->prox_pos.x / middle_x : this->prox_pos.x, this->hy_pos.y = (this->prox_pos.y != 0) ? this->prox_pos.y / middle_y : this->prox_pos.y,
-                this->hy_pos.u = (this->prox_pos.u != 0) ? this->prox_pos.u / middle_u : this->prox_pos.u, this->hy_pos.v = (this->prox_pos.v != 0) ? this->prox_pos.v / middle_v : this->prox_pos.v;
-        block = new Hypercube(root->hypercube->dim.x - middle_x, root->hypercube->dim.y - middle_y, root->hypercube->dim.u - middle_u, root->hypercube->dim.v - middle_v);
-        get_block_partition( block->data, root->hypercube->data, middle_x, root->hypercube->dim.x, middle_y, root->hypercube->dim.y, middle_u, root->hypercube->dim.u, middle_v, root->hypercube->dim.v);
-        root->child[15] = NewNode(block);
-        this->CreateTree(root->child[15], file, light_filed, hypercubo, channel, next_level, pos, hypercubo_pos, {middle_x,middle_y,middle_u,middle_v});
-      }
+            root->child[i] = new Node(this->next_start_position, this->next_end_position, middle);
+            this->CreateTree(root->child[i], next_level, pos, hypercubo_pos, start);
+        }
+    }
 }
 
-void Tree::get_block_partition(int ****block, int ****data, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v) {
-    for (int block_it_v = start_v, pos_v = 0; block_it_v < end_v; ++block_it_v, ++pos_v) {
-        for (int block_it_u = start_u, pos_u = 0; block_it_u < end_u; ++block_it_u, ++pos_u) {
-            for (int block_it_y = start_y, pos_y = 0; block_it_y < end_y; ++block_it_y, ++pos_y) {
-                for (int block_it_x = start_x, pos_x = 0; block_it_x < end_x; ++block_it_x, ++pos_x) {
-                    block[pos_x][pos_y][pos_u][pos_v] = data[block_it_x][block_it_y][block_it_u][block_it_v];
+Point_4D Tree::ComputeStart(int index, Point_4D middle) {
+    if (index == 0) return {0,0,0,0};
+    if (index == 1) return {middle.x,0,0,0};
+    if (index == 2) return {0,middle.y,0,0};
+    if (index == 3) return {middle.x,middle.y,0,0};
+    if (index == 4) return {0,0,middle.u,0};
+    if (index == 5) return {middle.x,0,middle.u,0};
+    if (index == 6) return {0,middle.y,middle.u,0};
+    if (index == 7) return {middle.v,middle.y,middle.u,0};
+    if (index == 8) return {0,0,0,middle.v};
+    if (index == 9) return {middle.x,0,0,middle.v};
+    if (index == 10) return {0,middle.y,0,middle.v};
+    if (index == 11) return {middle.x,middle.y,0,middle.v};
+    if (index == 12) return {0,0,middle.u,middle.v};
+    if (index == 13) return {middle.x,0,middle.u,middle.v};
+    if (index == 14) return {0,middle.y,middle.u,middle.v};
+    if (index == 15) return {middle.x,middle.y,middle.u,middle.v};
+}
+
+void Tree::ComputePositions(Point_4D start, Point_4D middle_before, Point_4D middle) {
+    this->next_start_position.x = start.x + middle_before.x;
+    this->next_start_position.y = start.y + middle_before.y;
+    this->next_start_position.u = start.u + middle_before.u;
+    this->next_start_position.v = start.v + middle_before.v;
+
+    this->next_end_position.x = this->next_start_position.x + middle.x;
+    this->next_end_position.y = this->next_start_position.y + middle.y;
+    this->next_end_position.u = this->next_start_position.u + middle.u;
+    this->next_end_position.v = this->next_start_position.v + middle.v;
+}
+
+void Tree::ComputeAttributes(Node* node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v) {
+    int acc = 0;
+    Attributes *att = new Attributes();
+    for (int it_v = start_v; it_v < end_v; ++it_v) {
+        for (int it_u = start_u; it_u < end_u; ++it_u) {
+            for (int it_y = start_y; it_y < end_y; ++it_y) {
+                for (int it_x = start_x; it_x < end_x; ++it_x) {
+                    acc += abs(this->hypercube->data[it_x][it_y][it_u][it_v]);
+                    if (abs(att->max_value) < abs(this->hypercube->data[it_x][it_y][it_u][it_v])) { att->max_value = abs(this->hypercube->data[it_x][it_y][it_u][it_v]);}
+                    if (this->hypercube->data[it_x][it_y][it_u][it_v] != 0) {att->significant_value = true;}
+                    if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 0) {++att->n_zero;}
+                    else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 1) {++att->n_one;}
+                    else if (abs(this->hypercube->data[it_x][it_y][it_u][it_v]) == 2) {++att->n_two;}
+                    else {++att->n_greater_than_two;}
                 }
             }
         }
     }
+    att->hypercubo_size = node->hypercube_dim.x * node->hypercube_dim.y * node->hypercube_dim.u * node->hypercube_dim.v;
+    att->mean_value = (float)acc / att->hypercubo_size;
+    node->SetAttributes(att);
+}
+
+void Tree::ComputeValues(Node* node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v, uint level, Point_4D &pos) {
+    Point_4D position = {0,0,0,0};
+    for (int it_v = start_v; it_v < end_v; ++it_v) {
+        for (int it_u = start_u; it_u < end_u; ++it_u) {
+            for (int it_y = start_y; it_y < end_y; ++it_y) {
+                for (int it_x = start_x; it_x < end_x; ++it_x) {
+                    position = {it_x, it_y, it_u, it_v};
+                    this->WriteValuesInFile(level, position, position, abs(this->hypercube->data[it_x][it_y][it_u][it_v]));
+                }
+            }
+        }
+    }
+}
+
+
+void Tree::HypercubePosition(Point_4D *middle) {
+    this->hy_pos.x = (this->next_start_position.x != 0) ? this->next_start_position.x / middle->x : this->next_start_position.x,
+    this->hy_pos.y = (this->next_start_position.y != 0) ? this->next_start_position.y / middle->y : this->next_start_position.y,
+    this->hy_pos.u = (this->next_start_position.u != 0) ? this->next_start_position.u / middle->u : this->next_start_position.u,
+    this->hy_pos.v = (this->next_start_position.v != 0) ? this->next_start_position.v / middle->v : this->next_start_position.v;
 }
 
 void Tree::_deleteTree(Node* node)
@@ -254,24 +175,57 @@ void Tree::_deleteTree(Node* node)
     
     for (int i = 0; i < node->child.size(); ++i) {
         _deleteTree(node->child[i]);
+        node->child.clear();
     }
-    for (int i = 0; i < node->hypercube->dim.x; ++i) {
-        for (int j = 0; j < node->hypercube->dim.y; ++j) {
-            for (int k = 0; k < node->hypercube->dim.u; ++k) {
-                free(node->hypercube->data[i][j][k]);
-            }
-            free(node->hypercube->data[i][j]);
-        }
-        free(node->hypercube->data[i]);
-    }
-    free(node->hypercube->data);
-
     delete node;
 }
 
 /* Deletes a tree and sets the root as NULL */
 void Tree::DeleteTree(Node** node_ref)
 {
+    delete [] this->hypercube->data;
+
     _deleteTree(*node_ref);
     *node_ref = nullptr;
+}
+
+void Tree::WriteAttributesInFile(uint level, Point_4D &pos, Node* node){
+    string order = "";
+    order = (level == 0) ? "Original" : (level == 1) ? "Order_8" : "Order_4";
+    this->props->file <<
+         this->props->light_field_name << SEP <<
+         order << SEP <<
+         this->props->hypercubo << SEP <<
+         this->props->channel << SEP <<
+         pos.x << SEP <<
+         pos.y << SEP <<
+         pos.u << SEP <<
+         pos.v << SEP <<
+         node->att->hypercubo_size << SEP <<
+         node->att->n_zero << SEP <<
+         node->att->n_one << SEP <<
+         node->att->n_two << SEP <<
+         node->att->n_greater_than_two <<  SEP <<
+         node->att->max_value << SEP <<
+         node->att->mean_value << SEP <<
+         node->att->significant_value << SEP << endl;
+}
+
+void Tree::WriteValuesInFile(uint level, Point_4D &pos, Point_4D &position, int value){
+    string order = "";
+    order = (level == 0) ? "Original" : (level == 1) ? "Order_8" : "Order_4";
+    this->props->file <<
+         this->props->light_field_name << SEP <<
+         order << SEP <<
+         this->props->hypercubo << SEP <<
+         this->props->channel << SEP <<
+         pos.x << SEP <<
+         pos.y << SEP <<
+         pos.u << SEP <<
+         pos.v << SEP <<
+         position.x << SEP <<
+         position.y << SEP <<
+         position.u << SEP <<
+         position.v << SEP <<
+         value << SEP << endl;
 }
