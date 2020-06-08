@@ -6,6 +6,7 @@
 #include <cmath>
 #include <queue>
 #include <fstream>
+#include <cassert>
 
 #include "EncoderParameters.h"
 #include "Point4D.h"
@@ -21,13 +22,11 @@ struct Point_4D{
 };
 
 struct LF_Props{
-    ofstream file;
     string light_field_name;
     uint hypercubo,
          channel;
 
-    LF_Props(ofstream &file, string light_field, uint hypercubo, uint channel){
-        this->file = dynamic_cast<basic_ofstream<char> &&>(file);
+    LF_Props(string light_field, uint hypercubo, uint channel){
         this->light_field_name = light_field;
         this->hypercubo = hypercubo;
         this->channel = channel;
@@ -100,13 +99,17 @@ struct Node{
 class Tree {
 public:
     Tree();
-    Node* CreateRoot(ofstream& file, string light_field, uint hypercubo, uint channel, int *bitstream, const Point4D &dim_block);
+    Node* CreateRoot(string light_field, uint hypercubo, uint channel, int *bitstream, const Point4D &dim_block);
     void CreateTree(Node * root, uint level, const Point4D &pos, const Point_4D &hypercubo_pos, Point_4D middle_before);
     void DeleteTree(Node** node_ref);
+    void OpenFile(string path);
+    void CloseFile();
 
     ~Tree();
 
 private:
+    ofstream file;
+
     LF_Props *props;
     Hypercube *hypercube = nullptr;
 

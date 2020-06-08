@@ -6,8 +6,8 @@ Tree::Tree() {
 Tree::~Tree() {
 }
 
-Node* Tree::CreateRoot(ofstream& file, string light_field, uint hypercubo, uint channel, int *bitstream, const Point4D &dim_block) {
-    this->props = new LF_Props(file, light_field, hypercubo, channel);
+Node* Tree::CreateRoot(string light_field, uint hypercubo, uint channel, int *bitstream, const Point4D &dim_block) {
+    this->props = new LF_Props(light_field, hypercubo, channel);
 
     //this->hypercube = new Hypercube(dim_block.x, dim_block.y, dim_block.u, dim_block.v); //Not zero padding
 
@@ -110,6 +110,8 @@ Point_4D Tree::ComputeStart(int index, Point_4D middle) {
     if (index == 13) return {middle.x,0,middle.u,middle.v};
     if (index == 14) return {0,middle.y,middle.u,middle.v};
     if (index == 15) return {middle.x,middle.y,middle.u,middle.v};
+
+    return {0,0,0,0,};
 }
 
 void Tree::ComputePositions(Point_4D start, Point_4D middle_before, Point_4D middle) {
@@ -189,10 +191,46 @@ void Tree::DeleteTree(Node** node_ref)
     *node_ref = nullptr;
 }
 
+void Tree::OpenFile(string path) {
+    this->file.open(path + "HexadecaTree.csv");
+
+    assert(this->file.is_open());
+
+    this->file <<
+           "Light_Field" << SEP <<
+           "Partition" << SEP <<
+           "Hypercubo" << SEP <<
+           "Channel" << SEP <<
+           "Pos_x" << SEP <<
+           "Pos_y" << SEP <<
+           "Pos_u" << SEP <<
+           "Pos_v" << SEP <<
+           #if HEXADECA_TREE_TYPE == 0
+           "Hypercubo_Size" << SEP <<
+           "N_Zero" << SEP <<
+           "N_One" << SEP <<
+           "N_Two" << SEP <<
+           "N_Greater_Than_Two" << SEP <<
+           "Abs_Max_Value" << SEP <<
+           "Abs_Mean_value" << SEP <<
+           "Significant_Value" << SEP << endl;
+#elif HEXADECA_TREE_TYPE == 1
+           "X" << SEP <<
+           "Y" << SEP <<
+           "U" << SEP <<
+           "V" << SEP <<
+           "Valor" << SEP << endl;
+#endif
+}
+
+void Tree::CloseFile() {
+    this->file.close();
+}
+
 void Tree::WriteAttributesInFile(uint level, Point_4D &pos, Node* node){
     string order = "";
     order = (level == 0) ? "Original" : (level == 1) ? "Order_8" : "Order_4";
-    this->props->file <<
+    this->file <<
          this->props->light_field_name << SEP <<
          order << SEP <<
          this->props->hypercubo << SEP <<
@@ -214,7 +252,7 @@ void Tree::WriteAttributesInFile(uint level, Point_4D &pos, Node* node){
 void Tree::WriteValuesInFile(uint level, Point_4D &pos, Point_4D &position, int value){
     string order = "";
     order = (level == 0) ? "Original" : (level == 1) ? "Order_8" : "Order_4";
-    this->props->file <<
+    this->file <<
          this->props->light_field_name << SEP <<
          order << SEP <<
          this->props->hypercubo << SEP <<

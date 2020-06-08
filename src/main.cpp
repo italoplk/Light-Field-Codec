@@ -88,33 +88,7 @@ int main(int argc, char **argv) {
     Tree tree;
     Node *root = nullptr;
     string light_field_name = Split(encoderParameters.getPathInput(), '/').back();
-    ofstream file_hexadeca_tree;
-    file_hexadeca_tree.open(encoderParameters.getPathOutput() + "HexadecaTree.csv");
-    file_hexadeca_tree <<
-                       "Light_Field" << sep <<
-                       "Partition" << sep <<
-                       "Hypercubo" << sep <<
-                       "Channel" << sep <<
-                       "Pos_x" << sep <<
-                       "Pos_y" << sep <<
-                       "Pos_u" << sep <<
-                       "Pos_v" << sep <<
-#if HEXADECA_TREE_TYPE == 0
-                       "Hypercubo_Size" << sep <<
-                       "N_Zero" << sep <<
-                       "N_One" << sep <<
-                       "N_Two" << sep <<
-                       "N_Greater_Than_Two" << sep <<
-                       "Abs_Max_Value" << sep <<
-                       "Abs_Mean_value" << sep <<
-                       "Significant_Value" << sep << endl;
-#elif HEXADECA_TREE_TYPE == 1
-                       "X" << sep <<
-                       "Y" << sep <<
-                       "U" << sep <<
-                       "V" << sep <<
-                       "Valor" << sep << endl;
-#endif
+    tree.OpenFile(encoderParameters.getPathOutput());
 #endif
 
 #if TRACE_TRANSF
@@ -276,12 +250,12 @@ int main(int argc, char **argv) {
                         }
 
 #if HEXADECA_TREE
-                        root = tree.CreateRoot(file_hexadeca_tree, light_field_name, hypercubo, it_channel, temp_lre, encoderParameters.dim_block);
+                        root = tree.CreateRoot(light_field_name, hypercubo, it_channel, temp_lre, encoderParameters.dim_block);
                         tree.CreateTree(root, 0, it_pos, hypercubo_pos, {0,0,0,0});
 
                         tree.DeleteTree(&root);
 
-                        /*if (hypercubo == 0)
+                        /*if (hypercubo == 1)
                             exit(1);*/
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
@@ -401,7 +375,7 @@ int main(int argc, char **argv) {
     }
 
     //lf.write(encoderParameters.getPathOutput());
-    encoder.finish_and_write();
+    //encoder.finish_and_write();
     encoder.~EncBitstreamWriter();
 
 #if STATISTICS_TIME
@@ -413,7 +387,7 @@ int main(int argc, char **argv) {
     cout << "#########################################################" << endl;
 
 #if HEXADECA_TREE
-    file_hexadeca_tree.close();
+    tree.CloseFile();
 #endif
 
 #if STATISTICS_GLOBAL
