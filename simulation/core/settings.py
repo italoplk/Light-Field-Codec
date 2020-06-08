@@ -39,6 +39,7 @@ class Settings:
         ARGS = getattr(self, 'ARGS', {})
         SEQ_ARGS = getattr(self, 'SEQ_ARGS', [])
         GROUP_TOGETHER_ARGS = getattr(self, 'GROUP_TOGETHER_ARGS', ())
+    
 
         for arg, value in ARGS.items():
             if type(value) is str:
@@ -86,11 +87,13 @@ class Settings:
         for var in to_parse:
             value = variables.get(var)
             if value is not None:
-                value = value % variables
+                if type(value) == str:
+                    value = value % variables
+                else:
+                    value = [v % variables for v in value]
                 variables[var] = value
 
             # Update back into args
             if var in args:
                 args.update({var: value})
-
         return variables, args

@@ -36,6 +36,7 @@ def tui(stdscr):
     curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
     total_jobs = len(Simulation.instances_status)
     s = screen.SimulationScreen(stdscr, total_jobs)
+    s.init()
     s.loop(settings.PARALLEL_INSTANCES)
 
 

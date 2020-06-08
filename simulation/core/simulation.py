@@ -112,8 +112,8 @@ class Simulation:
                     'time_start': time.time()
                 })
                 status[instance.id] = val
-                subprocess.call(
-                    ['python3 -c "import time; import random; time.sleep(random.randrange(2, 8))"'], shell=True)
+                # subprocess.call(
+                #     ['python3 -c "import time; import random; time.sleep(random.randrange(2, 8))"'], shell=True)
                 val = status[instance.id]
                 val.update({
                     'running': False,

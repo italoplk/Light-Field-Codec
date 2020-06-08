@@ -14,68 +14,41 @@ Statistics::Statistics(const std::string &file) {
 
     std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
 
-    output << "channel" << sep <<
-           "pos_x" << sep << "pos_y" << sep << "pos_u" << sep << "pos_v" << sep <<
-           "bl_x" << sep << "bl_y" << sep << "bl_u" << sep << "bl_v" << sep <<
-
-           "dc" << sep << "v_min" << sep << "v_max" << sep << "v_minAbs" << sep << "v_maxAbs" << sep <<
-
-           "zeros" << sep << "ones" << sep <<
-
-           "mean" << sep << "median" << sep << "std" << sep << "variance" << sep <<
-           "energy" << sep << "entropy" << sep << "sse" << sep <<  "mse" << sep << "PSNR" << sep <<
-
-           "run_count" << sep << "run_max" << sep << "run_mean" << sep << "run_std" << sep << "run_var" << sep <<
-
-           "posSO_last_nzero" << sep << "posSO_last_nzeroone" << sep <<
-           "pos_last_nzero" << sep << "pos_last_nzeroone" << sep << "bits_per_4D_Block" <<
-
-           std::endl;
+    output << "channel" << sep << "pos_x" << sep << "pos_y" << sep << "pos_u" << sep << "pos_v"
+           << sep << "bl_x" << sep << "bl_y" << sep << "bl_u" << sep << "bl_v" << sep << "dc" << sep
+           << "v_min" << sep << "v_max" << sep << "v_minAbs" << sep << "v_maxAbs" << sep << "zeros"
+           << sep << "ones" << sep << "mean" << sep << "median" << sep << "std" << sep << "variance"
+           << sep << "energy" << sep << "entropy" << sep << "sse" << sep << "cov" << sep
+           << "run_count" << sep << "run_max" << sep << "run_mean" << sep << "run_std" << sep
+           << "run_var" << sep << "posSO_last_nzero" << sep << "posSO_last_nzeroone" << sep
+           << "pos_last_nzero" << sep << "pos_last_nzeroone" << sep << "bits_per_4D_Block"
+           << std::endl;
 }
 
 void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel) {
     std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
 
-    output <<
-           it_channel << sep << 
-           pos.x << sep <<
-           pos.y << sep <<
-           pos.u << sep <<
-           pos.v << sep <<
-
-           dimBlock.x << sep <<
-           dimBlock.y << sep <<
-           dimBlock.u << sep <<
-           dimBlock.v << sep <<
-
-           this->dc << sep <<
-           this->v_min << sep <<
-           this->v_max << sep <<
-           this->v_minAbs << sep <<
-           this->v_maxAbs << sep <<
-
-           this->num_zeros << sep <<
-           this->num_ones << sep <<
-           this->v_mean << sep <<
-           this->v_median << sep <<
-           this->v_std << sep <<
-           this->v_variance << sep <<
-           this->v_energy << sep <<
-           this->v_entropy << sep <<
-           this->sse << sep <<
-           this->mse << sep << 
-           this->psnr << 
-           std::endl;
+    output << it_channel << sep << pos.x << sep << pos.y << sep << pos.u << sep << pos.v << sep
+           << dimBlock.x << sep << dimBlock.y << sep << dimBlock.u << sep << dimBlock.v << sep
+           << this->dc << sep << this->v_min << sep << this->v_max << sep << this->v_minAbs << sep
+           << this->v_maxAbs << sep << this->num_zeros << sep << this->num_ones << sep
+           << this->v_mean << sep << this->v_median << sep << this->v_std << sep << this->v_variance
+           << sep << this->v_energy << sep << this->v_entropy << sep << this->sse << sep
+           << this->cov << sep << std::endl;
 }
 
-void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel, std::vector<LRE_struct> &lre_result, uint bits_per_4D_Block) {
+void Statistics::write(Point4D &pos,
+                       Point4D &dimBlock,
+                       uint it_channel,
+                       std::vector<LRE_struct> &lre_result,
+                       uint bits_per_4D_Block) {
     std::ostream &output = (this->file_out.is_open()) ? this->file_out : std::cout;
 
     uint max_run = 0;
 
     std::vector<float> run_zeros;
 
-    for (auto it_result : lre_result) {
+    for (auto it_result: lre_result) {
         max_run = (it_result.run > max_run) ? it_result.run : max_run;
         run_zeros.push_back(it_result.run);
     }
@@ -84,60 +57,33 @@ void Statistics::write(Point4D &pos, Point4D &dimBlock, uint it_channel, std::ve
     this->run_var = Statistics::variance(run_zeros, this->run_mean);
     this->run_std = sqrt(this->run_var);
 
-    output <<
-           it_channel << sep <<
-           pos.x << sep <<
-           pos.y << sep <<
-           pos.u << sep <<
-           pos.v << sep <<
+    output << it_channel << sep << pos.x << sep << pos.y << sep << pos.u << sep << pos.v << sep <<
 
-           dimBlock.x << sep <<
-           dimBlock.y << sep <<
-           dimBlock.u << sep <<
-           dimBlock.v << sep <<
+    dimBlock.x << sep << dimBlock.y << sep << dimBlock.u << sep << dimBlock.v << sep <<
 
-           this->dc << sep <<
-           this->v_min << sep <<
-           this->v_max << sep <<
-           this->v_minAbs << sep <<
-           this->v_maxAbs << sep <<
+    this->dc << sep << this->v_min << sep << this->v_max << sep << this->v_minAbs << sep
+           << this->v_maxAbs << sep <<
 
-           this->num_zeros << sep <<
-           this->num_ones << sep <<
-           this->v_mean << sep <<
-           this->v_median << sep <<
-           this->v_std << sep <<
-           this->v_variance << sep <<
-           this->v_energy << sep <<
-           this->v_entropy << sep <<
+    this->num_zeros << sep << this->num_ones << sep << this->v_mean << sep << this->v_median << sep
+           << this->v_std << sep << this->v_variance << sep << this->v_energy << sep
+           << this->v_entropy << sep <<
 
-           this->sse << sep <<
-           this->mse << sep <<
-           this->psnr << sep <<
+    this->sse << sep << this->cov << sep <<
 
-           lre_result.size() << sep <<
-           max_run << sep <<
+    lre_result.size() << sep << max_run << sep <<
 
-           this->run_mean << sep <<
-           this->run_std << sep <<
-           this->run_var << sep <<
+    this->run_mean << sep << this->run_std << sep << this->run_var << sep <<
 
-           this->posSO_last_nzero << sep <<
-           this->posSO_last_nzeroone << sep <<
+    this->posSO_last_nzero << sep << this->posSO_last_nzeroone << sep <<
 
-           this->pos_last_nzero << sep <<
-           this->pos_last_nzeroone << sep <<
-           bits_per_4D_Block << sep <<
+    this->pos_last_nzero << sep << this->pos_last_nzeroone << sep << bits_per_4D_Block << sep <<
 
-           std::endl;
+    std::endl;
 }
 
 Statistics::~Statistics() {
-    if (this->file_out.is_open()) {
-        this->file_out.close();
-    }
+    if (this->file_out.is_open()) { this->file_out.close(); }
 }
-
 
 void Statistics::compute(const std::vector<float> &input, const ushort *scan_order) {
     std::vector<float> values;
@@ -151,8 +97,7 @@ void Statistics::compute(const std::vector<float> &input, const ushort *scan_ord
         assert(!std::isnan(value));
         if (std::abs(value) <= this->epsilon) {
             ++this->num_zeros;
-        }
-        else if (std::abs(value - 1) <= this->epsilon) { // epsilon = 0.1
+        } else if (std::abs(value - 1) <= this->epsilon) { // epsilon = 0.1
             ++this->num_ones;
             this->posSO_last_nzero = scan_order ? scan_order[i] : i;
             this->pos_last_nzero = i;
@@ -174,19 +119,24 @@ void Statistics::compute(const std::vector<float> &input, const ushort *scan_ord
 
     assert(!std::isnan(this->v_mean));
 
-
     this->v_min = this->v_max = this->v_minAbs = this->v_maxAbs = 0;
     if (!values.empty()) {
         this->v_min = Statistics::min_vet(std::vector<float>(values.begin() + 1, values.end()));
         this->v_max = Statistics::max_vet(std::vector<float>(values.begin() + 1, values.end()));
-        this->v_minAbs = Statistics::minAbs_vet(std::vector<float>(values.begin() + 1, values.end()));
-        this->v_maxAbs = Statistics::maxAbs_vet(std::vector<float>(values.begin() + 1, values.end()));
+        this->v_minAbs =
+        Statistics::minAbs_vet(std::vector<float>(values.begin() + 1, values.end()));
+        this->v_maxAbs =
+        Statistics::maxAbs_vet(std::vector<float>(values.begin() + 1, values.end()));
     }
 }
 
-void Statistics::compute_sse(float *orig, float *ref, const Point4D &dim_block, const Point4D &stride_block) {
+void Statistics::compute_sse(float *orig,
+                             float *ref,
+                             const Point4D &dim_block,
+                             const Point4D &stride_block) {
     float error;
     this->sse = 0;
+    this->cov = 0;
     float *it_orig = orig, *it_ref = ref;
 
     int count = 0;
@@ -194,12 +144,12 @@ void Statistics::compute_sse(float *orig, float *ref, const Point4D &dim_block, 
         for (int it_u = 0; it_u < dim_block.u; ++it_u) {
             for (int it_y = 0; it_y < dim_block.y; ++it_y) {
                 for (int it_x = 0; it_x < dim_block.x; ++it_x) {
-                    //uint pos = it_x + it_y * 15 + it_u * 15 * 15 + it_v * 15 * 15 * 15;
+                    // uint pos = it_x + it_y * 15 + it_u * 15 * 15 + it_v * 15 * 15 * 15;
 
                     error = *it_ref - *it_orig;
                     this->sse += error * error;
+                    this->cov += *it_ref * *it_orig;
                     ++count;
-
                     it_orig += stride_block.x;
                     it_ref += stride_block.x;
                 }
@@ -212,9 +162,6 @@ void Statistics::compute_sse(float *orig, float *ref, const Point4D &dim_block, 
         it_orig += stride_block.v;
         it_ref += stride_block.v;
     }
-
-    this->mse = this->sse / (double) dim_block.getNSamples();
-    this->psnr = 120 - std::log10(this->mse); // 20 * std::log10(1e6) = 120
 }
 
 float Statistics::entropy_vector(std::vector<int> values) {
@@ -223,26 +170,27 @@ float Statistics::entropy_vector(std::vector<int> values) {
     std::sort(values.begin(), values.end());
     auto unique_values = values;
 
-    unique_values.resize(std::distance(unique_values.begin(), std::unique(unique_values.begin(), unique_values.end())));
+    unique_values.resize(
+    std::distance(unique_values.begin(), std::unique(unique_values.begin(), unique_values.end())));
 
-    for (auto &i : unique_values) {
+    for (auto &i: unique_values) {
         int v_count = std::count(values.begin(), values.end(), i);
         float v_freq = float(v_count) / values.size();
         elements_count.emplace_back(i, v_count, v_freq);
     }
 
     float prob, entropy = 0;
-    for (auto &it : elements_count) {
+    for (auto &it: elements_count) {
         prob = std::get<2>(it);
-        entropy += (float) prob * std::log2(prob);
+        entropy += (float)prob * std::log2(prob);
     }
     return -entropy;
 }
 
 float Statistics::energy(std::vector<float> const &v) {
     float power = 0.0f;
-    for (auto &i : v) {
-        power += (float) i * (float) i;
+    for (auto &i: v) {
+        power += (float)i * (float)i;
     }
     return power;
 }
@@ -250,7 +198,7 @@ float Statistics::energy(std::vector<float> const &v) {
 double Statistics::variance(std::vector<float> const &vet, double mean) {
     double variance = 0;
 
-    for (auto it : vet) {
+    for (auto it: vet) {
         variance += pow((it - mean), 2);
     }
 
@@ -262,9 +210,7 @@ double Statistics::median(std::vector<float> vet) {
 
     if (size == 0) return 0;
 
-    return (size % 2 == 0) ?
-           ((vet[size / 2 - 1] + vet[size / 2]) / 2) :
-           (vet[size / 2]);
+    return (size % 2 == 0) ? ((vet[size / 2 - 1] + vet[size / 2]) / 2) : (vet[size / 2]);
 }
 
 double Statistics::mean(std::vector<float> const &vet) {
@@ -272,71 +218,59 @@ double Statistics::mean(std::vector<float> const &vet) {
 
     float sum = 0.0;
     float old_sum = 0.0;
-    for (auto &i : vet) {
+    for (auto &i: vet) {
         sum += i;
         assert(!std::isnan(sum));
         old_sum = sum;
     }
 
-    return sum / (float) vet.size();
+    return sum / (float)vet.size();
 }
 
-double Statistics::get_mean() const {
-    return this->v_mean;
-}
+double Statistics::get_mean() const { return this->v_mean; }
 
-double Statistics::get_median() const {
-    return this->v_median;
-}
+double Statistics::get_median() const { return this->v_median; }
 
-double Statistics::get_variance() const {
-    return this->v_variance;
-}
+double Statistics::get_variance() const { return this->v_variance; }
 
-double Statistics::get_std() const {
-    return this->v_std;
-}
+double Statistics::get_std() const { return this->v_std; }
 
-unsigned long Statistics::get_zeros() const {
-    return this->num_zeros;
-}
+unsigned long Statistics::get_zeros() const { return this->num_zeros; }
 
-unsigned long Statistics::get_ones() const {
-    return this->num_ones;
-}
+unsigned long Statistics::get_ones() const { return this->num_ones; }
 
-double Statistics::get_entropy() const {
-    return this->v_entropy;
-}
+double Statistics::get_entropy() const { return this->v_entropy; }
 
-double Statistics::get_power() const {
-    return this->v_energy;
-}
+double Statistics::get_power() const { return this->v_energy; }
 
 float Statistics::min_vet(const std::vector<float> &input) {
     if (input.empty()) return 0;
     float t_min = input[0];
-    for (auto it:input) t_min = std::min(it, t_min);
+    for (auto it: input)
+        t_min = std::min(it, t_min);
     return t_min;
 }
 
 float Statistics::max_vet(const std::vector<float> &input) {
     if (input.empty()) return 0;
     float t_max = input[0];
-    for (auto it:input) t_max = std::max(it, t_max);
+    for (auto it: input)
+        t_max = std::max(it, t_max);
     return t_max;
 }
 
 float Statistics::minAbs_vet(const std::vector<float> &input) {
     if (input.empty()) return 0;
-    float t_min_abs = std::abs(input[0]);
-    for (auto it:input) t_min_abs = std::min(std::abs(it), t_min_abs);
+    auto t_min_abs = std::abs(input[0]);
+    for (auto it: input)
+        t_min_abs = std::min(std::abs(it), t_min_abs);
     return t_min_abs;
 }
 
 float Statistics::maxAbs_vet(const std::vector<float> &input) {
     if (input.empty()) return 0;
-    float t_max_abs = std::abs(input[0]);
-    for (auto it:input) t_max_abs = std::max(std::abs(it), t_max_abs);
+    auto t_max_abs = std::abs(input[0]);
+    for (auto it: input)
+        t_max_abs = std::max(std::abs(it), t_max_abs);
     return t_max_abs;
 }

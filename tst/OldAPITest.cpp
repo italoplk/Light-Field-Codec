@@ -2,266 +2,164 @@
 #include <cstdlib>
 #include <gtest/gtest.h>
 
-#include "DiscreteCosineTransformContext.h"
-#include "DiscreteCosineTransformContext4D.h"
-#include "TransformContext.h"
 #include "Time.h"
-
+#include "Transform.h"
 #include "deprecated/Transform.h"
 #include "utils.h"
 
-#define ERROR_EPSILON 1e-6
-
-/**
- * This tests if the new implementation is identical to the old one.
- * The test passes if both the DCT transform and its inverse are identical.
- * BUGS: Somehow, the old implementation used double as an intermediate value.
- * It caused small changes that, if accumulated, grew beyond 1e-5 in arrays for
- * 100 elements.
- */
-TEST(BackwardsCompatibilityWithOldAPI, new_dct_1d_is_consistent) {
-#define FULL_LENGTH 512
-  TransformContext<float> *ctx;
-
-  float input_new[FULL_LENGTH];
-  float input_old[FULL_LENGTH];
-  float output_new[FULL_LENGTH];
-  float output_old[FULL_LENGTH];
-  Point4D size(FULL_LENGTH, 1, 1, 1);
-
-  // Seed the random number generator
-  std::srand(0);
-
-  // Populate input with random numbers and initialize output arrays.
-  for (int i = 0; i < FULL_LENGTH; i++) {
-    float value = 256 * (std::rand() / (RAND_MAX * 1.0));
-    input_new[i] = value;
-    input_old[i] = value;
-    output_new[i] = 0;
-    output_old[i] = 0;
-  }
-
-  old::Transform t(size);
-  ctx = new DiscreteCosineTransformContext<float>(FULL_LENGTH);
-
-  // Forward DCT
-  ctx->forward(input_new, output_new);
-  t.dct_4d(input_old, output_old, size, size);
-
-  EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 0,
-              ERROR_EPSILON)
-      << "The distance between the intermediate DCT "
-         "is bigger then the expected value.";
-
-  std::swap(input_new, output_new);
-  std::swap(input_old, output_old);
-
-  // Inverse DCT
-  ctx->inverse(input_new, output_new);
-  t.idct_4d(input_old, output_old, size, size);
-
-  EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 0,
-              ERROR_EPSILON)
-      << "The distance between the resulting vectors is "
-         "bigger then the expected value.";
-
-  delete ctx;
-  DiscreteCosineTransformContext<float>::flush_coeff();
-#undef FULL_LENGTH
+inline int offset(int x, int y, int u, int v, Point4D &stride) {
+  return x * stride.x + y * stride.y + u * stride.u + v * stride.v;
 }
 
 TEST(BackwardsCompatibilityWithOldAPI, new_dct_4d_is_consistent) {
-#define SIZE_X 15
-#define SIZE_Y 16
-#define SIZE_U 17
-#define SIZE_V 18
-#define FULL_LENGTH (SIZE_X * SIZE_Y * SIZE_U * SIZE_V)
+  size_t FLAT_SIZE = 3 * 4 * 5 * 6;
+  Point4D shape(3, 4, 5, 6);
 
-  TransformContext<float> *ctx;
+  Transform new_transform(shape);
+  old::Transform old_transform(shape);
 
-  Point4D size(SIZE_X, SIZE_Y, SIZE_U, SIZE_V);
-  Point4D stride(1, SIZE_X, SIZE_X * SIZE_Y, SIZE_X * SIZE_Y * SIZE_U);
-  float input_new[FULL_LENGTH];
-  float input_old[FULL_LENGTH];
-  float output_new[FULL_LENGTH];
-  float output_old[FULL_LENGTH];
+  float input[FLAT_SIZE];
+  float output[FLAT_SIZE];
+  float expected[FLAT_SIZE];
 
   // Seed the random number generator
   std::srand(0);
 
   // Populate input with random numbers and initialize output arrays.
-  for (int i = 0; i < FULL_LENGTH; i++) {
-    float value = 256 * (std::rand() / (RAND_MAX * 1.0));
-    input_new[i] = value;
-    input_old[i] = value;
-    output_new[i] = 0;
-    output_old[i] = 0;
-  }
-
-  old::Transform t(size);
-  ctx = new DiscreteCosineTransformContext4D<float>(size, stride);
-
-  // Forward DCT
-  ctx->forward(input_new, output_new);
-  t.dct_4d(input_old, output_old, size, size);
-
-  EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 0,
-              ERROR_EPSILON)
-      << "The distance between the intermediate DCT "
-         "is bigger then the expected value.";
-
-  std::swap(input_new, output_new);
-  std::swap(input_old, output_old);
-
-  // Inverse DCT
-  ctx->inverse(input_new, output_new);
-  t.idct_4d(input_old, output_old, size, size);
-
-  EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 0,
-              ERROR_EPSILON)
-      << "The distance between the resulting vectors is "
-         "bigger then the expected value.";
-
-  delete ctx;
-  DiscreteCosineTransformContext<float>::flush_coeff();
-#undef SIZE_X
-#undef SIZE_Y
-#undef SIZE_U
-#undef SIZE_V
-}
-
-TEST(BackwardsCompatibilityWithOldAPI,
-     new_api_accepts_blocks_of_smaller_sizes) {
-#define SIZE_X 15
-#define SIZE_Y 16
-#define SIZE_U 17
-#define SIZE_V 18
-#define FULL_LENGTH (SIZE_X * SIZE_Y * SIZE_U * SIZE_V)
-
-#define DELTA_SIZE 5
-
-  TransformContext<float> *ctx;
-
-  Point4D size_lightfield(SIZE_X, SIZE_Y, SIZE_U, SIZE_V);
-  Point4D size_block = size_lightfield - DELTA_SIZE;
-  Point4D stride_lightfield(1, SIZE_X, SIZE_X * SIZE_Y,
-                            SIZE_X * SIZE_Y * SIZE_U);
-  float input_new[FULL_LENGTH];
-  float input_old[FULL_LENGTH];
-  float output_new[FULL_LENGTH];
-  float output_old[FULL_LENGTH];
-
-  // Seed the random number generator
-  std::srand(0);
-
-  // Populate input with random numbers and initialize output arrays.
-  for (int i = 0; i < FULL_LENGTH; i++) {
-    float value = 256 * (std::rand() / (RAND_MAX * 1.0));
-    input_new[i] = value;
-    input_old[i] = value;
-    output_new[i] = 0;
-    output_old[i] = 0;
-  }
-
-  auto *size_block_array = size_block.to_array();
-
-  old::Transform t(size_lightfield);
-  ctx = new DiscreteCosineTransformContext4D<float>(size_lightfield,
-                                                    stride_lightfield);
-
-  // Forward DCT
-  ctx->forward(input_new, output_new, size_block_array);
-  t.dct_4d(input_old, output_old, size_block, size_lightfield);
-
-  EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 0,
-              ERROR_EPSILON)
-      << "The distance between the intermediate DCT "
-         "is bigger then the expected value.";
-
-  std::swap(input_new, output_new);
-  std::swap(input_old, output_old);
-
-  // Inverse DCT
-  ctx->inverse(input_new, output_new, size_block_array);
-  t.idct_4d(input_old, output_old, size_block, size_lightfield);
-
-  EXPECT_NEAR(distance_percent<float>(output_new, output_old, FULL_LENGTH), 0,
-              ERROR_EPSILON)
-      << "The distance between the resulting vectors is "
-         "bigger then the expected value.";
-
-  delete[] size_block_array;
-  delete ctx;
-  DiscreteCosineTransformContext<float>::flush_coeff();
-#undef SIZE_X
-#undef SIZE_Y
-#undef SIZE_U
-#undef SIZE_V
-#undef FULL_LENGTH
-#undef DELTA_SIZE
-}
-
-TEST(BackwardsCompatibilityWithOldAPI, DISABLED_speed_test) {
-#define SIZE_X 15
-#define SIZE_Y 16
-#define SIZE_U 17
-#define SIZE_V 18
-#define FULL_LENGTH (SIZE_X * SIZE_Y * SIZE_U * SIZE_V)
-
-  TransformContext<float> *ctx;
-  Time new_fwd, new_inv, trx_fwd, old_fwd, old_inv;
-
-  Point4D size(SIZE_X, SIZE_Y, SIZE_U, SIZE_V);
-  Point4D stride(1, SIZE_X, SIZE_X * SIZE_Y, SIZE_X * SIZE_Y * SIZE_U);
-  float input[FULL_LENGTH];
-  float inverse[FULL_LENGTH];
-  float output[FULL_LENGTH];
-
-  // Seed the random number generator
-  std::srand(0);
-
-  // Populate input with random numbers and initialize output arrays.
-  for (int i = 0; i < FULL_LENGTH; i++) {
+  for (int i = 0; i < FLAT_SIZE; i++) {
     float value = 256 * (std::rand() / (RAND_MAX * 1.0));
     input[i] = value;
+    output[i] = 0;
+    expected[i] = 0;
   }
 
-  old::Transform t(size);
-  ctx = new DiscreteCosineTransformContext4D<float>(size, stride);
+  old_transform.dct_4d(input, expected, shape, shape);
+  new_transform.forward(Transform::DCT, input, output, shape);
 
-  for (int run = 0; run < 1000; run++) {
+  for (int i = 0; i < FLAT_SIZE; i++)
+    ASSERT_NEAR(expected[i], output[i], std::abs(expected[i] * 1e-3));
+}
 
-    // Forward DCT
-    new_fwd.tic();
-    ctx->forward(input, inverse);
-    new_fwd.toc();
-    old_fwd.tic();
-    t.dct_4d(input, inverse, size, size);
-    old_fwd.toc();
+TEST(BackwardsCompatibilityWithOldAPI, new_idct_4d_is_consistent) {
+  size_t FLAT_SIZE = 3 * 4 * 5 * 6;
+  Point4D shape(3, 4, 5, 6);
 
-    // Inverse DCT
-    new_inv.tic();
-    ctx->inverse(inverse, output);
-    new_inv.toc();
-    old_inv.tic();
-    t.idct_4d(inverse, output, size, size);
-    old_inv.toc();
+  Transform new_transform(shape);
+  old::Transform old_transform(shape);
+
+  float input[FLAT_SIZE];
+  float temp1[FLAT_SIZE];
+  float temp2[FLAT_SIZE];
+  float output[FLAT_SIZE];
+  float expected[FLAT_SIZE];
+
+  // Seed the random number generator
+  std::srand(0);
+
+  // Populate input with random numbers and initialize output arrays.
+  for (int i = 0; i < FLAT_SIZE; i++) {
+    float value = 256 * (std::rand() / (RAND_MAX * 1.0));
+    input[i] = value;
+    output[i] = 0;
+    expected[i] = 0;
   }
 
-  // EXPECT_TRUE(false) << "new_fwd: " << new_fwd.getTotalTime() << "\t"
-  //                    << "old_fwd: " << old_fwd.getTotalTime() << "\t"
-  //                    << "new_inv: " << new_inv.getTotalTime() << "\t"
-  //                    << "old_inv: " << old_inv.getTotalTime();
+  old_transform.dct_4d(input, temp1, shape, shape);
+  old_transform.idct_4d(temp1, expected, shape, shape);
+
+  new_transform.forward(Transform::DCT, input, temp2, shape);
+  new_transform.inverse(Transform::DCT, temp2, output, shape);
+
+  for (int i = 0; i < FLAT_SIZE; i++)
+    ASSERT_NEAR(expected[i], output[i], std::abs(expected[i] * 1e-3));
+}
+
+TEST(BackwardsCompatibilityWithOldAPI, partial_size_dct) {
+  auto MAGIC_NUMBER = 123456.0;
+  size_t FLAT_SIZE = 38025;
+  Point4D shape(15,15,13,13);
+  Point4D smaller_shape(15,15,13,10);
+  Point4D stride(1,15,225,2925);
+
+  Transform new_transform(shape);
+  old::Transform old_transform(shape);
+
+  float input[FLAT_SIZE];
+  float temp1[FLAT_SIZE];
+  float temp2[FLAT_SIZE];
+  float output[FLAT_SIZE];
+  float expected[FLAT_SIZE];
+
+  // Populate input with random numbers and initialize output arrays.
+  for (int i = 0; i < FLAT_SIZE; i++) {
+    input[i] = i;
+    output[i] = expected[i] = temp1[i] = temp2[i] = MAGIC_NUMBER;
+  }
+
+  old_transform.dct_4d(input, temp1, smaller_shape, shape);
+  new_transform.forward(Transform::DCT, input, temp2, smaller_shape);
+
+  old_transform.idct_4d(temp1, expected, smaller_shape, shape);
+  new_transform.inverse(Transform::DCT, temp2, output, smaller_shape);
+
+  for (int v = 0; v < shape.v; v++) {
+    for (int u = 0; u < shape.u; u++) {
+      for (int y = 0; y < shape.y; y++) {
+        for (int x = 0; x < shape.x; x++) {
+          auto index = offset(x, y, u, v, stride);
+          if (!(v < smaller_shape.v && u < smaller_shape.u &&
+                y < smaller_shape.y && x < smaller_shape.x)) {
+            ASSERT_EQ(temp1[index], MAGIC_NUMBER);
+            ASSERT_EQ(temp2[index], MAGIC_NUMBER);
+            ASSERT_EQ(output[index], MAGIC_NUMBER);
+            ASSERT_EQ(expected[index], MAGIC_NUMBER);
+          } else {
+            ASSERT_NEAR(temp1[index], temp2[index], 1);
+            ASSERT_NEAR(output[index], expected[index], 1);
+          }
+        }
+      }
+    }
+  }
+}
 
 
-  // Expect new api to be faster than ond api
-  EXPECT_LT(new_fwd.getTotalTime(), old_fwd.getTotalTime());
-  EXPECT_LT(new_inv.getTotalTime(), old_inv.getTotalTime());
+TEST(BackwardsCompatibilityWithOldAPI, partial_size_dst2) {
+  auto MAGIC_NUMBER = 0xabcde;
+  size_t FLAT_SIZE = 38025;
+  Point4D shape(15,15,13,13);
+  Point4D smaller_shape(10,15,13,13);
+  Point4D stride(1,15,225,2925);
 
-  delete ctx;
-  DiscreteCosineTransformContext<float>::flush_coeff();
-#undef SIZE_X
-#undef SIZE_Y
-#undef SIZE_U
-#undef SIZE_V
+  Transform new_transform(shape);
+
+  float input[FLAT_SIZE];
+  float transformed_signal[FLAT_SIZE];
+  float output[FLAT_SIZE];
+
+  // Populate input with random numbers and initialize output arrays.
+  for (int i = 0; i < FLAT_SIZE; i++) {
+    input[i] = i;
+    output[i] = transformed_signal[i] = MAGIC_NUMBER;
+  }
+
+  new_transform.forward(Transform::DST_II, input, transformed_signal, smaller_shape);
+  new_transform.inverse(Transform::DST_II, transformed_signal, output, smaller_shape);
+
+  for (int v = 0; v < shape.v; v++) {
+    for (int u = 0; u < shape.u; u++) {
+      for (int y = 0; y < shape.y; y++) {
+        for (int x = 0; x < shape.x; x++) {
+          auto index = offset(x, y, u, v, stride);
+          if (!(v < smaller_shape.v && u < smaller_shape.u &&
+                y < smaller_shape.y && x < smaller_shape.x)) {
+            ASSERT_EQ(transformed_signal[index], MAGIC_NUMBER);
+            ASSERT_EQ(output[index], MAGIC_NUMBER);
+          } else {
+            ASSERT_NEAR(output[index], input[index], 1);
+          }
+        }
+      }
+    }
+  }
 }

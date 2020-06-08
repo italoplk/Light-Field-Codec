@@ -11,10 +11,11 @@ class EncoderParameters {
   std::string path_input{"input/"}, path_output{"output/"};
 
 public:
-  Point4D dim_LF{0, 0, 0, 0}, dim_block{0, 0, 0, 0},
-      quant_weight_100{1 * 100, 1 * 100, 1 * 100, 1 * 100};
-  std::string transform;
-  bool lytro{false};
+    Point4D dim_LF{0, 0, 0, 0},
+            dim_block{0, 0, 0, 0},
+            quant_weight_100{1 * 100, 1 * 100, 1 * 100, 1 * 100};
+    bool lytro{false};
+    std::string transform;
 
   bool isLytro() const;
 

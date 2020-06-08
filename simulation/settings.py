@@ -6,7 +6,7 @@
 # It is recomended that you keep this file clean and well documented.
 
 import os
-from os.path import join, dirname, abspath
+from os.path import dirname, abspath
 
 
 # Helper method to read from environment variables.
@@ -17,6 +17,19 @@ def from_env(variable, quiet=False):
         raise KeyError(f'Environment variable \'{variable}\' not defined')
     return value
 
+def isiterable(maybe_iterable):
+    try:
+        iter(maybe_iterable)
+    except:
+        return False
+    else:
+        return True
+
+def join(root, *paths):
+    if type(root) != str and isiterable(root):
+        return [os.path.join(r, *paths) for r in root]
+    else:
+        return os.path.join(root, *paths)
 
 # Path to parent directory.
 BASE_DIR = dirname(dirname(abspath(__file__)))
@@ -38,10 +51,10 @@ RESULTS = [join(RESULTS_DIR, dataset + '_%(SIMULATION_ID)s', '')
             for dataset in DATASETS_TO_RUN]
 
 # List of transformation protocols to be used
-TRANSFORMS = ['DCT']
+TRANSFORMS = ['DCT', 'DST_II', 'DST_VII']
 
 # Quatizations values
-QUANTIZATIONS = [0.1, 0.25, 0.5, 1, 2, 5, 7, 10, 15, 20, 50, 100]
+QUANTIZATIONS = [0.1, 0.25, 0.5, 1, 2, 3, 5, 7, 10, 15, 20, 35, 50, 100]
 
 # Argument that are used to create simulation objects.
 # All list-like objects will be combined. For instance,
@@ -100,16 +113,14 @@ GROUP_TOGETHER_ARGS = (
 )
 
 
-BUILD_DIR = from_env('BUILD_DIR')
-BUILD_DIR = join(BASE_DIR, BUILD_DIR)
+
+BINARY = from_env('BINARY')
 
 # Binary
-EXECUTABLE =  join(BUILD_DIR, 'lfcodec')
+EXECUTABLE = join(BASE_DIR, 'build', BINARY)
 
 # Variable at module level.
-SIMULATION_ID = '%(-blx)s_%(-bly)s_%(-blu)s_%(-blv)s_' \
-                '%(-qx)s_%(-qy)s_%(-qu)s_%(-qv)s_' \
-                '%(-transform)s'
+SIMULATION_ID = '%(-qp)s_%(-transform)s'
 
 
 # Redirects stdout to a file inside the result of each
@@ -131,4 +142,4 @@ VARIABLES_TO_PARSE = [
 ]
 
 # Number of parallel instaces to run the simulation
-PARALLEL_INSTANCES = 6
+PARALLEL_INSTANCES = 4

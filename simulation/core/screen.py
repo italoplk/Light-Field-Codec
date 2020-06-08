@@ -41,8 +41,7 @@ class SimulationScreen:
 
         for i, (_, job) in enumerate(Simulation.status.items()):
             self.info_pad.addstr(i, 0, '[                   ]')
-            self.info_pad.addstr(
-                i, 1, 'AWAITING'.center(19), self.COLOR_WAITING)
+            self.info_pad.addstr(i, 1, 'AWAITING'.center(19), self.COLOR_WAITING)
             parsed_job = job['instance'].parse()
             if self.shrink_paths:
                 parsed_job = ' '.join(f'{path[:6]}~{path[-8:]}'
