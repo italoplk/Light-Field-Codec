@@ -16,8 +16,9 @@ public:
             quant_weight_100{1 * 100, 1 * 100, 1 * 100, 1 * 100};
     bool lytro{false};
     std::string transform;
-
-  bool isLytro() const;
+    int flipaxis {0};
+    int segments {0};
+    bool isLytro() const;
 
   EncoderParameters() = default;
 

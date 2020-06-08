@@ -39,6 +39,10 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             this->qp = strtof(argv[++it], nullptr);
         } else if (flag == "-transform") {
             this->transform = argv[++it];
+        } else if (flag == "-flipaxis") {
+            this->flipaxis = strtol(argv[++it], nullptr, 10);
+        } else if (flag == "-segments") {
+            this->segments = strtol(argv[++it], nullptr, 10);
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;
@@ -64,7 +68,8 @@ void EncoderParameters::report() {
     std::cout << "Block Dim: " << this->dim_block << std::endl;
     std::cout << std::endl;
     std::cout << "Transform: " << this->transform << std::endl;
-    std::cout << std::endl;
+    std::cout << "Segments: " << this->segments << std::endl;
+    std::cout << "Flip Axis: " << this->flipaxis << std::endl;
     std::cout << "QP: " << this->qp << std::endl;
     std::cout << "Quantization Weight (*100): " << this->quant_weight_100 << std::endl;
     std::cout << "############################################" << std::endl;

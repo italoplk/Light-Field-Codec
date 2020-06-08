@@ -67,7 +67,10 @@ int main(int argc, char **argv) {
 #if LFCODEC_USE_PREDICTION
     Prediction predictor;
 #endif
+
     Transform transform(encoderParameters.dim_block);
+    transform.axis_to_flip = encoderParameters.flipaxis;
+    transform.use_segments = encoderParameters.segments;
 
     auto transform_type = Transform::get_type(encoderParameters.transform);
     Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
@@ -289,8 +292,8 @@ int main(int argc, char **argv) {
 
 #    else /* NO_QUANTIZATION */
                         for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
-                            // qi4D[i] = temp_lre[i];
-                            qi4D[i] = qf4D[i];
+                            qi4D[i] = temp_lre[i];
+                            // qi4D[i] = qf4D[i];
                         }
 #    endif
 

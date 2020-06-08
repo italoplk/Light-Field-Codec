@@ -19,10 +19,10 @@ void flip_axis(float *block, unsigned to_flip, Point4D shape, Point4D stride) {
     for (int u = 0; u < shape.u; u++) {
       for (int y = 0; y < shape.y; y++) {
         for (int x = 0; x < shape.x; x++) {
-          auto dx = to_flip & AXIS_X ? shape.x - 1 - 2 * x : 0;
-          auto dy = to_flip & AXIS_Y ? shape.y - 1 - 2 * y : 0;
-          auto du = to_flip & AXIS_U ? shape.u - 1 - 2 * u : 0;
-          auto dv = to_flip & AXIS_V ? shape.v - 1 - 2 * v : 0;
+          auto dx = to_flip & Transform::AXIS_X ? shape.x - 1 - 2 * x : 0;
+          auto dy = to_flip & Transform::AXIS_Y ? shape.y - 1 - 2 * y : 0;
+          auto du = to_flip & Transform::AXIS_U ? shape.u - 1 - 2 * u : 0;
+          auto dv = to_flip & Transform::AXIS_V ? shape.v - 1 - 2 * v : 0;
           auto f_offset = offset(x, y, u, v, stride);
           auto r_offset = offset(x + dx, y + dy, u + du, v + dv, stride);
           _block[r_offset] = block[f_offset];
@@ -42,7 +42,7 @@ TEST(AxisFlipTest, flip_axis_x) {
   Point4D shape(16, 1, 1, 1);
   for (int i = 0; i < SIZE; i++)
     rev[SIZE - 1 - i] = arr[i] = i;
-  flip_axis(arr, AXIS_X, shape, stride);
+  flip_axis(arr, Transform::AXIS_X, shape, stride);
   for (int i = 0; i < SIZE; i++)
     ASSERT_EQ(arr[i], rev[i]) << i;
 }
@@ -62,7 +62,7 @@ TEST(AxisFlipTest, flip_axis_y) {
           rev[right] = arr[left] = counter;
           counter++;
         }
-  flip_axis(arr, AXIS_Y, shape, stride);
+  flip_axis(arr, Transform::AXIS_Y, shape, stride);
   for (int v = 0; v < shape.v; v++)
     for (int u = 0; u < shape.u; u++)
       for (int y = 0; y < shape.y; y++)
@@ -87,7 +87,7 @@ TEST(AxisFlipTest, flip_axis_u) {
           rev[right] = arr[left] = counter;
           counter++;
         }
-  flip_axis(arr, AXIS_U, shape, stride);
+  flip_axis(arr, Transform::AXIS_U, shape, stride);
   for (int v = 0; v < shape.v; v++)
     for (int u = 0; u < shape.u; u++)
       for (int y = 0; y < shape.y; y++)
@@ -112,7 +112,7 @@ TEST(AxisFlipTest, flip_axis_v) {
           rev[right] = arr[left] = counter;
           counter++;
         }
-  flip_axis(arr, AXIS_V, shape, stride);
+  flip_axis(arr, Transform::AXIS_V, shape, stride);
   for (int v = 0; v < shape.v; v++)
     for (int u = 0; u < shape.u; u++)
       for (int y = 0; y < shape.y; y++)

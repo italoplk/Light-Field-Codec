@@ -13,7 +13,6 @@ if not sys.version_info >= PY_VERSION:
     print("You are using Python %d.%d.%d." % sys.version_info[:3])
     sys.exit(1)
 
-
 parser = argparse.ArgumentParser(description='Best simulator in town!')
 parser.add_argument('-f', '--fake', action='store_true',
                     help='Print out the commands but does not run')
@@ -26,23 +25,21 @@ parser.add_argument('-S', '--settings', default=None,
 parser.add_argument('-o', '--display-stdout', action='store_true',
                     help='If enabled, display stdout regardless of '\
                         'whichever redirection defined in settings.')
-
+parser.add_argument('-m', '--metrics', action="extend", nargs="+", type=str,
+                    help='Metrics to be calculated after a simulation '\
+                        'finishes.')
+parser.add_argument('-d', '--discard', action="extend", nargs="+", type=str,
+                    help='If set, discards the created .')
 
 
 def tui(stdscr):
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
     total_jobs = len(Simulation.instances_status)
     s = screen.SimulationScreen(stdscr, total_jobs)
     s.init()
     s.loop(settings.PARALLEL_INSTANCES)
 
-
-
 if __name__ == "__main__":
-    options = parser.parse_args()    
+    options = parser.parse_args()   
     settings_module = options.settings or 'settings'
     settings = Settings(settings_module)
     if options.display_stdout:

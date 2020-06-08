@@ -41,11 +41,12 @@ class SimulationScreen:
 
         for i, (_, job) in enumerate(Simulation.status.items()):
             self.info_pad.addstr(i, 0, '[                   ]')
-            self.info_pad.addstr(i, 1, 'AWAITING'.center(19), self.COLOR_WAITING)
+            self.info_pad.addstr(
+                i, 1, 'AWAITING'.center(19), self.COLOR_WAITING)
             parsed_job = job['instance'].parse()
             if self.shrink_paths:
                 parsed_job = ' '.join(f'{path[:6]}~{path[-8:]}'
-                                      if re.match("([><]?[/\.]+[a-zA-Z\./]*[\s]?)", path) else path
+                                      if re.match(r"([><]?[/\.]+[a-zA-Z\./]*[\s]?)", path) else path
                                       for path in parsed_job.split())
             self.job_pad.addstr(i, 0, parsed_job.ljust(1023))
 
@@ -70,7 +71,7 @@ class SimulationScreen:
             next_c = self.stdscr.getch()
             if next_c != -1:
                 continue
-            
+
             if c == ord('q'):
                 self.graceful_exit = True
                 self.set_status('Cleaning queue')
@@ -152,9 +153,10 @@ class SimulationScreen:
                 line = f' {self.sec2str(seconds):<8}'
                 self.info_pad.addstr(i, 1, line.ljust(19))
                 self.info_pad.addstr(i, 11, ' DONE!', self.COLOR_DONE)
-            
+
             elif self.graceful_exit:
-                self.info_pad.addstr(i, 1, 'CANCELED'.center(19), self.COLOR_ERROR)
+                self.info_pad.addstr(
+                    i, 1, 'CANCELED'.center(19), self.COLOR_ERROR)
 
         self.jobs_finished = finished
         if running == 0:
@@ -172,7 +174,7 @@ class SimulationScreen:
         curses.curs_set(1)
         curses.nocbreak()
         self.stdscr.keypad(False)
-        
+
         curses.endwin()
 
     def init(self):

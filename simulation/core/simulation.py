@@ -1,27 +1,29 @@
 import os
-import subprocess
 import time
 import random
 import logging
+import subprocess
+from glob import glob
 from itertools import count
 from multiprocessing import Process, Queue, Manager
+from . import metrics
 
 
 class Simulation:
-    _id_seed = count()
+    _count = count()
     instances = Queue()
     instances_status = {}
     status = None
 
-    def __init__(self, executable, args, stdin=None, stdout=None, stderr=None, fake=None, use_tui=None):
+    def __init__(self, executable, args, stdin=None, stdout=None, stderr=None, **options):
         self.executable = executable
         self.args = args
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
-        self.fake = fake
-        self.use_tui = use_tui
-        self.id = next(Simulation._id_seed)
+
+        
+        self.id = next(Simulation._count)
 
         Simulation.instances.put(self)
         Simulation.instances_status.update({
@@ -34,6 +36,9 @@ class Simulation:
                 'instance': self,
             }
         })
+        
+        for key, val in options.items():
+            setattr(self, key, val)
 
     def parse(self):
         line = f'{self.executable}'
@@ -76,10 +81,11 @@ class Simulation:
                 return
 
             args = map(str, sum(instance.args, ()))
+            dargs = dict(instance.args)
             process_info = [instance.executable, *args]
             if not instance.use_tui:
                 print(instance.parse())
-                
+
             if not instance.fake:
                 open_files = {}
                 for stream in ['stdin', 'stdout', 'stderr']:
@@ -88,39 +94,48 @@ class Simulation:
                         os.makedirs(os.path.dirname(
                             file_stream), exist_ok=True)
                         open_files.setdefault(stream, open(file_stream, 'w'))
-                val = status[instance.id]
-                val.update({
-                    'running': True,
-                    'time_start': time.time()
-                })
-                status[instance.id] = val
-                subprocess.call(process_info, **open_files)
-                val = status[instance.id]
-                val.update({
-                    'running': False,
-                    'done': True,
-                    'time_end': time.time(),
-                })
-                status[instance.id] = val
 
+            val = status[instance.id]
+            val.update({
+                'running': True,
+                'time_start': time.time()
+            })
+            status[instance.id] = val
+
+            if not instance.fake:
+                subprocess.call(process_info, **open_files) 
+                
+
+            val = status[instance.id]
+            
+            status[instance.id] = val
+            if not instance.fake:
                 for f in open_files.values():
                     f.close()
-            else:
-                val = status[instance.id]
-                val.update({
-                    'running': True,
-                    'time_start': time.time()
-                })
-                status[instance.id] = val
-                # subprocess.call(
-                #     ['python3 -c "import time; import random; time.sleep(random.randrange(2, 8))"'], shell=True)
-                val = status[instance.id]
-                val.update({
-                    'running': False,
-                    'done': True,
-                    'time_end': time.time(),
-                })
-                status[instance.id] = val
+
+            ref_folder = dargs.get('-input')
+            rec_folder = dargs.get('-output')
+            if instance.metrics:
+                try:
+                    metrics.calculate(ref_folder, rec_folder, *instance.metrics)
+                except:
+                    # Log exception. For now, just silently ignore it.
+                    pass
+            try:
+                for files in instance.discard:
+                    for filename in glob(os.path.join(rec_folder, files)):
+                        os.remove(filename)
+            except:
+                pass
+
+            val = status[instance.id]
+            val.update({
+                'running': False,
+                'done': True,
+                'time_end': time.time(),
+            })
+            status[instance.id] = val
+            
 
 
 def build_simulations(settings, options):
@@ -137,8 +152,7 @@ def build_simulations(settings, options):
                          stdin=parsed_values['STDIN'],
                          stdout=parsed_values['STDOUT'],
                          stderr=parsed_values['STDERR'],
-                         fake=options.fake,
-                         use_tui=options.use_tui)
+                         **vars(options))
         simulations.append(sim)
 
         # only runs one simulation
