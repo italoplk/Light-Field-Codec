@@ -58,7 +58,11 @@ public:
 
     void predictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
 
-    void angularPredictRef(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+    void angularPredictRefHorizontal(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+
+    void angularPredictRefVertical(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+
+    void sad(const float *orig_input, const float *prediction_input, const Point4D &origSize, float *sad);
 
     void recRef(const float *input, const Point4D &origSize, float *out );
 
