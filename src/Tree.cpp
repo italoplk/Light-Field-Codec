@@ -13,6 +13,8 @@ Node* Tree::CreateRoot(string light_field, uint hypercubo, uint channel, int *bi
 
     this->hypercube = new Hypercube(16,16,16,16);
 
+    this->id = 0;
+
     int i=0;
     for (int it_v = 0; it_v < this->hypercube->dim.v; ++it_v) {
         for (int it_u = 0; it_u < this->hypercube->dim.u; ++it_u) {
@@ -28,7 +30,7 @@ Node* Tree::CreateRoot(string light_field, uint hypercubo, uint channel, int *bi
         }
     }
 
-    Node *root = new Node({0,0,0,0}, this->hypercube->dim, this->hypercube->dim); //Zero padding
+    Node *root = new Node({0,0,0,0}, this->hypercube->dim, this->hypercube->dim, 0, -1); //Zero padding
 
     return root;
 }
@@ -82,12 +84,13 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
         uint next_level = level + 1;
 
         for (int i = 0; i < HEXADECA; ++i) {
+            this->id++;
             start = this->ComputeStart(i, middle);
 
             this->ComputePositions(start, middle_before, middle);
             this->HypercubePosition(&middle);
 
-            root->child[i] = new Node(this->next_start_position, this->next_end_position, middle);
+            root->child[i] = new Node(this->next_start_position, this->next_end_position, middle, this->id, root->id);
             this->CreateTree(root->child[i], next_level, pos, hypercubo_pos, start);
         }
     }
@@ -198,6 +201,10 @@ void Tree::OpenFile(string path) {
 
     this->file <<
            "Light_Field" << SEP <<
+#if HEXADECA_TREE_TYPE == 0
+           "Parent" << SEP <<
+           "Id" << SEP <<
+#endif
            "Partition" << SEP <<
            "Hypercubo" << SEP <<
            "Channel" << SEP <<
@@ -205,7 +212,7 @@ void Tree::OpenFile(string path) {
            "Pos_y" << SEP <<
            "Pos_u" << SEP <<
            "Pos_v" << SEP <<
-           #if HEXADECA_TREE_TYPE == 0
+#if HEXADECA_TREE_TYPE == 0
            "Hypercubo_Size" << SEP <<
            "N_Zero" << SEP <<
            "N_One" << SEP <<
@@ -232,6 +239,8 @@ void Tree::WriteAttributesInFile(uint level, Point_4D &pos, Node* node){
     order = (level == 0) ? "Original" : (level == 1) ? "Order_8" : "Order_4";
     this->file <<
          this->props->light_field_name << SEP <<
+         node->parent << SEP <<
+         node->id << SEP <<
          order << SEP <<
          this->props->hypercubo << SEP <<
          this->props->channel << SEP <<

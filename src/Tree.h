@@ -75,14 +75,20 @@ struct Node{
     Point_4D end{0,0,0,0};
     Point_4D hypercube_dim{0,0,0,0};
 
+    int id = 0,
+        parent = 0;
+
     Attributes *att;
 
     vector<Node *> child;
 
-    Node(Point_4D start, Point_4D end, Point_4D hypercube_dim){
+    Node(Point_4D start, Point_4D end, Point_4D hypercube_dim, int id, int parent){
         this->start = start;
         this->end = end;
         this->hypercube_dim = hypercube_dim;
+
+        this->id = id;
+        this->parent = parent;
 
         this->att = nullptr;
 
@@ -109,6 +115,8 @@ public:
 
 private:
     ofstream file;
+
+    int id = 0;
 
     LF_Props *props;
     Hypercube *hypercube = nullptr;
