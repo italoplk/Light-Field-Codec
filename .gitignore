@@ -1,2 +1,6 @@
-output
-Scripts/__pycache__
+#Folders
+cmake-build-debug/
+PSNR/
+Scripts/
+output/
+venv/
