@@ -274,3 +274,15 @@ float Statistics::maxAbs_vet(const std::vector<float> &input) {
         t_max_abs = std::max(std::abs(it), t_max_abs);
     return t_max_abs;
 }
+
+// std::map<float, int> Statistics::calculate_pdf(const std::vector<float> &input, unsigned range) {
+//     std::map<float, int> hist;
+//     for (const auto &val: input) {
+//             auto key = std::trunc(val);
+//             if (range > 0)
+//                 key /= range;
+//             auto old = hist[key];
+//             hist[key] = old + 1;
+//         }
+//     return hist;
+// }

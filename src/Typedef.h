@@ -8,17 +8,15 @@
 
 #define TRANSF_QUANT                true
 #define QUANTIZATION                true
-#define DPCM_DC                     QUANTIZATION
+#define DPCM_DC                     false
 #define STATISTICS_LOCAL            true
 #define STATISTICS_GLOBAL           false
 #define STATISTICS_TIME             false
 #define TRACE_TRANSF                false
 #define TRACE_QUANT                 false
 #define TRACE_LRE                   false
-#define LFCODEC_USE_PREDICTION      false
-#define LFCODEC_FORCE_DCT_NON_LUMA  false
-#define LFCODEC_USE_BLOCK_SEG       true
-#define LFCODEC_BLOCK_SEG_SIZE      1
-
+#define LFCODEC_USE_PREDICTION      true
+#define LFCODEC_FORCE_DCT_NON_LUMA  true
+#define LFCODEC_TRANSFORM_HISTOGRAM true
 
 #endif //TYPEDEF_H

@@ -9,6 +9,7 @@
 #include <fstream>
 #include <cassert>
 #include <cfloat>
+#include <map>
 
 #include "Point4D.h"
 #include "LRE.h"
@@ -53,6 +54,8 @@ public:
     static float minAbs_vet(const std::vector<float> &input);
 
     static float maxAbs_vet(const std::vector<float> &input);
+
+    // static std::map<float, int> calculate_pdf(const std::vector<float> &input, unsigned range);
 
 private:
     std::string sep{"\t"};

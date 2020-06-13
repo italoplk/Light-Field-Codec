@@ -3,48 +3,13 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include "utils.h"
 
 std::map<size_t, float *> Transform::_DCT_II_CACHE;
 std::map<size_t, float *> Transform::_DST_II_CACHE;
 std::map<size_t, float *> Transform::_DST_VII_CACHE;
 
 typedef void (*_tx_t)(const float *, float *, size_t, size_t);
-
-template <typename T>
-inline Point4D make_stride(T shape) {
-    Point4D stride;
-    stride.x = 1;
-    stride.y = shape[0];
-    stride.u = stride.y * shape[1];
-    stride.v = stride.u * shape[2];
-    return stride;
-}
-
-template <typename size_type>
-auto make_shapes(const std::vector<size_type> &from_shape,
-                 const std::vector<size_type> &base_shape) {
-    std::vector<std::vector<size_type>> shapes;
-    std::vector<size_type> shape;
-    shape.resize(4);
-    for (int v = 0; v < from_shape[3]; v += shape[3]) {
-        shape[3] = std::min(base_shape[3], from_shape[3] - v);
-        for (int u = 0; u < from_shape[2]; u += shape[2]) {
-            shape[2] = std::min(base_shape[3], from_shape[2] - u);
-            for (int y = 0; y < from_shape[1]; y += shape[1]) {
-                shape[1] = std::min(base_shape[1], from_shape[1] - y);
-                for (int x = 0; x < from_shape[0]; x += shape[0]) {
-                    shape[0] = std::min(base_shape[0], from_shape[0] - x);
-                    shapes.push_back(shape);
-                }
-            }
-        }
-    }
-    return shapes;
-}
-
-inline int offset(int x, int y, int u, int v, Point4D &stride) {
-    return x * stride.x + y * stride.y + u * stride.u + v * stride.v;
-}
 
 void flip_axis(float *block, unsigned to_flip, unsigned flat_size, Point4D shape, Point4D stride) {
     float _block[flat_size];
@@ -137,10 +102,15 @@ Transform::Transform(Point4D &shape) {
     this->shape = shape;
     stride = make_stride(shape);
     flat_size = stride.v * shape.v;
+    flat_p2 = std::pow(2, std::ceil(std::log2(flat_size)));
     partial_values = new float[flat_size];
+    wh_partial_values = new float[flat_p2];
 }
 
-Transform::~Transform() { delete[] partial_values; }
+Transform::~Transform() {
+    delete[] partial_values;
+    delete[] wh_partial_values;
+}
 
 float *Transform::_DST_VII(size_t size) {
     auto *output = new float[size * size];
@@ -325,14 +295,19 @@ Transform::TransformType Transform::get_type(std::string transform) {
         return DST_VII;
     else if (transform == "DCT")
         return DCT;
-    std::cerr << "Unkown " << transform << std::endl;
+    else if (transform == "DST_VII_2")
+        return DST_VII_2;
+    else
+        std::cerr << "Unkown transform: " << transform << std::endl;
     return DCT;
 }
 
 void Transform::forward(TransformType transform, float *input, float *output, Point4D &shape) {
+    float seg_block[this->flat_size];
+
     if (use_segments == NO_SEGMENTS) {
-        _forward(transform, input, output, shape);
         if (axis_to_flip != NO_AXIS) flip_axis(output, axis_to_flip, flat_size, shape, stride);
+        _forward(transform, input, output, shape);
     } else {
         auto shape_bak = this->shape;
         auto stride_bak = this->stride;
@@ -352,9 +327,9 @@ void Transform::forward(TransformType transform, float *input, float *output, Po
             this->shape = Point4D(curr_shape.data());
             this->stride = make_stride(curr_shape);
             this->flat_size = this->shape.getNSamples();
-            _forward(transform, pseg, pout, this->shape);
             if (axis_to_flip != NO_AXIS)
                 flip_axis(pout, axis_to_flip, flat_size, this->shape, stride);
+            _forward(transform, pseg, pout, this->shape);
             pout += this->flat_size;
             pseg += this->flat_size;
         }
@@ -365,14 +340,14 @@ void Transform::forward(TransformType transform, float *input, float *output, Po
 }
 
 void Transform::inverse(TransformType transform, float *input, float *output, Point4D &shape) {
+    float seg_block[this->flat_size];
     if (use_segments == NO_SEGMENTS) {
-        if (axis_to_flip != NO_AXIS) flip_axis(input, axis_to_flip, flat_size, shape, stride);
         _inverse(transform, input, output, shape);
+        if (axis_to_flip != NO_AXIS) flip_axis(input, axis_to_flip, flat_size, shape, stride);
     } else {
         auto shape_bak = this->shape;
         auto stride_bak = this->stride;
         auto flat_size_bak = this->flat_size;
-        float seg_block[flat_size_bak];
         auto *pout = seg_block;
         auto *pseg = input;
         std::vector _shape {shape_bak.x, shape_bak.y, shape_bak.u, shape_bak.v};
@@ -386,9 +361,9 @@ void Transform::inverse(TransformType transform, float *input, float *output, Po
             this->shape = Point4D(curr_shape.data());
             this->stride = make_stride(curr_shape);
             this->flat_size = this->shape.getNSamples();
+            _inverse(transform, pseg, pout, this->shape);
             if (axis_to_flip != NO_AXIS)
                 flip_axis(pseg, axis_to_flip, flat_size, this->shape, stride);
-            _inverse(transform, pseg, pout, this->shape);
             pout += this->flat_size;
             pseg += this->flat_size;
         }
@@ -399,6 +374,10 @@ void Transform::inverse(TransformType transform, float *input, float *output, Po
         this->flat_size = flat_size_bak;
     }
 }
+
+
+
+
 
 template <typename T, typename size_type>
 void Transform::segment_block(const T *from_block,

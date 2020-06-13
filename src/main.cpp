@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <map>
 
 #include "DpcmDC.h"
 #include "EncBitstreamWriter.h"
@@ -13,6 +14,7 @@
 #include "Time.h"
 #include "Transform.h"
 #include "Typedef.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -64,6 +66,7 @@ int main(int argc, char **argv) {
 
     int temp_lre[encoderParameters.dim_block.getNSamples()];
     uint bits_per_4D_Block = 0;
+
 #if LFCODEC_USE_PREDICTION
     Prediction predictor;
 #endif
@@ -93,7 +96,7 @@ int main(int argc, char **argv) {
                              "localStatistics_quantization.csv");
 #endif
 
-  std::string sep = ",";
+    std::string sep = ",";
 
 #if TRACE_TRANSF
     std::ofstream file_traceTransf;
@@ -106,8 +109,8 @@ int main(int argc, char **argv) {
         file_traceTransf << i;
         if (i != encoderParameters.dim_block.getNSamples() - 1) { file_traceTransf << sep; }
     }
-  }
-  file_traceTransf << std::endl;
+
+    file_traceTransf << std::endl;
 #endif
 
 #if TRACE_QUANT
@@ -121,8 +124,8 @@ int main(int argc, char **argv) {
         file_traceQuant << i;
         if (i != encoderParameters.dim_block.getNSamples() - 1) { file_traceQuant << sep; }
     }
-  }
-  file_traceQuant << std::endl;
+
+    file_traceQuant << std::endl;
 #endif
 
 #if TRACE_LRE
@@ -132,20 +135,20 @@ int main(int argc, char **argv) {
                   << "pos_v" << sep << "bl_x" << sep << "bl_y" << sep << "bl_u" << sep << "bl_v"
                   << sep << "level" << sep << "run" << std::endl;
 #endif
-  const Point4D dimLF = encoderParameters.dim_LF;
+    const Point4D dimLF = encoderParameters.dim_LF;
 
-  Point4D it_pos, dimBlock, stride_lf, stride_block;
+    Point4D it_pos, dimBlock, stride_lf, stride_block;
 
-#if LFCODEC_TRANSFORM_FLIP
-    Point4D _blk_stride;
-    _blk_stride.x = 1;
-    _blk_stride.y = encoderParameters.dim_block.x;
-    _blk_stride.u = _blk_stride.y * encoderParameters.dim_block.y;
-    _blk_stride.v = _blk_stride.u * encoderParameters.dim_block.u;
+#if LFCODEC_TRANSFORM_HISTOGRAM
+    std::map<float, int> histogram;
+    Point4D stride = make_stride(encoderParameters.dim_block);
+    std::ofstream file_histogram;
+    file_histogram.open(encoderParameters.getPathOutput() + "histogram.csv");
+    file_histogram << "value" << sep << "frequency" << std::endl;
 #endif
 
 #if STATISTICS_TIME
-  total_time.tic();
+    total_time.tic();
 #endif
     // angular
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) {
@@ -174,16 +177,16 @@ int main(int argc, char **argv) {
 
                     for (int it_channel = 0; it_channel < 3; ++it_channel) {
 #if STATISTICS_TIME
-            getBlock.tic();
+                        getBlock.tic();
 #endif
                         lf.getBlock(orig4D, it_pos, dimBlock, stride_block,
                                     encoderParameters.dim_block, stride_lf, it_channel);
 
 #if STATISTICS_TIME
-            getBlock.toc();
+                        getBlock.toc();
 #endif
 
-#if TRANSF_QUANT  
+#if TRANSF_QUANT
 
 #    if STATISTICS_TIME
                         t.tic();
@@ -224,14 +227,23 @@ int main(int argc, char **argv) {
 
                         file_traceTransf << std::endl;
 #    endif
-
+#    if LFCODEC_TRANSFORM_HISTOGRAM
+                        for (int v = 0; v < dimBlock.v; v++)
+                            for (int u = 0; u < dimBlock.u; u++)
+                                for (int y = 0; y < dimBlock.y; y++)
+                                    for (int x = 0; x < dimBlock.x; x++) {
+                                        auto index = offset(x, y, u, v, stride);
+                                        auto value = tf4D[index];
+                                        histogram[std::trunc(value)] += 1;
+                                    }
+#    endif
 #    if QUANTIZATION
 
 #        if STATISTICS_TIME
                         q.tic();
 #        endif
 
-            quantization.foward(tf4D, qf4D);
+                        quantization.foward(tf4D, qf4D);
 
 #        if DPCM_DC
                         qf4D[0] -= (float)dpcmDc[it_channel].get_reference(it_pos.x, it_pos.y);
@@ -323,11 +335,11 @@ int main(int argc, char **argv) {
 #    endif
 
 #else /* NO_TRANSF_QUANT */
-            std::copy(orig4D, orig4D + dimBlock.getNSamples(), ti4D);
+                        std::copy(orig4D, orig4D + dimBlock.getNSamples(), ti4D);
 #endif
 
 #if STATISTICS_TIME
-            rebuild.tic();
+                        rebuild.tic();
 #endif
                         // lf.rebuild(ti4D, it_pos, dimBlock, stride_block,
                         // encoderParameters.dim_block, stride_lf, it_channel);
@@ -335,7 +347,7 @@ int main(int argc, char **argv) {
                                    encoderParameters.dim_block, stride_lf, it_channel);
 
 #if STATISTICS_TIME
-            rebuild.toc();
+                        rebuild.toc();
 #endif
 
 #if STATISTICS_LOCAL
@@ -361,37 +373,41 @@ int main(int argc, char **argv) {
 #if DPCM_DC
                         dpcmDc[it_channel].update((int)qf4D[0], true);
 #endif
-            encoder.write_completedBytes();
-          }
+                        encoder.write_completedBytes();
+                    }
+                }
+            }
         }
-      }
     }
-  }
 
-  lf.write(encoderParameters.getPathOutput());
-  encoder.finish_and_write();
-  encoder.~EncBitstreamWriter();
+    lf.write(encoderParameters.getPathOutput());
+    encoder.finish_and_write();
+    encoder.~EncBitstreamWriter();
 
 #if STATISTICS_TIME
-  total_time.toc();
+    total_time.toc();
 #endif
 
-  cout << "\n#########################################################" << endl;
-  cout << "Total bytes:\t" << encoder.getTotalBytes() << endl;
-  cout << "#########################################################" << endl;
+    cout << "\n#########################################################" << endl;
+    cout << "Total bytes:\t" << encoder.getTotalBytes() << endl;
+    cout << "#########################################################" << endl;
 
 #if STATISTICS_GLOBAL
-  // TODO: statistics (global)
+// TODO: statistics (global)
 #endif
 
 #if TRACE_QUANT
-  file_traceQuant.close();
+    file_traceQuant.close();
 #endif
 
 #if TRACE_LRE
-  file_traceLRE.close();
+    file_traceLRE.close();
 #endif
-
+#if LFCODEC_TRANSFORM_HISTOGRAM
+    for (const auto &[val, freq]: histogram)
+        file_histogram << val << sep << freq << std::endl;
+    file_histogram.close();
+#endif
 #if STATISTICS_TIME
     std::ofstream file_time;
     file_time.open(encoderParameters.getPathOutput() + "time.csv");
