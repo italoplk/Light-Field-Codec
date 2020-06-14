@@ -83,10 +83,14 @@ class Simulation:
             args = map(str, sum(instance.args, ()))
             dargs = dict(instance.args)
             process_info = [instance.executable, *args]
+            ref_folder = dargs.get('-input')
+            rec_folder = dargs.get('-output')
             if not instance.use_tui:
                 print(instance.parse())
 
             if not instance.fake:
+                # Create -output path if it does not exist
+                os.makedirs(rec_folder, exist_ok=True)
                 open_files = {}
                 for stream in ['stdin', 'stdout', 'stderr']:
                     file_stream = getattr(instance, stream)
@@ -113,8 +117,7 @@ class Simulation:
                 for f in open_files.values():
                     f.close()
 
-            ref_folder = dargs.get('-input')
-            rec_folder = dargs.get('-output')
+            
             if instance.metrics:
                 try:
                     metrics.calculate(ref_folder, rec_folder, *instance.metrics)
@@ -142,11 +145,6 @@ def build_simulations(settings, options):
     simulations = []
     for args in settings.args:
         parsed_values, args = settings.parse_variables(args)
-
-        if not options.fake:
-            # Create -output path if it does not exist
-            os.makedirs(args['-output'], exist_ok=True)
-
         sim = Simulation(settings.EXECUTABLE,
                          list(args.items()),
                          stdin=parsed_values['STDIN'],

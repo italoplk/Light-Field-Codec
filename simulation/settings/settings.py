@@ -39,10 +39,10 @@ BASE_DIR = dirname(dirname(dirname(abspath(__file__))))
 
 
 # The path to folder containing all datasets
-DATASET_DIR = '/home/bosin/lfcodec/datasets'  # from_env('DATASET_DIR')
+DATASET_DIR = from_env('DATASET_DIR')
 
 # The path to folder to save all results
-RESULTS_DIR = '/home/bosin/lfcodec/results-no-quantization-prediction'  # from_env('RESULTS_DIR')
+RESULTS_DIR = from_env('RESULTS_DIR')
 
 # List of datasets to run on this simulation.
 DATASETS_TO_RUN = ['Bikes', ]
@@ -59,28 +59,21 @@ RESULTS = [join(RESULTS_DIR, dataset + '_%(SIMULATION_ID)s', '')
 TRANSFORMS = ['DCT', 'DST_II', 'DST_VII']
 
 # Quatizations values
-QUANTIZATIONS = [1]
-# QUANTIZATIONS = [1,3,5,7,12]
+QUANTIZATIONS = [1,3,5,7,12]
 
 # Axis to flip
 AXIS_X = 1 << 0
 AXIS_Y = 1 << 1
 AXIS_U = 1 << 2
 AXIS_V = 1 << 3
-FLIPS = [*range(16)
-    # 0,
-    # AXIS_X,
-    # AXIS_Y,
-    # AXIS_X | AXIS_Y,
-    # AXIS_U | AXIS_V,
-]
+FLIPS = [*range(16)]
 
 # Segments
 NO_SEGMENTS = 0
 SIDE_8 = 1
 SIDE_4 = 2
 SIDE_2 = 3
-SEGMENTS = [SIDE_4]
+SEGMENTS = [0,1,2,3]
 
 # Argument that are used to create simulation objects.
 # All list-like objects will be combined. For instance,
@@ -140,7 +133,7 @@ GROUP_TOGETHER_ARGS = (
     ('-input', '-output'),
 )
 
-BINARY = 'LF_Codec'  # from_env('BINARY')
+BINARY = from_env('BINARY')
 
 # Binary
 EXECUTABLE = join(BASE_DIR, 'build', BINARY)

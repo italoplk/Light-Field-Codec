@@ -87,17 +87,33 @@ class SimulationScreen:
             elif c == curses.KEY_RIGHT:
                 self.job_offset[1] = min(self.job_offset[1] + 1, 1024)
                 self.update_jobpad()
+
             elif c == curses.KEY_DOWN:
                 height = self.total_jobs - self.H - 2
                 self.job_offset[0] = min(self.job_offset[0] + 1, height)
                 self.info_offset[0] = min(self.info_offset[0] + 1, height)
                 self.update_jobpad()
                 self.update_infopad()
+            
             elif c == curses.KEY_UP:
                 self.job_offset[0] = max(self.job_offset[0] - 1, 0)
                 self.info_offset[0] = max(self.info_offset[0] - 1, 0)
                 self.update_jobpad()
                 self.update_infopad()
+
+            elif c == curses.KEY_NPAGE:
+                height = self.total_jobs - self.H - 2
+                self.job_offset[0] = min(self.job_offset[0] + 20, height)
+                self.info_offset[0] = min(self.info_offset[0] + 20, height)
+                self.update_jobpad()
+                self.update_infopad()
+                
+            elif c == curses.KEY_PPAGE:
+                self.job_offset[0] = max(self.job_offset[0] - 20, 0)
+                self.info_offset[0] = max(self.info_offset[0] - 20, 0)
+                self.update_jobpad()
+                self.update_infopad()
+
             elif c == curses.KEY_RESIZE:
                 self.recreate_windows()
 
