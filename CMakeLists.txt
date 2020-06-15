@@ -24,35 +24,35 @@ add_subdirectory(extern/googletest)
 add_subdirectory(tst)
 
 set(SOURCES
+    # src/EncoderParameters.h
+    # src/Point4D.h
+    # src/Transform.h
+    # src/Quantization.h
+    # src/LightField.h
+    # src/Statistics.h
+    # src/LRE.h
+    # src/clip.h
+    # src/DpcmDC.h
+    # src/Time.h
+    # src/CAVLC.h
+    # src/EncBitstreamWriter.h
+    # src/EncBitstreamVLC.h
+    # src/EncBitstreamBuffer.h
+    # src/Prediction.h
     src/EncoderParameters.cpp
-    src/EncoderParameters.h
     src/Point4D.cpp
-    src/Point4D.h
     src/Transform.cpp
-    src/Transform.h
     src/Quantization.cpp
-    src/Quantization.h
     src/LightField.cpp
-    src/LightField.h
     src/Statistics.cpp
-    src/Statistics.h
     src/LRE.cpp
-    src/LRE.h
-    src/clip.h
     src/DpcmDC.cpp
-    src/DpcmDC.h
     src/Time.cpp
-    src/Time.h
     src/CAVLC.cpp
-    src/CAVLC.h
     src/EncBitstreamWriter.cpp
-    src/EncBitstreamWriter.h
     src/EncBitstreamVLC.cpp
-    src/EncBitstreamVLC.h
     src/EncBitstreamBuffer.cpp
-    src/EncBitstreamBuffer.h
     src/Prediction.cpp
-    src/Prediction.h
     src/deprecated/OldTransform.cpp)
 
 
@@ -72,8 +72,8 @@ add_executable(LF_Codec                 src/main.cpp ${SOURCES})
 
 add_library(LF_Codec_Lib ${SOURCES})
 
-target_include_directories(LF_Codec PRIVATE src/sim/lfcodec)
-target_include_directories(LF_Codec_Lib PRIVATE src/sim/reference)
+target_include_directories(LF_Codec PRIVATE src)
+target_include_directories(LF_Codec_Lib PRIVATE src)
 # target_include_directories(LF_Codec_LUMA PRIVATE src/sim/luma)
 # target_include_directories(LF_Codec_QUANT PRIVATE src/sim/quant)
 # target_include_directories(LF_Codec_QUANT_LUMA PRIVATE src/sim/quant_luma)
