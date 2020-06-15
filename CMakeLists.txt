@@ -73,6 +73,7 @@ endif()
 
 enable_testing()
 add_subdirectory(extern/googletest)
+add_subdirectory(extern/spdlog)
 add_subdirectory(test)
 
 set(SOURCES
@@ -96,7 +97,7 @@ set(SOURCES
 add_executable(LF_Codec src/main.cpp)
 add_library(lfcodec ${SOURCES})
 target_include_directories(lfcodec PRIVATE src)
-target_link_libraries(LF_Codec PUBLIC lfcodec)
+target_link_libraries(LF_Codec PUBLIC lfcodec spdlog::spdlog)
 
 
 
