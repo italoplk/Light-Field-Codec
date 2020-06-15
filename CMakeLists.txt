@@ -3,6 +3,20 @@ project(LF_Codec)
 
 set(CMAKE_CXX_STANDARD 17)
 # set(CMAKE_CXX_FLAGS "-O3")
+# Use the syntax $ENV{VAR} to read environment variable VAR. See also the set() command to set ENV{VAR}.
+# add_compile_definitions(OPENCV_VERSION=${OpenCV_VERSION})
+message(STATUS "TRANSF_QUANT: $ENV{TRANSF_QUANT}")
+message(STATUS "QUANTIZATION: $ENV{QUANTIZATION}")
+message(STATUS "DPCM_DC: $ENV{DPCM_DC}")
+message(STATUS "STATISTICS_LOCAL: $ENV{STATISTICS_LOCAL}")
+message(STATUS "STATISTICS_GLOBAL: $ENV{STATISTICS_GLOBAL}")
+message(STATUS "STATISTICS_TIME: $ENV{STATISTICS_TIME}")
+message(STATUS "TRACE_TRANSF: $ENV{TRACE_TRANSF}")
+message(STATUS "TRACE_QUANT: $ENV{TRACE_QUANT}")
+message(STATUS "TRACE_LRE: $ENV{TRACE_LRE}")
+message(STATUS "LFCODEC_USE_PREDICTION: $ENV{LFCODEC_USE_PREDICTION}")
+message(STATUS "LFCODEC_FORCE_DCT_NON_LUMA: $ENV{LFCODEC_FORCE_DCT_NON_LUMA}")
+message(STATUS "LFCODEC_TRANSFORM_HISTOGRAM: $ENV{LFCODEC_TRANSFORM_HISTOGRAM}")
 
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
@@ -21,24 +35,9 @@ endif()
 
 enable_testing()
 add_subdirectory(extern/googletest)
-add_subdirectory(tst)
+add_subdirectory(test)
 
 set(SOURCES
-    # src/EncoderParameters.h
-    # src/Point4D.h
-    # src/Transform.h
-    # src/Quantization.h
-    # src/LightField.h
-    # src/Statistics.h
-    # src/LRE.h
-    # src/clip.h
-    # src/DpcmDC.h
-    # src/Time.h
-    # src/CAVLC.h
-    # src/EncBitstreamWriter.h
-    # src/EncBitstreamVLC.h
-    # src/EncBitstreamBuffer.h
-    # src/Prediction.h
     src/EncoderParameters.cpp
     src/Point4D.cpp
     src/Transform.cpp
@@ -56,32 +55,11 @@ set(SOURCES
     src/deprecated/OldTransform.cpp)
 
 
-
-############### Project executables ###############
-# Default configuration
-add_executable(LF_Codec                 src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_LUMA            src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_QUANT           src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_QUANT_LUMA      src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_QUANT_SEG       src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_QUANT_SEG_LUMA  src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_REFERENCE       src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_SEG             src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_QUANT_SEG_4     src/main.cpp ${SOURCES})
-# add_executable(LF_Codec_SEG_4           src/main.cpp ${SOURCES})
-
-add_library(LF_Codec_Lib ${SOURCES})
+add_executable(LF_Codec src/main.cpp ${SOURCES})
+add_library(lfcodec ${SOURCES})
 
 target_include_directories(LF_Codec PRIVATE src)
-target_include_directories(LF_Codec_Lib PRIVATE src)
-# target_include_directories(LF_Codec_LUMA PRIVATE src/sim/luma)
-# target_include_directories(LF_Codec_QUANT PRIVATE src/sim/quant)
-# target_include_directories(LF_Codec_QUANT_LUMA PRIVATE src/sim/quant_luma)
-# target_include_directories(LF_Codec_QUANT_SEG PRIVATE src/sim/quant_seg)
-# target_include_directories(LF_Codec_QUANT_SEG_LUMA PRIVATE src/sim/quant_seg_luma)
-# target_include_directories(LF_Codec_REFERENCE PRIVATE src/sim/reference)
-# target_include_directories(LF_Codec_SEG PRIVATE src/sim/seg)
-# target_include_directories(LF_Codec_QUANT_SEG_4 PRIVATE src/sim/quant_seg_4)
-# target_include_directories(LF_Codec_SEG_4 PRIVATE src/sim/seg_4)
+target_include_directories(lfcodec PRIVATE src)
+
 
 
