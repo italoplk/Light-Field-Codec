@@ -7,10 +7,6 @@
 #include "deprecated/Transform.h"
 #include "utils.h"
 
-inline int offset(int x, int y, int u, int v, Point4D &stride) {
-  return x * stride.x + y * stride.y + u * stride.u + v * stride.v;
-}
-
 TEST(BackwardsCompatibilityWithOldAPI, new_dct_4d_is_consistent) {
   size_t FLAT_SIZE = 3 * 4 * 5 * 6;
   Point4D shape(3, 4, 5, 6);

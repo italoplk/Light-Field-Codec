@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <random>
 #include "BlockCompare.h"
-#include "DiscreteCosineTransformContext4D.h"
 
 struct BlockCompareTest : public ::testing::Test {   
 
