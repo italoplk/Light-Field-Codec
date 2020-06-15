@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 
+set(libs_to_link 
+    gtest_main
+    lfcodec
+    spdlog::spdlog
+)
+
 add_subdirectory(axis_flip_tests)
 add_subdirectory(block_compare_tests)
 add_subdirectory(block_segmentation_tests)
