@@ -6,5 +6,5 @@ CXX_FLAGS = -g   -std=gnu++14
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/ubuntu/Documentos/Git/Light-Field-Codec/src 
+CXX_INCLUDES = -I/home/igor/Documentos/Git/Light-Field-Codec/src 
 

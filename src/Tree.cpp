@@ -14,6 +14,7 @@ Node* Tree::CreateRoot(string light_field, uint hypercubo, uint channel, int *bi
     this->hypercube = new Hypercube(16,16,16,16);
 
     this->id = 0;
+    this->CBF_bits_per_hypercube = 0;
 
     int i=0;
     for (int it_v = 0; it_v < this->hypercube->dim.v; ++it_v) {
@@ -59,7 +60,11 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
         }
 #if HEXADECA_TREE_TYPE == 0
         this->ComputeAttributes(root, root->start.x, root->end.x, root->start.y, root->end.y, root->start.u, root->end.u, root->start.v, root->end.v);
+
+#if HEXADECA_TREE_CBF == false
         this->WriteAttributesInFile(level, this->hy_pos, root);
+#endif
+
         this->hy_pos = {0,0,0,0};
 #endif
 #if HEXADECA_TREE_TYPE == 1
@@ -72,7 +77,11 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
     else{
 #if HEXADECA_TREE_TYPE == 0
         this->ComputeAttributes(root, root->start.x, root->end.x, root->start.y, root->end.y, root->start.u, root->end.u, root->start.v, root->end.v);
+
+#if HEXADECA_TREE_CBF == false
         this->WriteAttributesInFile(level, this->hy_pos, root); //prox_pos
+#endif
+
 #endif
         Point_4D middle = {(int)ceil((double)root->hypercube_dim.x/2),
                            (int)ceil((double)root->hypercube_dim.y/2),
@@ -150,6 +159,10 @@ void Tree::ComputeAttributes(Node* node, int start_x, int end_x, int start_y, in
     att->hypercubo_size = node->hypercube_dim.x * node->hypercube_dim.y * node->hypercube_dim.u * node->hypercube_dim.v;
     att->mean_value = (float)acc / att->hypercubo_size;
     node->SetAttributes(att);
+
+    if(att->significant_value){
+        ++this->CBF_bits_per_hypercube;
+    }
 }
 
 void Tree::ComputeValues(Node* node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v, uint level, Point_4D &pos) {
@@ -199,7 +212,18 @@ void Tree::OpenFile(string path) {
 
     assert(this->file.is_open());
 
-    this->file <<
+    this->SetFileAttributs();
+}
+
+void Tree::SetFileAttributs(){
+#if HEXADECA_TREE_CBF
+        this->file <<
+           "Light_Field" << SEP <<
+           "Hypercubo" << SEP <<
+           "Channel" << SEP <<
+           "CBF_Bits_Per_Hypercube" << SEP << endl;
+#else //base
+        this->file <<
            "Light_Field" << SEP <<
 #if HEXADECA_TREE_TYPE == 0
            "Parent" << SEP <<
@@ -222,11 +246,12 @@ void Tree::OpenFile(string path) {
            "Abs_Mean_value" << SEP <<
            "Significant_Value" << SEP << endl;
 #elif HEXADECA_TREE_TYPE == 1
-           "X" << SEP <<
+        "X" << SEP <<
            "Y" << SEP <<
            "U" << SEP <<
            "V" << SEP <<
            "Valor" << SEP << endl;
+#endif
 #endif
 }
 
@@ -275,4 +300,13 @@ void Tree::WriteValuesInFile(uint level, Point_4D &pos, Point_4D &position, int 
          position.u << SEP <<
          position.v << SEP <<
          value << SEP << endl;
+}
+
+
+void Tree::WriteCBFInFile(){
+    this->file <<
+        this->props->light_field_name << SEP <<
+        this->props->hypercubo << SEP <<
+        this->props->channel << SEP <<
+        this->CBF_bits_per_hypercube << SEP << endl;
 }

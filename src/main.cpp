@@ -253,6 +253,10 @@ int main(int argc, char **argv) {
                         root = tree.CreateRoot(light_field_name, hypercubo, it_channel, temp_lre, encoderParameters.dim_block);
                         tree.CreateTree(root, 0, it_pos, hypercubo_pos, {0,0,0,0});
 
+#if HEXADECA_TREE_CBF
+                        tree.WriteCBFInFile();
+#endif
+
                         tree.DeleteTree(&root);
 
                         /*if (hypercubo == 1)

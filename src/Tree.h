@@ -111,12 +111,15 @@ public:
     void OpenFile(string path);
     void CloseFile();
 
+    void WriteCBFInFile();
+
     ~Tree();
 
 private:
     ofstream file;
 
     int id = 0;
+    int CBF_bits_per_hypercube = 0;
 
     LF_Props *props;
     Hypercube *hypercube = nullptr;
@@ -138,6 +141,8 @@ private:
     void ComputeValues(Node *node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v, uint level, Point_4D &pos);
 
     Point_4D ComputeStart(int index, Point_4D middle);
+
+    void SetFileAttributs();
 };
 
 #endif //LF_CODEC_TREE_H
