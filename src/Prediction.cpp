@@ -124,8 +124,8 @@ void Prediction::angularPredictRefHorizontal(const float *orig_input, const floa
     int Cu = 0;
     int i = 0;
     int Wu = 0;
-    int R0 = 0;
-    int R1 = 0;
+    float R0 = 0;
+    float R1 = 0;
 
     int ref0 = 0;
     for(int i = 0; i < origSize.getNSamples(); i++){
@@ -152,13 +152,28 @@ void Prediction::angularPredictRefHorizontal(const float *orig_input, const floa
                         Cu = (it_pos_out.u * d) >> 5;
                         Wu = (it_pos_out.u * d) & 31;
                         i = it_pos_out.v + Cu;
+                        int pos = i+1;
+                        if (pos >= origSize.v){
+                            pos = i;
+                        }
                         R0 = orig_input[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
                                         (i * origSize.x * origSize.y * origSize.u)];
                         R1 = orig_input[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
-                                        ((i + 1) * origSize.x * origSize.y * origSize.u)];
+                                        ((pos) * origSize.x * origSize.y * origSize.u)];
 
                         //Pu,v = ((32 - Wu)) * R0,i + Wu * R0,i + 1 + 16) >> 5;
-                        out[pos_out] = ((32 - Wu) * R0 + Wu * R1 + 16) >> 5;
+                        out[pos_out] = ((32 - Wu) * R0 + Wu * R1 + 16) / pow(2, 5);
+
+                        /*
+                        printf("\nCu = %d * %d = %d", it_pos_out.u, d, Cu);
+                        printf("\nWu = %d * %d = %d", it_pos_out.u, d, Wu);
+                        printf("\ni = %d + %d = %d", it_pos_out.v, Cu, i);
+                        printf("\nR0 - %d = %f", (it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                                      (i * origSize.x * origSize.y * origSize.u), R0);
+                        printf("\nR1 - %d = %f", (it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                                             ((pos) * origSize.x * origSize.y * origSize.u), R1);
+                        printf("\nOut - %d = %f", pos_out, out[pos_out]);
+                        */
                     }
                 }
             }
@@ -178,7 +193,6 @@ void Prediction::angularPredictRefHorizontal(const float *orig_input, const floa
     wy = (y · d) & 31
     i = x + cy
     */
-
 }
 
 void Prediction::angularPredictRefVertical(const float *orig_input, const float *ref, const Point4D &origSize, float *out ){
@@ -203,8 +217,8 @@ void Prediction::angularPredictRefVertical(const float *orig_input, const float 
     int Cv = 0;
     int i = 0;
     int Wv = 0;
-    int R0 = 0;
-    int R1 = 0;
+    float R0 = 0;
+    float R1 = 0;
 
     int ref0 = 0;
     for(int i = 0; i < origSize.getNSamples(); i++){
@@ -231,13 +245,17 @@ void Prediction::angularPredictRefVertical(const float *orig_input, const float 
                         Cv = (it_pos_out.v * d) >> 5;
                         Wv = (it_pos_out.v * d) & 31;
                         i = it_pos_out.u + Cv;
+                        int pos = i+1;
+                        if (pos >= origSize.v){
+                            pos = i;
+                        }
                         R0 = orig_input[(it_pos_out.x) + (it_pos_in.y) + (i * origSize.x * origSize.y) +
                                         (it_pos_in.v)];
-                        R1 = orig_input[(it_pos_out.x) + (it_pos_in.y) + ((i + 1) * origSize.x * origSize.y) +
+                        R1 = orig_input[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
                                         (it_pos_in.v)];
 
                         //Pu,v = ((32 - Wv)) * Ri,0 + Wv * Ri + 1,0 + 16) >> 5
-                        out[pos_out] = ((32 - Wv) * R0 + Wv * R1 + 16) >> 5;
+                        out[pos_out] = ((32 - Wv) * R0 + Wv * R1 + 16) / pow(2, 5);
                     }
                 }
             }
@@ -258,13 +276,66 @@ void Prediction::angularPredictRefVertical(const float *orig_input, const float 
     */
 }
 
-void Prediction::sad(const float *orig_input, const float *prediction_input, const Point4D &origSize, float *sad){
+float Prediction::sadHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize){
+    Point4D it_pos;
+
+    // Horizontal
+    it_pos.x = origSize.x - 1;
+    it_pos.u = floor(origSize.u / 2);
+
+    it_pos.y = 0;
+    it_pos.v = 0;
+
+    float sum = 0;
+    int pos = 0;
+
+    for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+
+            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+
+                pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
+                sum += abs(orig_input[pos] - prediction_input[pos]);
+            }
+    }
+    return sum;
+}
+
+float Prediction::sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize){
+    Point4D it_pos;
+
+    // Horizontal - variable
+    it_pos.x = 0;
+    it_pos.u = 0;
+
+    // Vertical - fixed
+    it_pos.y = origSize.y - 1;
+    it_pos.v = floor(origSize.v / 2);
+
+    float sum = 0;
+    int pos = 0;
+
+    for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+
+        for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+            pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                  + (it_pos.v * origSize.x * origSize.y * origSize.u);
+            sum += abs(orig_input[pos] - prediction_input[pos]);
+        }
+    }
+    return sum;
+}
+
+/*
+float Prediction::sad(const float *orig_input, const float *prediction_input, const Point4D &origSize){
     float sum = 0;
     for (int i = 0; i < origSize.getNSamples(); ++i){
-        sum += orig_input[i] - prediction_input[i];
+        sum += abs(orig_input[i] - prediction_input[i]);
+        //printf("%d\n",  i);
     }
-    *sad = sum;
-}
+    return sum;
+}*/
 
 void Prediction::recRef(const float *input, const Point4D &origSize, float *out ){
     int numElements = origSize.getNSamples();

@@ -125,6 +125,7 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
     total_time.tic();
 #endif
+    int block;
 
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) { // angular
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
@@ -154,6 +155,8 @@ int main(int argc, char **argv) {
                         orig4D[i] = tf4D[i] = qf4D[i] = 0;
                     }
 
+                    block++;
+
                     for (int it_channel = 0; it_channel < 3; ++it_channel) {
 
 #if STATISTICS_TIME
@@ -174,17 +177,19 @@ int main(int argc, char **argv) {
 #endif
                         //EDUARDO BEGIN
 
-                        //newPredictor[it_channel].get_referenceL(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
-                        newPredictor[it_channel].get_referenceA(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
+                        newPredictor[it_channel].get_referenceL(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
+                        //newPredictor[it_channel].get_referenceA(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
                         //newPredictor[it_channel].get_referenceLA(it_pos.x, it_pos.y, ref4D, encoderParameters.dim_block);
                         //newPredictor[it_channel].predictRef(orig4D, ref4D, encoderParameters.dim_block, pf4D);
 
-                        newPredictor[it_channel].angularPredictRefVertical(orig4D, ref4D, encoderParameters.dim_block, pf4D);
-                        /*
-                        float *sad;
-                        newPredictor[it_channel].sad(orig4D, pf4D, encoderParameters.dim_block, sad);
-                        cout << "SAD: " << sad;
-                        */
+                        //newPredictor[it_channel].angularPredictRefVertical(orig4D, ref4D, encoderParameters.dim_block, pf4D);
+                        newPredictor[it_channel].angularPredictRefHorizontal(orig4D, ref4D, encoderParameters.dim_block, pf4D);
+
+                        float sad;
+                        //sad = newPredictor[it_channel].sadVertical(orig4D, pf4D, encoderParameters.dim_block);
+                        sad = newPredictor[it_channel].sadHorizontal(orig4D, pf4D, encoderParameters.dim_block);
+
+                        cout << "\nSAD: " << sad;
 
                         //predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
 

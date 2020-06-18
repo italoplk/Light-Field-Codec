@@ -62,7 +62,9 @@ public:
 
     void angularPredictRefVertical(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
 
-    void sad(const float *orig_input, const float *prediction_input, const Point4D &origSize, float *sad);
+    float sadHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+
+    float sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
     void recRef(const float *input, const Point4D &origSize, float *out );
 
