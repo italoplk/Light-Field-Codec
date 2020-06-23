@@ -66,6 +66,12 @@ public:
 
     float sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
+    void angularPredictRefHorizontalMI(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+
+    void residuePred(const float *orig_input, const float *pred, const Point4D &origSize, float *out );
+
+    void recResiduePred(const float *orig_input, const float *pred, const Point4D &origSize, float *out );
+
     void recRef(const float *input, const Point4D &origSize, float *out );
 
     //const std::vector<ValueBlockPred> &getPredReferences() const;

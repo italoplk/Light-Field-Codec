@@ -41,7 +41,8 @@ int main(int argc, char **argv) {
             tf4D[encoderParameters.dim_block.getNSamples()],
             qi4D[encoderParameters.dim_block.getNSamples()],
             pf4D[encoderParameters.dim_block.getNSamples()],
-            pi4D[encoderParameters.dim_block.getNSamples()];
+            pi4D[encoderParameters.dim_block.getNSamples()],
+            res4D[encoderParameters.dim_block.getNSamples()];
 
     int temp_lre[encoderParameters.dim_block.getNSamples()];
     uint bits_per_4D_Block = 0;
@@ -183,18 +184,20 @@ int main(int argc, char **argv) {
                         //newPredictor[it_channel].predictRef(orig4D, ref4D, encoderParameters.dim_block, pf4D);
 
                         //newPredictor[it_channel].angularPredictRefVertical(orig4D, ref4D, encoderParameters.dim_block, pf4D);
-                        newPredictor[it_channel].angularPredictRefHorizontal(orig4D, ref4D, encoderParameters.dim_block, pf4D);
+                        newPredictor[it_channel].angularPredictRefHorizontalMI(orig4D, ref4D, encoderParameters.dim_block, pf4D);
 
-                        float sad;
+                        //float sad;
                         //sad = newPredictor[it_channel].sadVertical(orig4D, pf4D, encoderParameters.dim_block);
-                        sad = newPredictor[it_channel].sadHorizontal(orig4D, pf4D, encoderParameters.dim_block);
+                        //sad = newPredictor[it_channel].sadHorizontal(orig4D, pf4D, encoderParameters.dim_block);
 
-                        cout << "\nSAD: " << sad;
+                        //cout << "\nSAD: " << sad;
 
                         //predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
 
+                        newPredictor[it_channel].residuePred(orig4D, pf4D, encoderParameters.dim_block, res4D);
+
                         //EDUARDO END
-                        transform.dct_4d(pf4D, tf4D, dimBlock, encoderParameters.dim_block);
+                        transform.dct_4d(res4D, tf4D, dimBlock, encoderParameters.dim_block);
 
                         //transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
 
@@ -315,6 +318,7 @@ int main(int argc, char **argv) {
 
                         //predictor.rec(ti4D, pi4D, dimBlock);
                         //newPredictor->recRef(ti4D, dimBlock, pi4D);
+                        newPredictor->recResiduePred(ti4D, pf4D, encoderParameters.dim_block, pi4D);
 
                         //EDUARDO END
 
@@ -332,7 +336,7 @@ int main(int argc, char **argv) {
 
                         //lf.rebuild(ti4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
                         //lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
-                        lf.rebuild(pf4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
+                        lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
 
 #if STATISTICS_TIME
                         rebuild.toc();
@@ -357,7 +361,7 @@ int main(int argc, char **argv) {
 #endif
 
                         //EDUARDO BEGIN
-                        newPredictor[it_channel].update(pf4D, true, encoderParameters.dim_block.getNSamples());
+                        newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
                         //EDUARDO END
                         encoder.write_completedBytes();
                     }

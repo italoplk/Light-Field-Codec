@@ -156,9 +156,9 @@ void Prediction::angularPredictRefHorizontal(const float *orig_input, const floa
                         if (pos >= origSize.v){
                             pos = i;
                         }
-                        R0 = orig_input[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                        R0 = ref[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
                                         (i * origSize.x * origSize.y * origSize.u)];
-                        R1 = orig_input[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                        R1 = ref[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
                                         ((pos) * origSize.x * origSize.y * origSize.u)];
 
                         //Pu,v = ((32 - Wu)) * R0,i + Wu * R0,i + 1 + 16) >> 5;
@@ -249,9 +249,9 @@ void Prediction::angularPredictRefVertical(const float *orig_input, const float 
                         if (pos >= origSize.v){
                             pos = i;
                         }
-                        R0 = orig_input[(it_pos_out.x) + (it_pos_in.y) + (i * origSize.x * origSize.y) +
+                        R0 = ref[(it_pos_out.x) + (it_pos_in.y) + (i * origSize.x * origSize.y) +
                                         (it_pos_in.v)];
-                        R1 = orig_input[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
+                        R1 = ref[(it_pos_out.x) + (it_pos_in.y) + ((pos) * origSize.x * origSize.y) +
                                         (it_pos_in.v)];
 
                         //Pu,v = ((32 - Wv)) * Ri,0 + Wv * Ri + 1,0 + 16) >> 5
@@ -327,6 +327,86 @@ float Prediction::sadVertical(const float *orig_input, const float *prediction_i
     return sum;
 }
 
+void Prediction::angularPredictRefHorizontalMI(const float *orig_input, const float *ref, const Point4D &origSize, float *out ){
+    Point4D it_pos_in;
+    Point4D it_pos_out;
+
+    // Horizontal
+    // fixed
+    it_pos_in.x = origSize.x - 1;
+
+    it_pos_in.u = 0;
+    it_pos_in.v = 0;
+    it_pos_in.y = 0;
+
+    it_pos_out.x = 0;
+    it_pos_out.u = 0;
+    it_pos_out.v = 0;
+    it_pos_out.y = 0;
+
+    // Horizontal modo 10 - H0
+    int d = 0;
+    int Cu = 0;
+    int i = 0;
+    int Wu = 0;
+    float R0 = 0;
+    float R1 = 0;
+
+    int ref0 = 0;
+    for(int i = 0; i < origSize.getNSamples(); i++){
+        ref0 += ref[i];
+    }
+
+    if(ref0 == 0){
+        for(int i = 0; i < origSize.getNSamples(); i++){
+            out[i] = orig_input[i];
+        }
+    } else{ //se tem bloco de referência
+
+        // percorre vetor out na ordem horizontal espacial
+        for (it_pos_out.y = 0; it_pos_out.y < origSize.y; it_pos_out.y += 1) {
+            for (it_pos_out.x = 0; it_pos_out.x < origSize.x; it_pos_out.x += 1) {
+
+                // percorre vetor out na ordem horizontal angular
+                for (it_pos_out.v = 0; it_pos_out.v < origSize.v; it_pos_out.v += 1) {
+                    for (it_pos_out.u = 0; it_pos_out.u < origSize.u; it_pos_out.u += 1) {
+
+                        int pos_out = (it_pos_out.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y)
+                                      + (it_pos_out.v * origSize.x * origSize.y * origSize.u);
+
+                        Cu = (it_pos_out.u * d) >> 5;
+                        Wu = (it_pos_out.u * d) & 31;
+                        i = it_pos_out.v + Cu;
+                        int pos = i+1;
+                        if (pos >= origSize.v){
+                            pos = i;
+                        }
+                        R0 = ref[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
+                                 (i * origSize.x * origSize.y * origSize.u)];
+                        R1 = ref[(it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_out.u * origSize.x * origSize.y) +
+                                 ((pos) * origSize.x * origSize.y * origSize.u)];
+
+                        //Pu,v = ((32 - Wu)) * R0,i + Wu * R0,i + 1 + 16) >> 5;
+                        out[pos_out] = ((32 - Wu) * R0 + Wu * R1 + 16) / pow(2, 5);
+
+                        /*
+                        printf("\nCu = %d * %d = %d", it_pos_out.u, d, Cu);
+                        printf("\nWu = %d * %d = %d", it_pos_out.u, d, Wu);
+                        printf("\ni = %d + %d = %d", it_pos_out.v, Cu, i);
+                        printf("\nR0 - %d = %f", (it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                                      (i * origSize.x * origSize.y * origSize.u), R0);
+                        printf("\nR1 - %d = %f", (it_pos_in.x) + (it_pos_out.y * origSize.x) + (it_pos_in.u) +
+                                             ((pos) * origSize.x * origSize.y * origSize.u), R1);
+                        printf("\nOut - %d = %f", pos_out, out[pos_out]);
+                        */
+                    }
+                }
+            }
+        }
+
+    }
+}
+
 /*
 float Prediction::sad(const float *orig_input, const float *prediction_input, const Point4D &origSize){
     float sum = 0;
@@ -336,6 +416,18 @@ float Prediction::sad(const float *orig_input, const float *prediction_input, co
     }
     return sum;
 }*/
+
+void Prediction::residuePred(const float *orig_input, const float *pred, const Point4D &origSize, float *out ){
+    for (int i = 0; i < origSize.getNSamples(); ++i){
+        out[i] = orig_input[i] - pred[i];
+    }
+}
+
+void Prediction::recResiduePred(const float *orig_input, const float *pred, const Point4D &origSize, float *out ){
+    for (int i = 0; i < origSize.getNSamples(); ++i){
+        out[i] = orig_input[i] + pred[i];
+    }
+}
 
 void Prediction::recRef(const float *input, const Point4D &origSize, float *out ){
     int numElements = origSize.getNSamples();
