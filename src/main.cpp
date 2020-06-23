@@ -253,14 +253,16 @@ int main(int argc, char **argv) {
                         root = tree.CreateRoot(light_field_name, hypercubo, it_channel, temp_lre, encoderParameters.dim_block);
                         tree.CreateTree(root, 0, it_pos, hypercubo_pos, {0,0,0,0});
 
+                        tree.PrintLAST();
+
 #if HEXADECA_TREE_CBF
                         tree.WriteCBFInFile();
 #endif
 
                         tree.DeleteTree(&root);
 
-                        /*if (hypercubo == 1)
-                            exit(1);*/
+                        if (hypercubo == 1)
+                            exit(1);
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 

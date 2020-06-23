@@ -74,6 +74,7 @@ struct Node{
     Point_4D start{0,0,0,0};
     Point_4D end{0,0,0,0};
     Point_4D hypercube_dim{0,0,0,0};
+    Point_4D node_pos{0,0,0,0};
 
     int id = 0,
         parent = 0;
@@ -97,6 +98,10 @@ struct Node{
         }
     }
 
+    void SetNodePosition(Point_4D pos){
+        this->node_pos = pos;
+    }
+
     void SetAttributes(Attributes *att){
         this->att = att;
     }
@@ -112,11 +117,14 @@ public:
     void CloseFile();
 
     void WriteCBFInFile();
+    void PrintLAST();
 
     ~Tree();
 
 private:
     ofstream file;
+
+    vector<Node *> subPartitionsBuffer; //TESTE PARA UTILIZAÇÃO DO LAST
 
     int id = 0;
     int CBF_bits_per_hypercube = 0;

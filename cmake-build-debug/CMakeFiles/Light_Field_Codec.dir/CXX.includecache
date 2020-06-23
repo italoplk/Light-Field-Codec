@@ -72,6 +72,10 @@ iostream
 vector
 -
 
+/home/igor/Documentos/Git/Light-Field-Codec/src/LightField.cpp
+LightField.h
+/home/igor/Documentos/Git/Light-Field-Codec/src/LightField.h
+
 /home/igor/Documentos/Git/Light-Field-Codec/src/LightField.h
 Typedef.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Typedef.h
@@ -96,6 +100,10 @@ iostream
 iomanip
 -
 
+/home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.cpp
+Prediction.h
+/home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.h
+
 /home/igor/Documentos/Git/Light-Field-Codec/src/Prediction.h
 Typedef.h
 /home/igor/Documentos/Git/Light-Field-Codec/src/Typedef.h
@@ -106,6 +114,12 @@ Point4D.h
 string
 -
 cstring
+-
+
+/home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.cpp
+Quantization.h
+/home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.h
+cmath
 -
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Quantization.h
@@ -145,6 +159,12 @@ chrono
 -
 iostream
 -
+
+/home/igor/Documentos/Git/Light-Field-Codec/src/Transform.cpp
+cassert
+-
+Transform.h
+/home/igor/Documentos/Git/Light-Field-Codec/src/Transform.h
 
 /home/igor/Documentos/Git/Light-Field-Codec/src/Transform.h
 zconf.h

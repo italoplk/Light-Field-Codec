@@ -13,6 +13,8 @@ Node* Tree::CreateRoot(string light_field, uint hypercubo, uint channel, int *bi
 
     this->hypercube = new Hypercube(16,16,16,16);
 
+    this->subPartitionsBuffer.clear();
+
     this->id = 0;
     this->CBF_bits_per_hypercube = 0;
 
@@ -60,6 +62,10 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
         }
 #if HEXADECA_TREE_TYPE == 0
         this->ComputeAttributes(root, root->start.x, root->end.x, root->start.y, root->end.y, root->start.u, root->end.u, root->start.v, root->end.v);
+
+        root->SetNodePosition(this->hy_pos);
+
+        this->subPartitionsBuffer.push_back(root);
 
 #if HEXADECA_TREE_CBF == false
         this->WriteAttributesInFile(level, this->hy_pos, root);
@@ -309,4 +315,18 @@ void Tree::WriteCBFInFile(){
         this->props->hypercubo << SEP <<
         this->props->channel << SEP <<
         this->CBF_bits_per_hypercube << SEP << endl;
+}
+
+void Tree::PrintLAST() {
+    while (this->subPartitionsBuffer.size() > 0){
+        if (this->subPartitionsBuffer.back()->att->significant_value != 0){
+            cout << "Last sub-hypercube with significant value: (x: " << this->subPartitionsBuffer.back()->node_pos.x <<
+                    ",y: " << this->subPartitionsBuffer.back()->node_pos.y <<
+                    ",u: " << this->subPartitionsBuffer.back()->node_pos.u <<
+                    ",v: " << this->subPartitionsBuffer.back()->node_pos.v << ")" << endl;
+            break;
+        }else{
+            this->subPartitionsBuffer.pop_back();
+        }
+    }
 }

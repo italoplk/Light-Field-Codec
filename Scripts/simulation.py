@@ -12,10 +12,10 @@ if __name__ == '__main__':
 	qps = {0.1, 1, 5, 10}
 
 	""" Diretório dos arquivos de entrada .ppm """
-	input_file = '/media/ubuntu/872f3d86-0680-4dea-b351-493e8c7e7054/home/igor/Git/Full_datasets/'
+	input_file = '/home/igor/Documentos/Git/Full_datasets/'
 
 	""" Diretório de saída """
-	output_file = '/media/ubuntu/872f3d86-0680-4dea-b351-493e8c7e7054/home/igor/Git/output_data_tree/'
+	output_file = '/home/igor/Documentos/Git/Outputs/output_CBF/'
 
 	""" Tamanho da partição de bloco """
 	block_particion = '4x4x4x4'
