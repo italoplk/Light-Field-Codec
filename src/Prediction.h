@@ -72,9 +72,10 @@ public:
 
     void recResiduePred(const float *orig_input, const float *pred, const Point4D &origSize, float *out );
 
+    void YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale);
+
     void recRef(const float *input, const Point4D &origSize, float *out );
 
-    //const std::vector<ValueBlockPred> &getPredReferences() const;
     //EDUARDO END
 
     int mNumberOfHorizontalViews, mNumberOfVerticalViews;

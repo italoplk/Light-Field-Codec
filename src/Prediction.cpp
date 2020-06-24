@@ -429,6 +429,65 @@ void Prediction::recResiduePred(const float *orig_input, const float *pred, cons
     }
 }
 
+void Prediction::YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale) {
+
+    int cont = 0;
+    int mFirstPixelPosition = 0;
+
+    int N = 10;
+    float pixel[3];
+    double M[] = {1.000000000000000, 1.000000000000000, 1.000000000000000, 0,
+                  -0.187330000000000, 1.855630000000000, 1.574800000000000,
+                  -0.468130000000000, 0};
+
+
+    double nd = (double) (1 << (N - 8));
+
+    unsigned short clipval = (unsigned short) (1 << N) - 1;  // pow(2, N) - 1;
+
+    double sval1 = 16 * nd;
+    double sval2 = 219 * nd;
+    double sval3 = 128 * nd;
+    double sval4 = 224 * nd;
+
+
+    for (int index_t = 0; index_t < origSize.v; index_t++) { //vertical angular
+        for (int index_s = 0; index_s < origSize.u; index_s++) { //horizontal angular
+            mFirstPixelPosition = cont * origSize.x * origSize.y;
+            cont++;
+
+            for (int pixelCount = 0; pixelCount < origSize.x * origSize.y; pixelCount++) {
+
+//#if USE_YCbCr == 1 /*Mule*/
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+                    yCbCr[icomp][mFirstPixelPosition + pixelCount] =
+                            yCbCr[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
+
+                    if (icomp < 1) {
+                        yCbCr[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr[icomp][mFirstPixelPosition + pixelCount] - sval1) / sval2, 0.0, 1.0);
+                    } else {
+                        yCbCr[icomp][mFirstPixelPosition + pixelCount] = clip(
+                                (yCbCr[icomp][mFirstPixelPosition + pixelCount] - sval3) / sval4, -0.5, 0.5);
+                    }
+
+                }
+
+                for (int icomp = 0; icomp < 3; icomp++) {
+
+                    pixel[icomp] = yCbCr[0][mFirstPixelPosition + pixelCount] * M[icomp + 0]
+                                   + yCbCr[1][mFirstPixelPosition + pixelCount] * M[icomp + 3]
+                                   + yCbCr[2][mFirstPixelPosition + pixelCount] * M[icomp + 6];
+
+                    rgb[icomp][mFirstPixelPosition + pixelCount] = clip(
+                            double(pixel[icomp] * clipval), 0.0, (double) clipval);
+                }
+            }
+        }
+    }
+}
+
 void Prediction::recRef(const float *input, const Point4D &origSize, float *out ){
     int numElements = origSize.getNSamples();
 

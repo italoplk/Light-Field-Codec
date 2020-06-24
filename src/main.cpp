@@ -41,8 +41,7 @@ int main(int argc, char **argv) {
             tf4D[encoderParameters.dim_block.getNSamples()],
             qi4D[encoderParameters.dim_block.getNSamples()],
             pf4D[encoderParameters.dim_block.getNSamples()],
-            pi4D[encoderParameters.dim_block.getNSamples()],
-            res4D[encoderParameters.dim_block.getNSamples()];
+            pi4D[encoderParameters.dim_block.getNSamples()];
 
     int temp_lre[encoderParameters.dim_block.getNSamples()];
     uint bits_per_4D_Block = 0;
@@ -52,7 +51,12 @@ int main(int argc, char **argv) {
     Prediction newPredictor[3]{{(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)},
                                {(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)},
                                {(uint)ceil(encoderParameters.dim_LF.x/encoderParameters.dim_block.x)}};
-    float ref4D[encoderParameters.dim_block.getNSamples()];
+    float ref4D[encoderParameters.dim_block.getNSamples()],
+            res4D[encoderParameters.dim_block.getNSamples()];
+
+    float origBlock[3][encoderParameters.dim_block.getNSamples()],
+            predictedBlock[3][encoderParameters.dim_block.getNSamples()];
+
     //EDUARDO END
     Transform transform(encoderParameters.dim_block);
     Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
@@ -333,10 +337,13 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         rebuild.tic();
 #endif
+                        //EDUARDO BEGIN
 
                         //lf.rebuild(ti4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
                         //lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
                         lf.rebuild(pi4D, it_pos, dimBlock, stride_block, encoderParameters.dim_block, stride_lf, it_channel);
+
+                        //EDUARDO END
 
 #if STATISTICS_TIME
                         rebuild.toc();
@@ -362,9 +369,29 @@ int main(int argc, char **argv) {
 
                         //EDUARDO BEGIN
                         newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
+
+                        if(block == 50){
+                            for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i){
+                                origBlock[it_channel][i] = orig4D[i];
+                                predictedBlock[it_channel][i] = pf4D[i];
+                            }
+                        }
+
                         //EDUARDO END
                         encoder.write_completedBytes();
                     }
+
+                    //EDUARDO BEGIN
+
+                    if(block == 50){
+                        float origBlockRGB[3][encoderParameters.dim_block.getNSamples()],
+                                predictedBlockRGB[3][encoderParameters.dim_block.getNSamples()];
+
+                        newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);
+                        newPredictor->YCbCR2RGB(predictedBlock, encoderParameters.dim_block, predictedBlockRGB lf.mPGMScale);
+                    }
+
+                    //EDUARDO END
                 }
             }
         }
