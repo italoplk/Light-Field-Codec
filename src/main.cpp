@@ -54,8 +54,15 @@ int main(int argc, char **argv) {
     float ref4D[encoderParameters.dim_block.getNSamples()],
             res4D[encoderParameters.dim_block.getNSamples()];
 
-    float origBlock[3][encoderParameters.dim_block.getNSamples()],
-            predictedBlock[3][encoderParameters.dim_block.getNSamples()];
+    //float origBlock[3][encoderParameters.dim_block.getNSamples()],
+    //        predictedBlock[3][encoderParameters.dim_block.getNSamples()];
+    float **origBlock, **predictedBlock, **origBlockRGB, **predictedBlockRGB;
+    for(int i = 0; i <3; ++i) {
+        origBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        predictedBlock[i] = new float[encoderParameters.dim_block.getNSamples()];
+        origBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+        predictedBlockRGB[i] = new float[encoderParameters.dim_block.getNSamples()];
+    }
 
     //EDUARDO END
     Transform transform(encoderParameters.dim_block);
@@ -371,6 +378,8 @@ int main(int argc, char **argv) {
                         newPredictor[it_channel].update(pi4D, true, encoderParameters.dim_block.getNSamples());
 
                         if(block == 50){
+
+
                             for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i){
                                 origBlock[it_channel][i] = orig4D[i];
                                 predictedBlock[it_channel][i] = pf4D[i];
@@ -384,11 +393,10 @@ int main(int argc, char **argv) {
                     //EDUARDO BEGIN
 
                     if(block == 50){
-                        float origBlockRGB[3][encoderParameters.dim_block.getNSamples()],
-                                predictedBlockRGB[3][encoderParameters.dim_block.getNSamples()];
-
                         newPredictor->YCbCR2RGB(origBlock, encoderParameters.dim_block, origBlockRGB, lf.mPGMScale);
-                        newPredictor->YCbCR2RGB(predictedBlock, encoderParameters.dim_block, predictedBlockRGB lf.mPGMScale);
+                        newPredictor->YCbCR2RGB(predictedBlock, encoderParameters.dim_block, predictedBlockRGB, lf.mPGMScale);
+
+                        newPredictor->write(origBlockRGB, encoderParameters.dim_block, lf.mPGMScale, lf.start_t, lf.start_s, block);
                     }
 
                     //EDUARDO END

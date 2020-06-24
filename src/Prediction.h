@@ -74,6 +74,12 @@ public:
 
     void YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale);
 
+    void write(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, int block);
+
+    void WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer);
+
+    unsigned short change_endianness_16b(unsigned short val);
+
     void recRef(const float *input, const Point4D &origSize, float *out );
 
     //EDUARDO END

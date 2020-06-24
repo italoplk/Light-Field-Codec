@@ -458,8 +458,6 @@ void Prediction::YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, 
 
             for (int pixelCount = 0; pixelCount < origSize.x * origSize.y; pixelCount++) {
 
-//#if USE_YCbCr == 1 /*Mule*/
-
                 for (int icomp = 0; icomp < 3; icomp++) {
                     yCbCr[icomp][mFirstPixelPosition + pixelCount] =
                             yCbCr[icomp][mFirstPixelPosition + pixelCount] + (mPGMScale + 1) / 2;
@@ -486,6 +484,88 @@ void Prediction::YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, 
             }
         }
     }
+}
+
+void Prediction::write(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, int block) {
+    //this->YCbCR2RGB();
+
+    //int cont = 0;
+    //int cont2 = 0;
+
+    //for (int index_t = start_t; index_t < start_t + origSize.v; index_t++) {
+        //for (int index_s = start_s; index_s < start_s + origSize.u; index_s++) {
+
+            /*
+            std::string indice_t = std::to_string(index_t);
+            std::string indice_s = std::to_string(index_s);
+            indice_t = std::string(3 - indice_t.length(), '0') + indice_t;
+            indice_s = std::string(3 - indice_s.length(), '0') + indice_s;
+
+            std::string name_ppm = path + indice_t + "_" + indice_s + ".ppm";
+            */
+
+            std::string blockS = std::to_string(block);
+
+            //printf("Opening View %s \n", name_ppm.c_str());
+            FILE *mViewFilePointer = fopen(blockS.c_str(), "w");
+            if (mViewFilePointer == nullptr) {
+                printf("unable to open %s view file for writing\n", blockS.c_str());
+                //assert(false);
+            }
+
+            //fwrite(fullTag, sizeof(char), sizeof(fullTag), mViewFilePointer);
+
+
+            int mNumberOfFileBytesPerPixelComponent = (mPGMScale <= 255 ? 1 : 2);
+
+            fprintf(mViewFilePointer, "P6\n%d %d\n%d\n", origSize.x * origSize.u, origSize.y * origSize.v, mPGMScale);
+
+            Point4D it_pos;
+
+
+            for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+                for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                    for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+                        for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+                            int pos_out = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
+                            WritePixelToFile(pos_out, rgb, mPGMScale, mNumberOfFileBytesPerPixelComponent, mViewFilePointer);
+                        }
+                    }
+                }
+            }
+
+            /*
+            mFirstPixelPosition = cont * mColumns * mLines;
+            for (int pixelCount = 0; pixelCount < mColumns * mLines; pixelCount++) {
+                WritePixelToFile(pixelCount);
+            }
+
+            cont++;
+            */
+        //}
+    //}
+}
+
+void Prediction::WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer) {
+
+    for (int component_index = 0; component_index < 3; component_index++) {
+        int ClippedPixelValue = rgb[component_index][pixelPositionInCache];
+        if (ClippedPixelValue > mPGMScale)
+            ClippedPixelValue = mPGMScale;
+        if (ClippedPixelValue < 0)
+            ClippedPixelValue = 0;
+        unsigned short bigEndianPixelValue = (mNumberOfFileBytesPerPixelComponent == 2) ? change_endianness_16b(
+                ClippedPixelValue) : ClippedPixelValue;
+
+        fwrite(&bigEndianPixelValue, mNumberOfFileBytesPerPixelComponent, 1, mViewFilePointer);
+    }
+
+}
+
+unsigned short Prediction::change_endianness_16b(unsigned short val) {
+    return (val << 8u) | ((val >> 8u) & 0x00ff);
 }
 
 void Prediction::recRef(const float *input, const Point4D &origSize, float *out ){
