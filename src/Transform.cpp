@@ -306,8 +306,9 @@ void Transform::forward(TransformType transform, float *input, float *output, Po
     float seg_block[this->flat_size];
 
     if (use_segments == NO_SEGMENTS) {
-        if (axis_to_flip != NO_AXIS) flip_axis(output, axis_to_flip, flat_size, shape, stride);
         _forward(transform, input, output, shape);
+        write_stats(0, output, shape);
+        if (axis_to_flip != NO_AXIS) flip_axis(output, axis_to_flip, flat_size, shape, stride);
     } else {
         auto shape_bak = this->shape;
         auto stride_bak = this->stride;
@@ -322,17 +323,20 @@ void Transform::forward(TransformType transform, float *input, float *output, Po
                                 (shape_bak.v >> use_segments) + (shape_bak.v & 1)};
         segment_block(input, _shape, seg_block, base_shape);
         auto shapes = make_shapes(_shape, base_shape);
-        int seg_count = 0;
+        volatile int seg_count = 0;
         for (auto &curr_shape: shapes) {
             this->shape = Point4D(curr_shape.data());
             this->stride = make_stride(curr_shape);
             this->flat_size = this->shape.getNSamples();
+            _forward(transform, pseg, pout, this->shape);
+            write_stats(seg_count, pout, this->shape);
             if (axis_to_flip != NO_AXIS)
                 flip_axis(pout, axis_to_flip, flat_size, this->shape, stride);
-            _forward(transform, pseg, pout, this->shape);
             pout += this->flat_size;
             pseg += this->flat_size;
+            seg_count += 1;
         }
+
         this->shape = shape_bak;
         this->stride = stride_bak;
         this->flat_size = flat_size_bak;
@@ -342,8 +346,8 @@ void Transform::forward(TransformType transform, float *input, float *output, Po
 void Transform::inverse(TransformType transform, float *input, float *output, Point4D &shape) {
     float seg_block[this->flat_size];
     if (use_segments == NO_SEGMENTS) {
-        _inverse(transform, input, output, shape);
         if (axis_to_flip != NO_AXIS) flip_axis(input, axis_to_flip, flat_size, shape, stride);
+        _inverse(transform, input, output, shape);
     } else {
         auto shape_bak = this->shape;
         auto stride_bak = this->stride;
@@ -361,9 +365,9 @@ void Transform::inverse(TransformType transform, float *input, float *output, Po
             this->shape = Point4D(curr_shape.data());
             this->stride = make_stride(curr_shape);
             this->flat_size = this->shape.getNSamples();
-            _inverse(transform, pseg, pout, this->shape);
             if (axis_to_flip != NO_AXIS)
                 flip_axis(pseg, axis_to_flip, flat_size, this->shape, stride);
+            _inverse(transform, pseg, pout, this->shape);
             pout += this->flat_size;
             pseg += this->flat_size;
         }
@@ -374,10 +378,6 @@ void Transform::inverse(TransformType transform, float *input, float *output, Po
         this->flat_size = flat_size_bak;
     }
 }
-
-
-
-
 
 template <typename T, typename size_type>
 void Transform::segment_block(const T *from_block,
@@ -414,7 +414,8 @@ template <typename T, typename size_type>
 void Transform::join_segments(const T *from_block,
                               const std::vector<size_type> &from_shape,
                               T *into_block,
-                              const std::vector<size_type> &base_shape) {
+                              const std::vector<size_type> &base_shape)
+{
     auto *curr_seg = from_block;
     auto stride = make_stride(from_shape);
     int seg_index = 0;
@@ -438,4 +439,109 @@ void Transform::join_segments(const T *from_block,
             }
         }
     }
+}
+
+
+void Transform::use_statistics(const std::string filename)
+{
+    stats_stream.open(filename);
+    stats_stream << "segment" << sep
+                 << "channel" << sep
+                 << "pos_x" << sep
+                 << "pos_y" << sep
+                 << "pos_u" << sep
+                 << "pos_v" << sep
+                 << "bl_x" << sep
+                 << "bl_y" << sep
+                 << "bl_u" << sep
+                 << "bl_v" << sep
+                 << "v_min" << sep
+                 << "v_max" << sep
+                 << "v_minAbs" << sep
+                 << "v_maxAbs" << sep
+                 << "zeros" << sep
+                 << "ones" << sep
+                 << "mean" << sep
+                 << "std" << sep
+                 << "variance" << sep
+                 << "energy" << sep
+                 << std::endl;
+    
+}
+
+void Transform::set_position(int channel, const Point4D& current_pos)
+{
+    this->channel = channel;
+    this->position = current_pos;
+}
+
+static inline float _max(float a, float b) {
+    return a > b ? a : b;
+}
+
+static inline float _min(float a, float b) {
+    return a < b ? a : b;
+}
+
+void Transform::calculate(const float *block, const Point4D &shape)
+{
+    max = block[0];
+    min = block[0];
+    abs_max = std::abs(block[0]);
+    abs_min = std::abs(block[0]);
+    zeros = 0;
+    ones = 0;
+    energy = 0;
+    sum = 0;
+    count = 0;
+    for (int v = 0; v < shape.v; v++) 
+        for (int u = 0; u < shape.u; u++) 
+            for (int y = 0; y < shape.y; y++) 
+                for (int x = 0; x < shape.x; x++) {
+                    auto index = offset(x,y,u,v,stride);
+                    max = _max(max, block[index]);
+                    min = _min(min, block[index]);
+                    abs_max = _max(abs_max, std::abs(block[index]));
+                    abs_min = _min(abs_min, std::abs(block[index]));
+                    if (std::abs(block[index]) < 0.5)
+                        zeros++;
+                    else if (std::abs(block[index]) - 1 < 0.5)
+                        ones++;
+                    energy += block[index] * block[index];
+                    sum += block[index];
+                    count++;
+                }
+}
+
+void Transform::write_stats(const int segment, const float *block, const Point4D &shape)
+{
+    if (!stats_stream.is_open())
+        return;
+
+    calculate(block, shape);
+    float countf = count;
+    float mean = sum / countf;
+    float variance = (1 / countf) * (energy - std::pow(sum/countf, 2)); 
+    float std = std::sqrt(variance);
+    stats_stream << segment << sep
+                 << channel << sep
+                 << position.x << sep
+                 << position.y << sep
+                 << position.u << sep
+                 << position.v << sep
+                 << shape.x << sep
+                 << shape.y << sep
+                 << shape.u << sep
+                 << shape.v << sep
+                 << min << sep
+                 << max << sep
+                 << abs_min << sep
+                 << abs_max << sep
+                 << zeros << sep
+                 << ones << sep
+                 << mean << sep
+                 << std << sep
+                 << variance << sep
+                 << energy << sep
+                 << std::endl;
 }

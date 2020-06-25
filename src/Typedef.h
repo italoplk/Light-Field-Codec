@@ -13,10 +13,10 @@
 #define QUANTIZATION true
 #endif
 #ifndef DPCM_DC
-#define DPCM_DC true
+#define DPCM_DC false
 #endif
 #ifndef STATISTICS_LOCAL
-#define STATISTICS_LOCAL false
+#define STATISTICS_LOCAL true
 #endif
 #ifndef STATISTICS_GLOBAL
 #define STATISTICS_GLOBAL false
@@ -25,10 +25,10 @@
 #define STATISTICS_TIME false
 #endif
 #ifndef TRACE_TRANSF
-#define TRACE_TRANSF false
+#define TRACE_TRANSF true
 #endif
 #ifndef TRACE_QUANT
-#define TRACE_QUANT false
+#define TRACE_QUANT true
 #endif
 #ifndef TRACE_LRE
 #define TRACE_LRE false
@@ -41,6 +41,9 @@
 #endif
 #ifndef LFCODEC_TRANSFORM_HISTOGRAM
 #define LFCODEC_TRANSFORM_HISTOGRAM false
+#endif
+#ifndef LFCODEC_QUANTIZATION_EXTRA_VOLUMES
+#define LFCODEC_QUANTIZATION_EXTRA_VOLUMES true
 #endif
 
 

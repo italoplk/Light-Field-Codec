@@ -12,6 +12,10 @@ private:
 
     float *volume{nullptr};
 
+#if LFCODEC_QUANTIZATION_EXTRA_VOLUMES
+    float *volume_hom = nullptr;
+#endif
+
     float qp;
 
     static float clip_min(float val, float min);
@@ -28,6 +32,17 @@ public:
     void inverse(const float *input, float *output);
 
     void foward(const float *input, float *output);
+
+
+#if LFCODEC_QUANTIZATION_EXTRA_VOLUMES
+    enum {
+        DEFAULT = 0,
+        HOMOGENEOUS
+    };
+    void inverse(const int volume, const float *input, float *output);
+
+    void foward(const int volume, const float *input, float *output);
+#endif
 };
 
 

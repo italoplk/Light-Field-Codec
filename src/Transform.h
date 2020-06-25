@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <fstream>
 
 class Transform {
   public:
@@ -33,23 +34,43 @@ class Transform {
     int use_segments = NO_SEGMENTS;
     int axis_to_flip = NO_AXIS;
 
-    Transform(Point4D &shape);
-    ~Transform();
+    
+    
 
     static void flush_cache();
     static TransformType get_type(std::string transform);
 
-    void forward(TransformType transform, float *input, float *output, Point4D &shape);
+    Transform(Point4D &shape);
+    ~Transform();
 
+    void use_statistics(const std::string filename);
+    void set_position(int channel, const Point4D& current_pos);
+
+    void forward(TransformType transform, float *input, float *output, Point4D &shape);
     void inverse(TransformType transform, float *input, float *output, Point4D &shape);
+
 
   private:
     Point4D shape;
     Point4D stride;
+    Point4D position;
+    int channel;
     size_t flat_size;
     size_t flat_p2;
     float *wh_partial_values;
     float *partial_values;
+    float max;
+    float min;
+    float abs_max;
+    float abs_min;
+    int zeros;
+    int ones;
+    int count;
+    float energy;
+    float sum;
+    std::ofstream stats_stream;
+    std::string sep = ",";
+
 
     static std::map<size_t, float *> _DCT_II_CACHE;
     static std::map<size_t, float *> _DST_II_CACHE;
@@ -86,7 +107,9 @@ class Transform {
                        const std::vector<size_type> &from_shape,
                        T *into_block,
                        const std::vector<size_type> &base_shape);
+                       
+    void write_stats(int segment, const float *block, const Point4D &shape);
+    void calculate(const float *block, const Point4D &shape);
 };
-
 
 #endif // TRANSFORM_H

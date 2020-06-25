@@ -91,7 +91,8 @@ int main(int argc, char **argv) {
     // encoder.writeHeader();
 
 #if STATISTICS_LOCAL
-    Statistics statistics_tf(encoderParameters.getPathOutput() + "localStatistics_transform.csv");
+    transform.use_statistics(encoderParameters.getPathOutput() +
+                             "localStatistics_transform.csv");
     Statistics statistics_qf(encoderParameters.getPathOutput() +
                              "localStatistics_quantization.csv");
 #endif
@@ -188,32 +189,32 @@ int main(int argc, char **argv) {
 
 #if TRANSF_QUANT
 
-#    if STATISTICS_TIME
+#if STATISTICS_TIME
                         t.tic();
-#    endif
-#    if LFCODEC_USE_PREDICTION
+#endif
+#if LFCODEC_USE_PREDICTION
                         predictor.predict(orig4D, encoderParameters.dim_block, pf4D);
-#    else
+#else
                         for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
                             pf4D[i] = orig4D[i];
                         }
-#    endif
-
-#    if LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
+#endif
+                        transform.set_position(it_channel, it_pos);
+#if LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
                         // For chrominance channels, use DCT only.
                         if (it_channel == 0) // Luma channel
                             transform.forward(transform_type, pf4D, tf4D, dimBlock);
                         else
                             transform.forward(Transform::DCT, pf4D, tf4D, dimBlock);
-#    else
+#else
                         transform.forward(transform_type, pf4D, tf4D, dimBlock);
-#    endif
+#endif
 
-#    if STATISTICS_TIME
+#if STATISTICS_TIME
                         t.toc();
-#    endif
+#endif
 
-#    if TRACE_TRANSF
+#if TRACE_TRANSF
                         file_traceTransf << it_channel << sep <<
 
                         it_pos.x << sep << it_pos.y << sep << it_pos.u << sep << it_pos.v << sep <<
@@ -226,8 +227,8 @@ int main(int argc, char **argv) {
                         }
 
                         file_traceTransf << std::endl;
-#    endif
-#    if LFCODEC_TRANSFORM_HISTOGRAM
+#endif
+#if LFCODEC_TRANSFORM_HISTOGRAM
                         for (int v = 0; v < dimBlock.v; v++)
                             for (int u = 0; u < dimBlock.u; u++)
                                 for (int y = 0; y < dimBlock.y; y++)
@@ -236,23 +237,23 @@ int main(int argc, char **argv) {
                                         auto value = tf4D[index];
                                         histogram[std::trunc(value)] += 1;
                                     }
-#    endif
-#    if QUANTIZATION
+#endif
+#if QUANTIZATION
 
-#        if STATISTICS_TIME
+#if STATISTICS_TIME
                         q.tic();
-#        endif
+#endif
 
-                        quantization.foward(tf4D, qf4D);
+                        quantization.foward(Quantization::HOMOGENEOUS, tf4D, qf4D);
 
-#        if DPCM_DC
+#if DPCM_DC
                         qf4D[0] -= (float)dpcmDc[it_channel].get_reference(it_pos.x, it_pos.y);
-#        endif
+#endif
 
-#        if STATISTICS_TIME
+#if STATISTICS_TIME
                         q.toc();
-#        endif
-#        if TRACE_QUANT
+#endif
+#if TRACE_QUANT
                         file_traceQuant << it_channel << sep << it_pos.x << sep << it_pos.y << sep
                                         << it_pos.u << sep << it_pos.v << sep <<
 
@@ -264,10 +265,10 @@ int main(int argc, char **argv) {
                         }
 
                         file_traceQuant << std::endl;
-#        endif
-#    else  // QUANTIZATION
+#endif
+#else  // QUANTIZATION
                         std::copy(tf4D, tf4D + encoderParameters.dim_block.getNSamples(), qf4D);
-#    endif // QUANTIZATION
+#endif // QUANTIZATION
 
                         for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
                             temp_lre[i] = (int)std::trunc(qf4D[i]);
@@ -275,7 +276,7 @@ int main(int argc, char **argv) {
 
                         auto lre_result =
                         lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
-#    if TRACE_LRE
+#if TRACE_LRE
                         for (auto it_lre: lre_result) {
                             file_traceLRE << it_channel << sep << it_pos.x << sep << it_pos.y << sep
                                           << it_pos.u << sep << it_pos.v << sep <<
@@ -285,54 +286,54 @@ int main(int argc, char **argv) {
 
                             it_lre.level << sep << it_lre.run << std::endl;
                         }
-#    endif
+#endif
                         bits_per_4D_Block = encoder.write4DBlock(
                         temp_lre, encoderParameters.dim_block.getNSamples(), lre_result);
 
-#    if STATISTICS_TIME
+#if STATISTICS_TIME
                         qi.tic();
-#    endif
-#    if QUANTIZATION
-#        if DPCM_DC
+#endif
+#if QUANTIZATION
+#if DPCM_DC
                         qf4D[0] += (float)dpcmDc[it_channel].get_reference(it_pos.x, it_pos.y);
-#        endif
-                        quantization.inverse(qf4D, qi4D);
+#endif
+                        quantization.inverse(Quantization::HOMOGENEOUS, qf4D, qi4D);
 
-#        if STATISTICS_TIME
+#if STATISTICS_TIME
                         qi.toc();
-#        endif
+#endif
 
-#    else /* NO_QUANTIZATION */
+#else /* NO_QUANTIZATION */
                         for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
                             qi4D[i] = temp_lre[i];
                             // qi4D[i] = qf4D[i];
                         }
-#    endif
+#endif
 
-#    if STATISTICS_TIME
+#if STATISTICS_TIME
                         ti.tic();
-#    endif
+#endif
 
-#    if LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
+#if LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
                         // For chrominance channels, use DCT only.
                         if (it_channel == 0) // Luma channel
                             transform.inverse(transform_type, qi4D, ti4D, dimBlock);
                         else
                             transform.inverse(Transform::DCT, qi4D, ti4D, dimBlock);
-#    else
+#else
                         transform.inverse(transform_type, qi4D, ti4D, dimBlock);
-#    endif
-#    if LFCODEC_USE_PREDICTION
+#endif
+#if LFCODEC_USE_PREDICTION
                         predictor.rec(ti4D, pi4D, dimBlock);
-#    else
+#else
                         for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i) {
                             pi4D[i] = ti4D[i];
                         }
-#    endif
+#endif
 
-#    if STATISTICS_TIME
+#if STATISTICS_TIME
                         ti.toc();
-#    endif
+#endif
 
 #else /* NO_TRANSF_QUANT */
                         std::copy(orig4D, orig4D + dimBlock.getNSamples(), ti4D);
@@ -351,14 +352,8 @@ int main(int argc, char **argv) {
 #endif
 
 #if STATISTICS_LOCAL
-#    if TRANSF_QUANT
-                        statistics_tf.compute(
-                        std::vector<float>(tf4D, tf4D + dimBlock.getNSamples()), nullptr);
-                        statistics_tf.compute_sse(orig4D, qi4D, dimBlock, stride_block);
-                        statistics_tf.write(it_pos, dimBlock, it_channel, lre_result,
-                                            bits_per_4D_Block);
-
-#        if QUANTIZATION
+#if TRANSF_QUANT
+#if QUANTIZATION
 
                         statistics_qf.compute(
                         std::vector<float>(qf4D, qf4D + encoderParameters.dim_block.getNSamples()),
@@ -366,9 +361,9 @@ int main(int argc, char **argv) {
                         statistics_qf.compute_sse(orig4D, qi4D, dimBlock, stride_block);
                         statistics_qf.write(it_pos, dimBlock, it_channel, lre_result,
                                             bits_per_4D_Block);
-#        endif // QUANTIZATION
-#    endif     // TRANSF_QUANT
-#endif         // STATISTICS_LOCAL
+#endif // QUANTIZATION
+#endif // TRANSF_QUANT
+#endif // STATISTICS_LOCAL
 
 #if DPCM_DC
                         dpcmDc[it_channel].update((int)qf4D[0], true);

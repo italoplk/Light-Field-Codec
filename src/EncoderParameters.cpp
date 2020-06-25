@@ -30,7 +30,7 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
         } else if (flag == "-lfv") {
             this->dim_LF.v = (short)strtol(argv[++it], nullptr, 10);
         } else if (flag == "-lytro") {
-            this->lytro = (short)strtol(argv[++it], nullptr, 10);
+            this->lytro = true; //(short)strtol(argv[++it], nullptr, 10);
         } else if (flag == "-input") {
             this->path_input = argv[++it];
         } else if (flag == "-output") {
@@ -66,6 +66,7 @@ void EncoderParameters::report() {
     std::cout << std::endl;
     std::cout << "LF Dim: " << this->dim_LF << std::endl;
     std::cout << "Block Dim: " << this->dim_block << std::endl;
+    std::cout << "Lytro: " << this->lytro << std::endl;
     std::cout << std::endl;
     std::cout << "Transform: " << this->transform << std::endl;
     std::cout << "Segments: " << this->segments << std::endl;
