@@ -4,6 +4,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <vector>
 #include <zconf.h>
 
 class Point4D {
@@ -21,11 +22,30 @@ public:
 
   uint getNSamples() const;
 
+  std::vector<uint> to_vector() const {
+    std::vector<uint> vec;
+    vec.resize(4);
+    vec[0] = x;
+    vec[1] = y;
+    vec[2] = u;
+    vec[3] = v;
+    return vec;
+  }
+
   friend std::ostream &operator<<(std::ostream &os, Point4D const &point);
 
   friend bool operator!=(const Point4D &p1, const Point4D &p2);
 
   friend bool operator==(const Point4D &p1, const Point4D &p2);
+
+  friend Point4D operator>>(const Point4D &p, const int val) {
+    Point4D q;
+    q.x = p.x >> val;
+    q.y = p.y >> val;
+    q.u = p.u >> val;
+    q.v = p.v >> val;
+    return q;
+  }
 
   uint &operator[](size_t dimension) {
     switch (dimension) {

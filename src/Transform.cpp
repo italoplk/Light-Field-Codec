@@ -1,15 +1,20 @@
 
 #include "Transform.h"
+#include "Quantization.h"
+#include "EncBitstreamWriter.h"
+#include "LRE.h"
+
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
+#include <limits>
+#include <algorithm>
 #include "utils.h"
 
 std::map<size_t, float *> Transform::_DCT_II_CACHE;
 std::map<size_t, float *> Transform::_DST_II_CACHE;
 std::map<size_t, float *> Transform::_DST_VII_CACHE;
-
-typedef void (*_tx_t)(const float *, float *, size_t, size_t);
 
 void flip_axis(float *block, unsigned to_flip, unsigned flat_size, Point4D shape, Point4D stride) {
     float _block[flat_size];
@@ -55,7 +60,6 @@ float *Transform::_get_coefficients(Transform::TransformType type, const size_t 
                 _DST_VII_CACHE[size] = coeff;
             }
             break;
-        case BESTMATCH:
         case DCT:
         default: try { coeff = _DCT_II_CACHE.at(size);
             } catch (...) {
@@ -100,6 +104,7 @@ void Transform::_inverse_1(Transform::TransformType type,
 
 Transform::Transform(Point4D &shape) {
     this->shape = shape;
+    this->enforce_transform = TransformType::NO_TRANSFORM;
     stride = make_stride(shape);
     flat_size = stride.v * shape.v;
     flat_p2 = std::pow(2, std::ceil(std::log2(flat_size)));
@@ -295,196 +300,32 @@ Transform::TransformType Transform::get_type(std::string transform) {
         return DST_VII;
     else if (transform == "DCT")
         return DCT;
-    else if (transform == "DST_VII_2")
-        return DST_VII_2;
+    else if (transform == "ANY")
+        return ANY;
     else
         std::cerr << "Unkown transform: " << transform << std::endl;
     return DCT;
 }
 
-void Transform::forward(TransformType transform, float *input, float *output, Point4D &shape) {
-    float seg_block[this->flat_size];
-
-    if (use_segments == NO_SEGMENTS) {
-        _forward(transform, input, output, shape);
-        write_stats(0, output, shape);
-        if (axis_to_flip != NO_AXIS) flip_axis(output, axis_to_flip, flat_size, shape, stride);
-    } else {
-        auto shape_bak = this->shape;
-        auto stride_bak = this->stride;
-        auto flat_size_bak = this->flat_size;
-        float seg_block[flat_size_bak];
-        auto *pout = output;
-        auto *pseg = seg_block;
-        std::vector _shape {shape_bak.x, shape_bak.y, shape_bak.u, shape_bak.v};
-        std::vector base_shape {(shape_bak.x >> use_segments) + (shape_bak.x & 1),
-                                (shape_bak.y >> use_segments) + (shape_bak.y & 1),
-                                (shape_bak.u >> use_segments) + (shape_bak.u & 1),
-                                (shape_bak.v >> use_segments) + (shape_bak.v & 1)};
-        segment_block(input, _shape, seg_block, base_shape);
-        auto shapes = make_shapes(_shape, base_shape);
-        volatile int seg_count = 0;
-        for (auto &curr_shape: shapes) {
-            this->shape = Point4D(curr_shape.data());
-            this->stride = make_stride(curr_shape);
-            this->flat_size = this->shape.getNSamples();
-            _forward(transform, pseg, pout, this->shape);
-            write_stats(seg_count, pout, this->shape);
-            if (axis_to_flip != NO_AXIS)
-                flip_axis(pout, axis_to_flip, flat_size, this->shape, stride);
-            pout += this->flat_size;
-            pseg += this->flat_size;
-            seg_count += 1;
-        }
-
-        this->shape = shape_bak;
-        this->stride = stride_bak;
-        this->flat_size = flat_size_bak;
-    }
-}
-
-void Transform::inverse(TransformType transform, float *input, float *output, Point4D &shape) {
-    float seg_block[this->flat_size];
-    if (use_segments == NO_SEGMENTS) {
-        if (axis_to_flip != NO_AXIS) flip_axis(input, axis_to_flip, flat_size, shape, stride);
-        _inverse(transform, input, output, shape);
-    } else {
-        auto shape_bak = this->shape;
-        auto stride_bak = this->stride;
-        auto flat_size_bak = this->flat_size;
-        auto *pout = seg_block;
-        auto *pseg = input;
-        std::vector _shape {shape_bak.x, shape_bak.y, shape_bak.u, shape_bak.v};
-        std::vector base_shape {(shape_bak.x >> use_segments) + (shape_bak.x & 1),
-                                (shape_bak.y >> use_segments) + (shape_bak.y & 1),
-                                (shape_bak.u >> use_segments) + (shape_bak.u & 1),
-                                (shape_bak.v >> use_segments) + (shape_bak.v & 1)};
-        int seg_count = 0;
-        auto shapes = make_shapes(_shape, base_shape);
-        for (auto &curr_shape: shapes) {
-            this->shape = Point4D(curr_shape.data());
-            this->stride = make_stride(curr_shape);
-            this->flat_size = this->shape.getNSamples();
-            if (axis_to_flip != NO_AXIS)
-                flip_axis(pseg, axis_to_flip, flat_size, this->shape, stride);
-            _inverse(transform, pseg, pout, this->shape);
-            pout += this->flat_size;
-            pseg += this->flat_size;
-        }
-
-        join_segments(seg_block, _shape, output, base_shape);
-        this->shape = shape_bak;
-        this->stride = stride_bak;
-        this->flat_size = flat_size_bak;
-    }
-}
-
-template <typename T, typename size_type>
-void Transform::segment_block(const T *from_block,
-                              const std::vector<size_type> &from_shape,
-                              T *into_block,
-                              const std::vector<size_type> &base_shape) {
-    auto *curr_seg = into_block;
-    auto stride = make_stride(from_shape);
-    int seg_index = 0;
-    const auto shapes = make_shapes(from_shape, base_shape);
-    auto shape = shapes[seg_index];
-    for (int v = 0; v < from_shape[3]; v += shape[3]) {
-        for (int u = 0; u < from_shape[2]; u += shape[2]) {
-            for (int y = 0; y < from_shape[1]; y += shape[1]) {
-                for (int x = 0; x < from_shape[0]; x += shape[0]) {
-                    shape = shapes[seg_index++];
-                    auto into_stride = make_stride(shape);
-                    for (int dv = 0; dv < shape[3]; dv++)
-                        for (int du = 0; du < shape[2]; du++)
-                            for (int dy = 0; dy < shape[1]; dy++) {
-                                auto from_offset = stride.x * x + stride.y * (y + dy) +
-                                                   stride.u * (u + du) + stride.v * (v + dv);
-
-                                std::copy(from_block + from_offset,
-                                          from_block + from_offset + shape[0], curr_seg);
-                                curr_seg += shape[0];
-                            }
-                }
-            }
-        }
-    }
-}
-template <typename T, typename size_type>
-void Transform::join_segments(const T *from_block,
-                              const std::vector<size_type> &from_shape,
-                              T *into_block,
-                              const std::vector<size_type> &base_shape)
-{
-    auto *curr_seg = from_block;
-    auto stride = make_stride(from_shape);
-    int seg_index = 0;
-    const auto shapes = make_shapes(from_shape, base_shape);
-    auto shape = shapes[seg_index];
-    for (int v = 0; v < from_shape[3]; v += shape[3]) {
-        for (int u = 0; u < from_shape[2]; u += shape[2]) {
-            for (int y = 0; y < from_shape[1]; y += shape[1]) {
-                for (int x = 0; x < from_shape[0]; x += shape[0]) {
-                    shape = shapes[seg_index++];
-                    auto into_stride = make_stride(shape);
-                    for (int dv = 0; dv < shape[3]; dv++)
-                        for (int du = 0; du < shape[2]; du++)
-                            for (int dy = 0; dy < shape[1]; dy++) {
-                                auto into_offset = stride.x * x + stride.y * (y + dy) +
-                                                   stride.u * (u + du) + stride.v * (v + dv);
-                                std::copy(curr_seg, curr_seg + shape[0], into_block + into_offset);
-                                curr_seg += shape[0];
-                            }
-                }
-            }
-        }
-    }
-}
-
-
-void Transform::use_statistics(const std::string filename)
-{
+void Transform::use_statistics(const std::string filename) {
     stats_stream.open(filename);
-    stats_stream << "segment" << sep
-                 << "channel" << sep
-                 << "pos_x" << sep
-                 << "pos_y" << sep
-                 << "pos_u" << sep
-                 << "pos_v" << sep
-                 << "bl_x" << sep
-                 << "bl_y" << sep
-                 << "bl_u" << sep
-                 << "bl_v" << sep
-                 << "v_min" << sep
-                 << "v_max" << sep
-                 << "v_minAbs" << sep
-                 << "v_maxAbs" << sep
-                 << "zeros" << sep
-                 << "ones" << sep
-                 << "mean" << sep
-                 << "std" << sep
-                 << "variance" << sep
-                 << "energy" << sep
-                 << std::endl;
-    
+    stats_stream << "segment" << sep << "channel" << sep << "pos_x" << sep << "pos_y" << sep
+                 << "pos_u" << sep << "pos_v" << sep << "bl_x" << sep << "bl_y" << sep << "bl_u"
+                 << sep << "bl_v" << sep << "v_min" << sep << "v_max" << sep << "v_minAbs" << sep
+                 << "v_maxAbs" << sep << "zeros" << sep << "ones" << sep << "mean" << sep << "std"
+                 << sep << "variance" << sep << "energy" << sep << std::endl;
 }
 
-void Transform::set_position(int channel, const Point4D& current_pos)
-{
+void Transform::set_position(int channel, const Point4D &current_pos) {
     this->channel = channel;
     this->position = current_pos;
 }
 
-static inline float _max(float a, float b) {
-    return a > b ? a : b;
-}
+static inline float _max(float a, float b) { return a > b ? a : b; }
 
-static inline float _min(float a, float b) {
-    return a < b ? a : b;
-}
+static inline float _min(float a, float b) { return a < b ? a : b; }
 
-void Transform::calculate(const float *block, const Point4D &shape)
-{
+void Transform::calculate_metrics(const float *block, const Point4D &shape) {
     max = block[0];
     min = block[0];
     abs_max = std::abs(block[0]);
@@ -494,11 +335,11 @@ void Transform::calculate(const float *block, const Point4D &shape)
     energy = 0;
     sum = 0;
     count = 0;
-    for (int v = 0; v < shape.v; v++) 
-        for (int u = 0; u < shape.u; u++) 
-            for (int y = 0; y < shape.y; y++) 
+    for (int v = 0; v < shape.v; v++)
+        for (int u = 0; u < shape.u; u++)
+            for (int y = 0; y < shape.y; y++)
                 for (int x = 0; x < shape.x; x++) {
-                    auto index = offset(x,y,u,v,stride);
+                    auto index = offset(x, y, u, v, stride);
                     max = _max(max, block[index]);
                     min = _min(min, block[index]);
                     abs_max = _max(abs_max, std::abs(block[index]));
@@ -513,35 +354,214 @@ void Transform::calculate(const float *block, const Point4D &shape)
                 }
 }
 
-void Transform::write_stats(const int segment, const float *block, const Point4D &shape)
-{
-    if (!stats_stream.is_open())
-        return;
+void Transform::write_stats(const int segment, const float *block, const Point4D &shape) {
+    if (!stats_stream.is_open()) return;
 
-    calculate(block, shape);
+    calculate_metrics(block, shape);
     float countf = count;
     float mean = sum / countf;
-    float variance = (1 / countf) * (energy - std::pow(sum/countf, 2)); 
+    float variance = (1 / countf) * (energy - std::pow(sum / countf, 2));
     float std = std::sqrt(variance);
-    stats_stream << segment << sep
-                 << channel << sep
-                 << position.x << sep
-                 << position.y << sep
-                 << position.u << sep
-                 << position.v << sep
-                 << shape.x << sep
-                 << shape.y << sep
-                 << shape.u << sep
-                 << shape.v << sep
-                 << min << sep
-                 << max << sep
-                 << abs_min << sep
-                 << abs_max << sep
-                 << zeros << sep
-                 << ones << sep
-                 << mean << sep
-                 << std << sep
-                 << variance << sep
-                 << energy << sep
-                 << std::endl;
+    stats_stream << segment << sep << channel << sep << position.x << sep << position.y << sep
+                 << position.u << sep << position.v << sep << shape.x << sep << shape.y << sep
+                 << shape.u << sep << shape.v << sep << min << sep << max << sep << abs_min << sep
+                 << abs_max << sep << zeros << sep << ones << sep << mean << sep << std << sep
+                 << variance << sep << energy << sep << std::endl;
+}
+auto Transform::get_quantization_procotol(TransformType transform) {
+    switch (transform) {
+        case DCT: return Quantization::DEFAULT;
+        default: return Quantization::HOMOGENEOUS;
+    }
+}
+static float mse(float *original, float *reconstructed, unsigned size) {
+    auto value = 0;
+    for (int i = 0; i < size; i++)
+        value += std::pow(original[i] - reconstructed[i], 2);
+    return value / size;
+}
+
+
+
+auto Transform::calculate_distortion(float *block, float *result, Point4D &shape) {
+    shape.updateNSamples();
+    const int SIZE = this->shape.getNSamples();
+    std::vector<TransformType> transforms;
+
+    if (enforce_transform == NO_TRANSFORM)
+        return std::tuple(NO_TRANSFORM, std::numeric_limits<float>::infinity());
+
+    else if (enforce_transform == ANY)
+        for (const auto &type: ALL_TRANSFORMS)
+            transforms.push_back(type);
+    else
+        transforms.push_back(enforce_transform);
+
+    float blk_transf[SIZE];
+    float blk_qnt[SIZE];
+    float blk_iquant[SIZE];
+    float blk_itransf[SIZE];
+
+    std::fill(blk_transf, blk_transf + SIZE, 0);
+    std::fill(blk_qnt, blk_qnt + SIZE, 0);
+    std::fill(blk_iquant, blk_iquant + SIZE, 0);
+    std::fill(blk_itransf, blk_itransf + SIZE, 0);
+
+    float best_score = std::numeric_limits<float>::infinity();
+    TransformType best_type;
+
+    Quantization quantizer(shape, qp, quant_weight_100);
+    for (const auto &type: transforms) {
+        _forward(type, block, blk_transf, shape);
+        quantizer.foward(get_quantization_procotol(type), blk_transf, blk_qnt);
+        quantizer.inverse(get_quantization_procotol(type), blk_qnt, blk_iquant);
+        _inverse(type, blk_iquant, blk_itransf, shape);
+        auto curr_score = mse(block, blk_itransf, SIZE);
+
+        if (curr_score < best_score) {
+            best_type = type;
+            best_score = curr_score;
+            std::copy(blk_qnt, blk_qnt + SIZE, result);
+        }
+    }
+    return std::tuple(best_type, best_score);
+}
+
+auto Transform::calculate_tree(float *block, float *result, Point4D &shape, int level) {
+    if (!block) /* Dummy return to deduce return type */
+        return std::tuple((_Node *)nullptr, 0.0F);
+
+    const int SIZE = this->shape.getNSamples();
+    shape.updateNSamples();
+
+    float block_transformed[SIZE];
+    float block_segmented[SIZE];
+    float segments_results[SIZE];
+    float joined_results[SIZE];
+
+    std::fill(block_transformed, block_transformed + SIZE, 0);
+    std::fill(block_segmented, block_segmented + SIZE, 0);
+    std::fill(segments_results, segments_results + SIZE, 0);
+    std::fill(joined_results, joined_results + SIZE, 0);
+
+    float segments_score = std::numeric_limits<float>::infinity();
+    auto block_shape = this->shape.to_vector();
+    float *transformed_block;
+    float final_score;
+
+    auto [block_type, block_score] = calculate_distortion(block, block_transformed, shape);
+    auto root = new _Node();
+
+    if (level > 0) {
+        float segments_score_sum = 0;
+        auto shapes = make_shapes(block_shape, 1);
+
+        auto shape_bak = this->shape;
+        auto stride_bak = this->stride;
+        auto flat_size_bak = this->flat_size;
+        segment_block(block, block_shape, block_segmented, 1);
+        float *pseg = block_segmented;
+        float *pres = segments_results;
+
+        for (int i = 0; i < shapes.size(); i++) {
+            Point4D seg_shape(shapes[i].data());
+            this->shape = seg_shape;
+            this->flat_size = seg_shape.getNSamples();
+            this->stride = make_stride(seg_shape);
+            auto [node, score] = calculate_tree(pseg, pres, seg_shape, level - 1);
+
+            root->set_child(i, node);
+            segments_score_sum += score;
+            pseg += seg_shape.getNSamples();
+            pres += seg_shape.getNSamples();
+        }
+        this->shape = shape_bak;
+        this->stride = stride_bak;
+        this->flat_size = flat_size_bak;
+
+        segments_score = segments_score_sum / shapes.size();
+    }
+    if (segments_score < block_score) {
+        transformed_block = segments_results;
+        final_score = segments_score;
+    } else {
+        root->set_transform_type(block_type);
+        transformed_block = block_transformed;
+        final_score = block_score;
+    }
+    std::copy(transformed_block, transformed_block + SIZE, result);
+    return std::tuple(root, final_score);
+}
+
+void Transform::reconstruct_from_tree(_Node *root, float *input, float *output, Point4D &shape) {
+    shape.updateNSamples();
+    const int SIZE = this->shape.getNSamples();
+    float block_iquant[SIZE];
+    float block_segments[SIZE];
+    float segment_results[SIZE];
+    std::fill(block_iquant, block_iquant + SIZE, 0);
+    std::fill(block_segments, block_segments + SIZE, 0);
+    std::fill(segment_results, segment_results + SIZE, 0);
+
+    if (root->transform_type != -1) {
+        Quantization quantizer(shape, qp, quant_weight_100);
+        quantizer.inverse(get_quantization_procotol((TransformType)root->transform_type), input,
+                          block_iquant);
+        _inverse((TransformType)root->transform_type, block_iquant, output, shape);
+    } else {
+        auto block_shape = this->shape.to_vector();
+        auto shapes = make_shapes(block_shape, 1);
+        auto shape_bak = this->shape;
+        auto stride_bak = this->stride;
+        auto flat_size_bak = this->flat_size;
+
+        float *pseg = input;
+        float *pres = segment_results;
+        for (int i = 0; i < shapes.size(); i++) {
+            Point4D seg_shape(shapes[i].data());
+            this->shape = seg_shape;
+            this->flat_size = seg_shape.getNSamples();
+            this->stride = make_stride(seg_shape);
+            reconstruct_from_tree(root->children[i], pseg, pres, seg_shape);
+            pseg += seg_shape.getNSamples();
+            pres += seg_shape.getNSamples();
+        }
+        this->shape = shape_bak;
+        this->stride = stride_bak;
+        this->flat_size = flat_size_bak;
+        join_segments(segment_results, block_shape, output, 1);
+    }
+}
+
+std::string
+Transform::forward(TransformType transform, float *input, float *output, Point4D &shape) {
+    shape.updateNSamples();
+    char buffer[1 << 16];
+#if !!LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
+    this->enforce_transform = channel == 0 ? transform : DCT;
+#else
+    this->enforce_transform = transform;
+#endif
+    const int MAX_LEVELS = std::min(LFCODEC_SEGMENTATION_MAX_LEVELS, 3);
+#if !!LFCODEC_USE_SEGMENTATION
+#if !!LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
+    std::vector channel_mapping = {MAX_LEVELS, 0, 0};
+#else
+    std::vector channel_mapping = {MAX_LEVELS, MAX_LEVELS, MAX_LEVELS};
+#endif
+    
+#else
+    std::vector channel_mapping = {0, 0, 0};
+#endif
+    auto [root, mse] = calculate_tree(input, output, shape, channel_mapping[channel]);
+    root->to_string(buffer);
+    std::string tree = buffer;
+    delete root;
+    return tree;
+}
+
+void Transform::inverse(const std::string tree, float *input, float *output, Point4D &shape) {
+    _Node root;
+    root.from_string(tree.c_str());
+    reconstruct_from_tree(&root, input, output, shape);
 }

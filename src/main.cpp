@@ -43,6 +43,8 @@ void report_macros() {
     printf("***********************\n");
 }
 
+
+
 int main(int argc, char **argv) {
     report_macros();
     EncoderParameters encoderParameters;
@@ -70,10 +72,15 @@ int main(int argc, char **argv) {
 #if LFCODEC_USE_PREDICTION
     Prediction predictor;
 #endif
-
+    volatile bool should_show_block = false;
     Transform transform(encoderParameters.dim_block);
     transform.axis_to_flip = encoderParameters.flipaxis;
     transform.use_segments = encoderParameters.segments;
+    transform.codec_parameters = encoderParameters;
+
+    transform.qp = encoderParameters.getQp();
+    transform.quant_weight_100 = encoderParameters.quant_weight_100;
+
 
     auto transform_type = Transform::get_type(encoderParameters.transform);
     Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
@@ -87,7 +94,7 @@ int main(int argc, char **argv) {
                       {encoderParameters.dim_LF.x}};
 #endif
 
-    EncBitstreamWriter encoder(&encoderParameters, 10000000);
+    EncBitstreamWriter encoder(&encoderParameters, 10'000'000);
     // encoder.writeHeader();
 
 #if STATISTICS_LOCAL
@@ -151,6 +158,8 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
     total_time.tic();
 #endif
+    std::string tree;
+
     // angular
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) {
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
@@ -171,7 +180,7 @@ int main(int argc, char **argv) {
                     (encoderParameters.dim_block.u - dimBlock.u) * encoderParameters.dim_block.x *
                     encoderParameters.dim_block.y);
 
-                    std::cout << "Pos: " << it_pos << "\tBlock Size: " << dimBlock << std::endl;
+                    // std::cout << "Pos: " << it_pos << "\tBlock Size: " << dimBlock << std::endl;
 
                     for (int i = 0; i < encoderParameters.dim_block.getNSamples(); ++i)
                         orig4D[i] = tf4D[i] = qf4D[i] = 0;
@@ -186,7 +195,11 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         getBlock.toc();
 #endif
-
+                        if (it_pos.y + 15 > dimLF.y)
+                        {
+                            // Dummy variable for breakpoint and debugging
+                            volatile int xxx = 0;
+                        }
 #if TRANSF_QUANT
 
 #if STATISTICS_TIME
@@ -199,16 +212,13 @@ int main(int argc, char **argv) {
                             pf4D[i] = orig4D[i];
                         }
 #endif
+                        
                         transform.set_position(it_channel, it_pos);
-#if LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
-                        // For chrominance channels, use DCT only.
-                        if (it_channel == 0) // Luma channel
-                            transform.forward(transform_type, pf4D, tf4D, dimBlock);
-                        else
-                            transform.forward(Transform::DCT, pf4D, tf4D, dimBlock);
-#else
-                        transform.forward(transform_type, pf4D, tf4D, dimBlock);
-#endif
+                        tree = transform.forward(transform_type, pf4D, qf4D, dimBlock);
+
+                        printf("Pos(x=%02d,y=%02d,u=%02d,v=%02d,ch=%d) tree=%s\n", 
+                               it_pos.x / 15, it_pos.y / 15, it_pos.u / 15, it_pos.v / 15, it_channel,
+                               tree.c_str());
 
 #if STATISTICS_TIME
                         t.toc();
@@ -244,7 +254,7 @@ int main(int argc, char **argv) {
                         q.tic();
 #endif
 
-                        quantization.foward(Quantization::HOMOGENEOUS, tf4D, qf4D);
+                        // quantization.foward(Quantization::HOMOGENEOUS, tf4D, qf4D);
 
 #if DPCM_DC
                         qf4D[0] -= (float)dpcmDc[it_channel].get_reference(it_pos.x, it_pos.y);
@@ -297,7 +307,7 @@ int main(int argc, char **argv) {
 #if DPCM_DC
                         qf4D[0] += (float)dpcmDc[it_channel].get_reference(it_pos.x, it_pos.y);
 #endif
-                        quantization.inverse(Quantization::HOMOGENEOUS, qf4D, qi4D);
+                        // quantization.inverse(Quantization::HOMOGENEOUS, qf4D, qi4D);
 
 #if STATISTICS_TIME
                         qi.toc();
@@ -314,15 +324,8 @@ int main(int argc, char **argv) {
                         ti.tic();
 #endif
 
-#if LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
-                        // For chrominance channels, use DCT only.
-                        if (it_channel == 0) // Luma channel
-                            transform.inverse(transform_type, qi4D, ti4D, dimBlock);
-                        else
-                            transform.inverse(Transform::DCT, qi4D, ti4D, dimBlock);
-#else
-                        transform.inverse(transform_type, qi4D, ti4D, dimBlock);
-#endif
+
+                        transform.inverse(tree, qf4D, ti4D, dimBlock);
 #if LFCODEC_USE_PREDICTION
                         predictor.rec(ti4D, pi4D, dimBlock);
 #else
@@ -369,6 +372,11 @@ int main(int argc, char **argv) {
                         dpcmDc[it_channel].update((int)qf4D[0], true);
 #endif
                         encoder.write_completedBytes();
+
+                        if (should_show_block) {
+                            show_block(it_channel, orig4D, dimBlock, make_stride(Point4D(15,15,13,13)), "ref");
+                            show_block(it_channel, pi4D, dimBlock, make_stride(Point4D(15,15,13,13)), "rec");
+                        }
                     }
                 }
             }
