@@ -124,7 +124,8 @@ class Transform {
     std::string forward(TransformType transform, float *input, float *output, Point4D &shape);
     void inverse(TransformType transform, float *input, float *output, Point4D &shape);
     void inverse(const std::string tree, float *input, float *output, Point4D &shape);
-
+    void _forward(TransformType transform, float *input, float *output, Point4D &shape);
+    void _inverse(TransformType transform, float *input, float *output, Point4D &shape);
   private:
     Point4D shape;
     Point4D stride;
@@ -169,8 +170,7 @@ class Transform {
                            const size_t offset,
                            const size_t size);
 
-    void _forward(TransformType transform, float *input, float *output, Point4D &shape);
-    void _inverse(TransformType transform, float *input, float *output, Point4D &shape);
+    
 
     void write_stats(int segment, const float *block, const Point4D &shape);
     void calculate_metrics(const float *block, const Point4D &shape);
