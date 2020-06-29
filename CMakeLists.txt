@@ -75,6 +75,7 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
+
 enable_testing()
 add_subdirectory(extern/googletest)
 add_subdirectory(extern/spdlog)
@@ -95,14 +96,22 @@ set(SOURCES
     src/EncBitstreamVLC.cpp
     src/EncBitstreamBuffer.cpp
     src/Prediction.cpp
-    src/deprecated/OldTransform.cpp)
+    src/deprecated/OldTransform.cpp
+    src/utils.cpp
+)
 
 
 add_executable(LF_Codec src/main.cpp)
 add_library(lfcodec ${SOURCES})
 target_include_directories(lfcodec PRIVATE src)
-target_link_libraries(LF_Codec PUBLIC lfcodec spdlog::spdlog)
+target_link_libraries(LF_Codec PUBLIC
+    lfcodec
+    spdlog::spdlog
+)
 
+find_package(OpenCV QUIET)
+add_compile_definitions(LFCODEC_USE_OPENCV=${OPENCV_FOUND})
 
-
-
+if(OPENCV_FOUND)
+    target_link_libraries(lfcodec PUBLIC ${OpenCV_LIBS})
+endif()
