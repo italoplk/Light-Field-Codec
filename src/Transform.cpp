@@ -542,14 +542,13 @@ Transform::forward(TransformType transform, float *input, float *output, Point4D
 #else
     this->enforce_transform = transform;
 #endif
-    const int MAX_LEVELS = std::min(LFCODEC_SEGMENTATION_MAX_LEVELS, 3);
+    const int MAX_LEVELS = disable_segmentation ? 0 : std::min(LFCODEC_SEGMENTATION_MAX_LEVELS, 3);
 #if !!LFCODEC_USE_SEGMENTATION
 #if !!LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
     std::vector channel_mapping = {MAX_LEVELS, 0, 0};
 #else
     std::vector channel_mapping = {MAX_LEVELS, MAX_LEVELS, MAX_LEVELS};
-#endif
-    
+#endif  
 #else
     std::vector channel_mapping = {0, 0, 0};
 #endif
@@ -560,8 +559,18 @@ Transform::forward(TransformType transform, float *input, float *output, Point4D
     return tree;
 }
 
+void Transform::inverse(TransformType transform, float *input, float *output, Point4D &shape) {
+    shape.updateNSamples();
+    const int SIZE = this->shape.getNSamples();
+    float block_iquant[SIZE];
+    Quantization quantizer(shape, qp, quant_weight_100);
+    quantizer.inverse(get_quantization_procotol(transform), input, block_iquant);
+    _inverse(transform, block_iquant, output, shape);
+}
+
 void Transform::inverse(const std::string tree, float *input, float *output, Point4D &shape) {
     _Node root;
     root.from_string(tree.c_str());
     reconstruct_from_tree(&root, input, output, shape);
 }
+

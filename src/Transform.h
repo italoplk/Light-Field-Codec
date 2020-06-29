@@ -107,6 +107,7 @@ class Transform {
     int axis_to_flip = NO_AXIS;
     EncoderParameters codec_parameters;
     float qp;
+    bool disable_segmentation = false;
     Point4D quant_weight_100;
     static void flush_cache();
     static TransformType get_type(std::string transform);
@@ -121,6 +122,7 @@ class Transform {
     // void inverse(TransformType transform, float *input, float *output, Point4D &shape);
 
     std::string forward(TransformType transform, float *input, float *output, Point4D &shape);
+    void inverse(TransformType transform, float *input, float *output, Point4D &shape);
     void inverse(const std::string tree, float *input, float *output, Point4D &shape);
 
   private:
