@@ -116,12 +116,27 @@ public:
     void OpenFile(string path);
     void CloseFile();
 
-    void WriteCBFInFile();
-    void PrintLAST();
+    void ComputeHierarchicalCBF();
+    void ComputeLastRun();
 
     ~Tree();
 
 private:
+    void ComputeAttributes(Node *node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v);
+    void _deleteTree(Node* node);
+    void HypercubePosition(Point_4D *middle);
+
+    void WriteAttributesInFile(uint level, Point_4D &pos, Node* node);
+    void WriteValuesInFile(uint level, Point_4D &pos,Point_4D &position, int value);
+
+    void ComputePositions(Point_4D start, Point_4D middle_before, Point_4D middle);
+    void ComputeValues(Node *node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v, uint level, Point_4D &pos);
+
+    Point_4D ComputeStart(int index, Point_4D middle);
+    void SortBufferPositions();
+
+    void SetFileAttributs();
+
     int index_sorted[256] = {
             0,1,4,5,16,17,20,21,64,65,68,69,80,81,84,85,2,3,6,7,18,19,22,23,66,67,70,71,82,83,86,87,8,9,12,13,24,25,28,29,72,73,76,77,88,89,92,93,10,
             11,14,15,26,27,30,31,74,75,78,79,90,91,94,95,32,33,36,37,48,49,52,53,96,97,100,101,112,113,116,117,34,35,38,39,50,51,54,55,98,99,102,103,
@@ -147,21 +162,6 @@ private:
     Point_4D hy_pos = {0,0,0,0};
 
     uint size = 0;
-
-    void ComputeAttributes(Node *node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v);
-    void _deleteTree(Node* node);
-    void HypercubePosition(Point_4D *middle);
-
-    void WriteAttributesInFile(uint level, Point_4D &pos, Node* node);
-    void WriteValuesInFile(uint level, Point_4D &pos,Point_4D &position, int value);
-
-    void ComputePositions(Point_4D start, Point_4D middle_before, Point_4D middle);
-    void ComputeValues(Node *node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v, uint level, Point_4D &pos);
-
-    Point_4D ComputeStart(int index, Point_4D middle);
-    void SortBufferPositions();
-
-    void SetFileAttributs();
 };
 
 #endif //LF_CODEC_TREE_H
