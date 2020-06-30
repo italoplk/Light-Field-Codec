@@ -261,8 +261,8 @@ int main(int argc, char **argv) {
 
                         tree.DeleteTree(&root);
 
-                        if (hypercubo == 1)
-                            exit(1);
+                        /*if (hypercubo == 0)
+                            exit(1);*/
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 
