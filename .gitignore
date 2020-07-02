@@ -1,6 +1,6 @@
 #Folders
-cmake-build-debug/
-PSNR/
-Scripts/
-output/
-venv/
+cmake-build-debug/*
+PSNR/*
+Scripts/*
+output/*
+venv/*

@@ -256,13 +256,15 @@ int main(int argc, char **argv) {
 #if HEXADECA_TREE_CODEC_MODE == 0
                         tree.ComputeHierarchicalCBF();
 #elif HEXADECA_TREE_CODEC_MODE == 1
+                        tree.ComputeLastCBF();
+#elif HEXADECA_TREE_CODEC_MODE == 2
                         tree.ComputeLastRun();
 #endif
 
                         tree.DeleteTree(&root);
 
-                        /*if (hypercubo == 0)
-                            exit(1);*/
+                        if (hypercubo == 1)
+                            exit(1);
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 

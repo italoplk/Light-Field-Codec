@@ -15,7 +15,7 @@ if __name__ == '__main__':
 	input_file = '/home/igor/Documentos/Git/Full_datasets/'
 
 	""" Diretório de saída """
-	output_file = '/home/igor/Documentos/Git/Outputs/output_CBF/'
+	output_file = '/home/igor/Documentos/Git/Outputs/output_Last_CBF/'
 
 	""" Tamanho da partição de bloco """
 	block_particion = '4x4x4x4'

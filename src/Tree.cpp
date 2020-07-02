@@ -233,14 +233,13 @@ void Tree::SetFileAttributs(){
            "Light_Field" << SEP <<
            "Hypercubo" << SEP <<
            "Channel" << SEP <<
-           "LAST + CBF" << SEP << endl;
+           "Last_CBF" << SEP << endl;
 #elif HEXADECA_TREE_CODEC_MODE == 2  //LAST + RUN
         this->file <<
            "Light_Field" << SEP <<
            "Hypercubo" << SEP <<
            "Channel" << SEP <<
-           "LAST" << SEP <<
-           "RUN" << SEP << endl;
+           "Last_Run" << SEP << endl;
 #else //base
         this->file <<
            "Light_Field" << SEP <<
@@ -330,7 +329,7 @@ void Tree::ComputeHierarchicalCBF(){
         this->CBF_bits_per_hypercube << SEP << endl;
 }
 
-void Tree::ComputeLastRun() {
+void Tree::ComputeLastCBF() {
     this->SortBufferPositions();
     while (this->subPartitionsBuffer.size() > 0){
         if (this->subPartitionsBuffer.back()->att->significant_value != 0){
@@ -350,6 +349,38 @@ void Tree::ComputeLastRun() {
                (8 + this->subPartitionsBuffer.size()) << SEP << endl; // 8 bits do Last + 1 flag para cada subpartição restante
 }
 
+void Tree::ComputeLastRun() {
+    int run = 0;
+    int bits_run = 0;
+    this->SortBufferPositions();
+    while (this->subPartitionsBuffer.size() > 0){
+        if (this->subPartitionsBuffer.back()->att->significant_value != 0){
+            break;
+        }else{
+            this->subPartitionsBuffer.pop_back();
+        }
+    }
+    while (this->subPartitionsBuffer.size() > 0){
+        while(this->subPartitionsBuffer.size() > 0 && this->subPartitionsBuffer.back()->att->significant_value == 0){
+            run++;
+            this->subPartitionsBuffer.pop_back();
+        }
+        if (this->subPartitionsBuffer.size() > 0) {
+            this->subPartitionsBuffer.pop_back();
+        }
+        if (run > 0) {
+            bits_run += this->BitsExpGolomb(run);
+            run = 0;
+        }
+    }
+    this->file <<
+               this->props->light_field_name << SEP <<
+               this->props->hypercubo << SEP <<
+               this->props->channel << SEP <<
+               (8 + bits_run) << SEP << endl; // 8 bits do Last + bits referente a corrida
+
+}
+
 void Tree::SortBufferPositions() {
     vector<Node *> temp;
     for (int i = 0; i < this->subPartitionsBuffer.size(); ++i) {
@@ -366,4 +397,8 @@ void Tree::SortBufferPositions() {
                 ", u: " << this->subPartitionsBuffer[i]->node_pos.u <<
                 ", v: " << this->subPartitionsBuffer[i]->node_pos.v << ")" << endl;
     }*/
+}
+
+int Tree::BitsExpGolomb(int code) {
+    return (floor(log2(code + 1))) * 2 + 1;
 }

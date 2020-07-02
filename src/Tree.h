@@ -117,11 +117,13 @@ public:
     void CloseFile();
 
     void ComputeHierarchicalCBF();
+    void ComputeLastCBF();
     void ComputeLastRun();
 
     ~Tree();
 
 private:
+    int BitsExpGolomb(int code);
     void ComputeAttributes(Node *node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v);
     void _deleteTree(Node* node);
     void HypercubePosition(Point_4D *middle);
