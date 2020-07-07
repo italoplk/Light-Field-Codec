@@ -13,7 +13,8 @@ Node* Tree::CreateRoot(string light_field, uint hypercubo, uint channel, int *bi
 
     this->hypercube = new Hypercube(16,16,16,16);
 
-    this->subPartitionsBuffer.clear();
+    this->order4_SubPartitionsBuffer.clear();
+    this->order8_SubPartitionsBuffer.clear();
 
     this->id = 0;
     this->CBF_bits_per_hypercube = 0;
@@ -65,9 +66,11 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
 
         root->SetNodePosition(this->hy_pos);
 
-        this->subPartitionsBuffer.push_back(root);
+#if HEXADECA_TREE_CODEC_MODE == 1 || HEXADECA_TREE_CODEC_MODE == 2
+        this->order4_SubPartitionsBuffer.push_back(root);
+#endif
 
-#if HEXADECA_TREE_CODEC_MODE == 3
+#if HEXADECA_TREE_CODEC_MODE == 4
         this->WriteAttributesInFile(level, this->hy_pos, root);
 #endif
 
@@ -97,6 +100,12 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
         Point_4D start = {0,0,0,0};
 
         uint next_level = level + 1;
+
+#if HEXADECA_TREE_CODEC_MODE == 3
+        if(level == 1) {
+            this->order8_SubPartitionsBuffer.push_back(root);
+        }
+#endif
 
         for (int i = 0; i < HEXADECA; ++i) {
             this->id++;
@@ -240,6 +249,12 @@ void Tree::SetFileAttributs(){
            "Hypercubo" << SEP <<
            "Channel" << SEP <<
            "Last_Run" << SEP << endl;
+#elif HEXADECA_TREE_CODEC_MODE == 3  //Multiple Levels of LAST + RUN
+    this->file <<
+           "Light_Field" << SEP <<
+           "Hypercubo" << SEP <<
+           "Channel" << SEP <<
+           "Multiple_Levels_Of_Last_Run" << SEP << endl;
 #else //base
         this->file <<
            "Light_Field" << SEP <<
@@ -331,42 +346,42 @@ void Tree::ComputeHierarchicalCBF(){
 
 void Tree::ComputeLastCBF() {
     this->SortBufferPositions();
-    while (this->subPartitionsBuffer.size() > 0){
-        if (this->subPartitionsBuffer.back()->att->significant_value != 0){
-            /*cout << "Last sub-hypercube with significant value: (x: " << this->subPartitionsBuffer.back()->node_pos.x <<
-                    ",y: " << this->subPartitionsBuffer.back()->node_pos.y <<
-                    ",u: " << this->subPartitionsBuffer.back()->node_pos.u <<
-                    ",v: " << this->subPartitionsBuffer.back()->node_pos.v << ")" << endl;*/
+    while (this->order4_SubPartitionsBuffer.size() > 0){
+        if (this->order4_SubPartitionsBuffer.back()->att->significant_value != 0){
+            /*cout << "Last sub-hypercube with significant value: (x: " << this->order4_SubPartitionsBuffer.back()->node_pos.x <<
+                    ",y: " << this->order4_SubPartitionsBuffer.back()->node_pos.y <<
+                    ",u: " << this->order4_SubPartitionsBuffer.back()->node_pos.u <<
+                    ",v: " << this->order4_SubPartitionsBuffer.back()->node_pos.v << ")" << endl;*/
             break;
         }else{
-            this->subPartitionsBuffer.pop_back();
+            this->order4_SubPartitionsBuffer.pop_back();
         }
     }
     this->file <<
                this->props->light_field_name << SEP <<
                this->props->hypercubo << SEP <<
                this->props->channel << SEP <<
-               (8 + this->subPartitionsBuffer.size()) << SEP << endl; // 8 bits do Last + 1 flag para cada subpartição restante
+               (8 + this->order4_SubPartitionsBuffer.size()) << SEP << endl; // 8 bits do Last + 1 flag para cada subpartição restante
 }
 
 void Tree::ComputeLastRun() {
     int run = 0;
     int bits_run = 0;
     this->SortBufferPositions();
-    while (this->subPartitionsBuffer.size() > 0){
-        if (this->subPartitionsBuffer.back()->att->significant_value != 0){
+    while (this->order4_SubPartitionsBuffer.size() > 0){ // Encontra o Last no buffer de ordem 4
+        if (this->order4_SubPartitionsBuffer.back()->att->significant_value != 0){
             break;
         }else{
-            this->subPartitionsBuffer.pop_back();
+            this->order4_SubPartitionsBuffer.pop_back();
         }
     }
-    while (this->subPartitionsBuffer.size() > 0){
-        while(this->subPartitionsBuffer.size() > 0 && this->subPartitionsBuffer.back()->att->significant_value == 0){
+    while (this->order4_SubPartitionsBuffer.size() > 0){ // Calcula a corrida de blocos zerados
+        while(this->order4_SubPartitionsBuffer.size() > 0 && this->order4_SubPartitionsBuffer.back()->att->significant_value == 0){
             run++;
-            this->subPartitionsBuffer.pop_back();
+            this->order4_SubPartitionsBuffer.pop_back();
         }
-        if (this->subPartitionsBuffer.size() > 0) {
-            this->subPartitionsBuffer.pop_back();
+        if (this->order4_SubPartitionsBuffer.size() > 0) {
+            this->order4_SubPartitionsBuffer.pop_back();
         }
         if (run > 0) {
             bits_run += this->BitsExpGolomb(run);
@@ -381,21 +396,67 @@ void Tree::ComputeLastRun() {
 
 }
 
+void Tree::ComputeMultipleLevesOfLastRun(){
+    int run = 0;
+    int bits_run = 0;
+    int total_bits = 0;
+    while (this->order8_SubPartitionsBuffer.size() > 0){
+        if (this->order8_SubPartitionsBuffer.back()->att->significant_value != 0){
+            total_bits += 4; // 4 bits para indicar uma posição em 16 subdivisões
+            break;
+        }else{
+            this->order8_SubPartitionsBuffer.pop_back();
+        }
+    }
+    for (int i = 0; i < this->order8_SubPartitionsBuffer.size(); ++i) { // adiciona os filhos das subpartisões restantes ao buffer de ordem 4
+        for (int j = 0; j < this->order8_SubPartitionsBuffer[i]->child.size(); ++j) {
+            this->order4_SubPartitionsBuffer.push_back(this->order8_SubPartitionsBuffer[i]->child[j]);
+        }
+    }
+    this->order8_SubPartitionsBuffer.clear();
+    while (this->order4_SubPartitionsBuffer.size() > 0){ // Encontra o Last no buffer de ordem 4
+        if (this->order4_SubPartitionsBuffer.back()->att->significant_value != 0){
+            total_bits += 8;
+            break;
+        }else{
+            this->order4_SubPartitionsBuffer.pop_back();
+        }
+    }
+    while (this->order4_SubPartitionsBuffer.size() > 0){ // Calcula a corrida de blocos zerados
+        while(this->order4_SubPartitionsBuffer.size() > 0 && this->order4_SubPartitionsBuffer.back()->att->significant_value == 0){
+            run++;
+            this->order4_SubPartitionsBuffer.pop_back();
+        }
+        if (this->order4_SubPartitionsBuffer.size() > 0) {
+            this->order4_SubPartitionsBuffer.pop_back();
+        }
+        if (run > 0) {
+            bits_run += this->BitsExpGolomb(run);
+            run = 0;
+        }
+    }
+    this->file <<
+               this->props->light_field_name << SEP <<
+               this->props->hypercubo << SEP <<
+               this->props->channel << SEP <<
+               (total_bits + bits_run) << SEP << endl; // bits dos Last + bits referente a corrida no nível ordem 4
+}
+
 void Tree::SortBufferPositions() {
     vector<Node *> temp;
-    for (int i = 0; i < this->subPartitionsBuffer.size(); ++i) {
+    for (int i = 0; i < this->order4_SubPartitionsBuffer.size(); ++i) {
         temp.push_back(nullptr);
     }
-    for (int i = 0; i < this->subPartitionsBuffer.size(); ++i) {
-        temp[this->index_sorted[i]] = this->subPartitionsBuffer[i];
+    for (int i = 0; i < this->order4_SubPartitionsBuffer.size(); ++i) {
+        temp[this->index_sorted[i]] = this->order4_SubPartitionsBuffer[i];
     }
-    this->subPartitionsBuffer = temp;
+    this->order4_SubPartitionsBuffer = temp;
     temp.clear();
-/*    for (int i = 0; i < this->subPartitionsBuffer.size(); ++i) {
-        cout << i << ": (x: " << this->subPartitionsBuffer[i]->node_pos.x <<
-                ", y: " << this->subPartitionsBuffer[i]->node_pos.y <<
-                ", u: " << this->subPartitionsBuffer[i]->node_pos.u <<
-                ", v: " << this->subPartitionsBuffer[i]->node_pos.v << ")" << endl;
+/*    for (int i = 0; i < this->order4_SubPartitionsBuffer.size(); ++i) {
+        cout << i << ": (x: " << this->order4_SubPartitionsBuffer[i]->node_pos.x <<
+                ", y: " << this->order4_SubPartitionsBuffer[i]->node_pos.y <<
+                ", u: " << this->order4_SubPartitionsBuffer[i]->node_pos.u <<
+                ", v: " << this->order4_SubPartitionsBuffer[i]->node_pos.v << ")" << endl;
     }*/
 }
 

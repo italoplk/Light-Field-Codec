@@ -20,7 +20,7 @@
 #define DPCM_DC true
 
 #define HEXADECA_TREE true
-#define HEXADECA_TREE_CODEC_MODE 2 // 0: CBF Hierarquico || 1: LAST + CBF || 2: LAST + RUN
+#define HEXADECA_TREE_CODEC_MODE 3 // 0: CBF Hierarquico || 1: LAST + CBF || 2: LAST + RUN || 3: Multiple levels of LAST + RUN || 4: Other
 #define HEXADECA_TREE_TYPE 0 // 0: (0s,1s,2s,n>2) | 1: heat map
 #define HEXADECA_TREE_PARTITION 2 // 0: Original | 1: Order 8 | 2: Order 4
 #define HYPERCUBE_POSITION 10 //Position of hypercube for heat map analyze (15x15x13x13 range 0 - 1217)

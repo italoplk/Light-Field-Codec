@@ -259,6 +259,8 @@ int main(int argc, char **argv) {
                         tree.ComputeLastCBF();
 #elif HEXADECA_TREE_CODEC_MODE == 2
                         tree.ComputeLastRun();
+#elif HEXADECA_TREE_CODEC_MODE == 3
+                        tree.ComputeMultipleLevesOfLastRun();
 #endif
 
                         tree.DeleteTree(&root);

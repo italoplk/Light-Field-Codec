@@ -119,6 +119,7 @@ public:
     void ComputeHierarchicalCBF();
     void ComputeLastCBF();
     void ComputeLastRun();
+    void ComputeMultipleLevesOfLastRun();
 
     ~Tree();
 
@@ -151,7 +152,8 @@ private:
 
     ofstream file;
 
-    vector<Node *> subPartitionsBuffer; //TESTE PARA UTILIZAÇÃO DO LAST
+    vector<Node *> order8_SubPartitionsBuffer; //TESTE PARA UTILIZAÇÃO DO LAST NO NÍVEL DE ORDEM 8
+    vector<Node *> order4_SubPartitionsBuffer; //TESTE PARA UTILIZAÇÃO DO LAST NO NÍVEL DE ORDEM 4
 
     int id = 0;
     int CBF_bits_per_hypercube = 0;
