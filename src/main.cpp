@@ -261,12 +261,14 @@ int main(int argc, char **argv) {
                         tree.ComputeLastRun();
 #elif HEXADECA_TREE_CODEC_MODE == 3
                         tree.ComputeMultipleLevesOfLastRun();
+#elif HEXADECA_TREE_CODEC_MODE == 4
+                        tree.ComputeLastRun_0_1();
 #endif
 
                         tree.DeleteTree(&root);
 
-                        if (hypercubo == 1)
-                            exit(1);
+                        /*if (hypercubo == 1)
+                           exit(1);*/
 #endif
                         auto lre_result = lre.encodeCZI(temp_lre, 0, encoderParameters.dim_block.getNSamples());
 

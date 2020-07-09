@@ -48,7 +48,7 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
         this->size = 4;
     else return;
 
-    if (root->hypercube_dim.x <= this->size || root->hypercube_dim.y <= this->size || root->hypercube_dim.u <= this->size || root->hypercube_dim.v <= this->size) {
+    if (root->hypercube_dim.x <= this->size || root->hypercube_dim.y <= this->size || root->hypercube_dim.u <= this->size || root->hypercube_dim.v <= this->size) { //order 4 se HEXADECA_TREE_PARTITION == 2
         if (HEXADECA_TREE_PARTITION == 0){
             this->next_start_position.x = pos.x;
             this->next_start_position.y = pos.y;
@@ -64,13 +64,19 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
 #if HEXADECA_TREE_TYPE == 0
         this->ComputeAttributes(root, root->start.x, root->end.x, root->start.y, root->end.y, root->start.u, root->end.u, root->start.v, root->end.v);
 
+#if HEXADECA_TREE_CODEC_MODE == 0
+        if (root->att->significant_value == 1 || root->att->significant_value == 0 ){
+            ++this->CBF_bits_per_hypercube;
+        }
+#endif
+
         root->SetNodePosition(this->hy_pos);
 
-#if HEXADECA_TREE_CODEC_MODE == 1 || HEXADECA_TREE_CODEC_MODE == 2
+#if HEXADECA_TREE_CODEC_MODE == 1 || HEXADECA_TREE_CODEC_MODE == 2 || HEXADECA_TREE_CODEC_MODE == 4
         this->order4_SubPartitionsBuffer.push_back(root);
 #endif
 
-#if HEXADECA_TREE_CODEC_MODE == 4
+#if HEXADECA_TREE_CODEC_MODE == 5
         this->WriteAttributesInFile(level, this->hy_pos, root);
 #endif
 
@@ -104,6 +110,16 @@ void Tree::CreateTree(Node * root, uint level, const Point4D &pos, const Point_4
 #if HEXADECA_TREE_CODEC_MODE == 3
         if(level == 1) {
             this->order8_SubPartitionsBuffer.push_back(root);
+        }
+#endif
+
+#if HEXADECA_TREE_CODEC_MODE == 0
+        if (root->att->significant_value == 1){ // original ou ordem 8
+            ++this->CBF_bits_per_hypercube;
+        }
+        else if(root->att->significant_value == 0){
+            ++this->CBF_bits_per_hypercube;
+            return;
         }
 #endif
 
@@ -174,10 +190,10 @@ void Tree::ComputeAttributes(Node* node, int start_x, int end_x, int start_y, in
     att->hypercubo_size = node->hypercube_dim.x * node->hypercube_dim.y * node->hypercube_dim.u * node->hypercube_dim.v;
     att->mean_value = (float)acc / att->hypercubo_size;
     node->SetAttributes(att);
-
+/*
     if(att->significant_value){
         ++this->CBF_bits_per_hypercube;
-    }
+    }*/
 }
 
 void Tree::ComputeValues(Node* node, int start_x, int end_x, int start_y, int end_y, int start_u, int end_u, int start_v, int end_v, uint level, Point_4D &pos) {
@@ -193,7 +209,6 @@ void Tree::ComputeValues(Node* node, int start_x, int end_x, int start_y, int en
         }
     }
 }
-
 
 void Tree::HypercubePosition(Point_4D *middle) {
     this->hy_pos.x = (this->next_start_position.x != 0) ? this->next_start_position.x / middle->x : this->next_start_position.x,
@@ -243,7 +258,7 @@ void Tree::SetFileAttributs(){
            "Hypercubo" << SEP <<
            "Channel" << SEP <<
            "Last_CBF" << SEP << endl;
-#elif HEXADECA_TREE_CODEC_MODE == 2  //LAST + RUN
+#elif HEXADECA_TREE_CODEC_MODE == 2 || HEXADECA_TREE_CODEC_MODE == 4  //LAST + RUN
         this->file <<
            "Light_Field" << SEP <<
            "Hypercubo" << SEP <<
@@ -383,10 +398,8 @@ void Tree::ComputeLastRun() {
         if (this->order4_SubPartitionsBuffer.size() > 0) {
             this->order4_SubPartitionsBuffer.pop_back();
         }
-        if (run > 0) {
-            bits_run += this->BitsExpGolomb(run);
-            run = 0;
-        }
+        bits_run += this->BitsExpGolomb(run);
+        run = 0;
     }
     this->file <<
                this->props->light_field_name << SEP <<
@@ -394,6 +407,43 @@ void Tree::ComputeLastRun() {
                this->props->channel << SEP <<
                (8 + bits_run) << SEP << endl; // 8 bits do Last + bits referente a corrida
 
+}
+
+void Tree::ComputeLastRun_0_1() {
+    int run_0 = 0;
+    int run_1 = 0;
+    int bits_run = 0;
+    this->SortBufferPositions();
+    while (this->order4_SubPartitionsBuffer.size() > 0){ // Encontra o Last no buffer de ordem 4
+        if (this->order4_SubPartitionsBuffer.back()->att->significant_value != 0){
+            break;
+        }else{
+            this->order4_SubPartitionsBuffer.pop_back();
+        }
+    }
+    while (this->order4_SubPartitionsBuffer.size() > 0){ // Calcula a corrida de blocos zerados
+        while(this->order4_SubPartitionsBuffer.size() > 0 && this->order4_SubPartitionsBuffer.back()->att->significant_value == 1){
+            ++run_1;
+            this->order4_SubPartitionsBuffer.pop_back();
+        }
+        while(this->order4_SubPartitionsBuffer.size() > 0 && this->order4_SubPartitionsBuffer.back()->att->significant_value == 0) {
+            ++run_0;
+            this->order4_SubPartitionsBuffer.pop_back();
+        }
+        if(run_1 > 0){
+            bits_run += this->BitsExpGolomb(run_1);
+            run_1 = 0;
+        }
+        if(run_0 > 0){
+            bits_run += this->BitsExpGolomb(run_0);
+            run_0 = 0;
+        }
+    }
+    this->file <<
+       this->props->light_field_name << SEP <<
+       this->props->hypercubo << SEP <<
+       this->props->channel << SEP <<
+       (8 + bits_run) << SEP << endl; // 8 bits do Last + bits referente a corrida
 }
 
 void Tree::ComputeMultipleLevesOfLastRun(){
@@ -422,19 +472,7 @@ void Tree::ComputeMultipleLevesOfLastRun(){
             this->order4_SubPartitionsBuffer.pop_back();
         }
     }
-    while (this->order4_SubPartitionsBuffer.size() > 0){ // Calcula a corrida de blocos zerados
-        while(this->order4_SubPartitionsBuffer.size() > 0 && this->order4_SubPartitionsBuffer.back()->att->significant_value == 0){
-            run++;
-            this->order4_SubPartitionsBuffer.pop_back();
-        }
-        if (this->order4_SubPartitionsBuffer.size() > 0) {
-            this->order4_SubPartitionsBuffer.pop_back();
-        }
-        if (run > 0) {
-            bits_run += this->BitsExpGolomb(run);
-            run = 0;
-        }
-    }
+    total_bits += this->order4_SubPartitionsBuffer.size();
     this->file <<
                this->props->light_field_name << SEP <<
                this->props->hypercubo << SEP <<

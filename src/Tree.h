@@ -119,6 +119,7 @@ public:
     void ComputeHierarchicalCBF();
     void ComputeLastCBF();
     void ComputeLastRun();
+    void ComputeLastRun_0_1();
     void ComputeMultipleLevesOfLastRun();
 
     ~Tree();
