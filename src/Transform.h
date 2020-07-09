@@ -87,11 +87,11 @@ class Transform {
   public:
     enum TransformType {
         NO_TRANSFORM = 0, /* Empty value */
-        DCT,              /* Discrete Cosine Transform Type II */
-        DST,              /* Discrete Sine Transform Type II */
-        DST_II = DST,     /* Discrete Sine Transform Type II */
+        DCT_II,           /* Discrete Cosine Transform Type II */
+        DST_II,           /* Discrete Sine Transform Type II */
         DST_VII,          /* Discrete Sine Transform Type VII */
-        ANY, 
+        MULTI,            /* Pick transform with smallest distortion rate */  
+        HYBRID,           /* Applies different transforms across the dimensions */
     };
 
     enum {
@@ -103,8 +103,8 @@ class Transform {
 
     enum { NO_AXIS = 0, AXIS_X = 1, AXIS_Y = 2, AXIS_U = 4, AXIS_V = 8 };
 
-    int use_segments = NO_SEGMENTS;
-    int axis_to_flip = NO_AXIS;
+    int use_segments = 0;
+    int axis_to_flip = 0;
     EncoderParameters codec_parameters;
     float qp;
     bool disable_segmentation = false;
@@ -124,8 +124,8 @@ class Transform {
     std::string forward(TransformType transform, float *input, float *output, Point4D &shape);
     void inverse(TransformType transform, float *input, float *output, Point4D &shape);
     void inverse(const std::string tree, float *input, float *output, Point4D &shape);
-    void _forward(TransformType transform, float *input, float *output, Point4D &shape);
-    void _inverse(TransformType transform, float *input, float *output, Point4D &shape);
+    void _forward_md(TransformType transform, float *input, float *output, Point4D &shape);
+    void _inverse_md(TransformType transform, float *input, float *output, Point4D &shape);
   private:
     Point4D shape;
     Point4D stride;
@@ -147,7 +147,9 @@ class Transform {
     TransformType enforce_transform;
     std::ofstream stats_stream;
     const std::string sep = ",";
-    const std::vector<TransformType> ALL_TRANSFORMS = {DCT, DST_II, DST_VII};
+    const std::vector<TransformType> ALL_TRANSFORMS = {DCT_II, DST_II, DST_VII};
+    const std::vector<TransformType> HYBRID_LST = {DCT_II, DST_VII, DST_VII, DST_VII};
+
 
     static std::map<size_t, float *> _DCT_II_CACHE;
     static std::map<size_t, float *> _DST_II_CACHE;
@@ -159,12 +161,12 @@ class Transform {
 
     static auto get_transform(TransformType type, bool is_inverse = false);
     static float *_get_coefficients(TransformType type, const size_t size);
-    static void _forward_1(TransformType type,
+    static void _forward_sd(TransformType type,
                            const float *in,
                            float *out,
                            const size_t offset,
                            const size_t size);
-    static void _inverse_1(TransformType type,
+    static void _inverse_sd(TransformType type,
                            const float *in,
                            float *out,
                            const size_t offset,

@@ -60,7 +60,7 @@ float *Transform::_get_coefficients(Transform::TransformType type, const size_t 
                 _DST_VII_CACHE[size] = coeff;
             }
             break;
-        case DCT:
+        case DCT_II:
         default: try { coeff = _DCT_II_CACHE.at(size);
             } catch (...) {
                 coeff = _DCT_II(size);
@@ -70,7 +70,7 @@ float *Transform::_get_coefficients(Transform::TransformType type, const size_t 
     return coeff;
 }
 
-void Transform::_forward_1(Transform::TransformType type,
+void Transform::_forward_sd(Transform::TransformType type,
                            const float *in,
                            float *out,
                            const size_t offset,
@@ -86,7 +86,7 @@ void Transform::_forward_1(Transform::TransformType type,
     }
 }
 
-void Transform::_inverse_1(Transform::TransformType type,
+void Transform::_inverse_sd(Transform::TransformType type,
                            const float *in,
                            float *out,
                            const size_t offset,
@@ -151,7 +151,7 @@ float *Transform::_DCT_II(size_t size) {
     return output;
 }
 
-void Transform::_forward(TransformType type, float *input, float *output, Point4D &shape) {
+void Transform::_forward_md(TransformType type, float *input, float *output, Point4D &shape) {
     size_t axis_arr[4][3] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
     const float *pin = input;
     float *pout = output;
@@ -159,7 +159,7 @@ void Transform::_forward(TransformType type, float *input, float *output, Point4
     for (int v = 0; v < shape.v; ++v) {
         for (int u = 0; u < shape.u; ++u) {
             for (int y = 0; y < shape.y; ++y) {
-                _forward_1(type, pin, pout, stride.x, shape.x);
+                _forward_sd(type, pin, pout, stride.x, shape.x);
                 pin += stride.y;
                 pout += stride.y;
             }
@@ -175,7 +175,7 @@ void Transform::_forward(TransformType type, float *input, float *output, Point4
     for (int v = 0; v < shape.v; ++v) {
         for (int u = 0; u < shape.u; ++u) {
             for (int x = 0; x < shape.x; ++x) {
-                _forward_1(type, pin, pout, stride.y, shape.y);
+                _forward_sd(type, pin, pout, stride.y, shape.y);
 
                 ++pin, ++pout;
             }
@@ -192,7 +192,7 @@ void Transform::_forward(TransformType type, float *input, float *output, Point4
     for (int v = 0; v < shape.v; ++v) {
         for (int y = 0; y < shape.y; ++y) {
             for (int x = 0; x < shape.x; ++x) {
-                _forward_1(type, pin, pout, stride.u, shape.u);
+                _forward_sd(type, pin, pout, stride.u, shape.u);
 
                 ++pin, ++pout;
             }
@@ -209,7 +209,7 @@ void Transform::_forward(TransformType type, float *input, float *output, Point4
     for (int u = 0; u < shape.u; ++u) {
         for (int y = 0; y < shape.y; ++y) {
             for (int x = 0; x < shape.x; ++x) {
-                _forward_1(type, pin, pout, stride.v, shape.v);
+                _forward_sd(type, pin, pout, stride.v, shape.v);
 
                 ++pin, ++pout;
             }
@@ -221,7 +221,7 @@ void Transform::_forward(TransformType type, float *input, float *output, Point4
     }
 }
 
-void Transform::_inverse(TransformType type, float *input, float *output, Point4D &shape) {
+void Transform::_inverse_md(TransformType type, float *input, float *output, Point4D &shape) {
     size_t axis_arr[4][3] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
 
     float *pin = (float *)input;
@@ -230,7 +230,7 @@ void Transform::_inverse(TransformType type, float *input, float *output, Point4
     for (int u = 0; u < shape.u; ++u) {
         for (int y = 0; y < shape.y; ++y) {
             for (int x = 0; x < shape.x; ++x) {
-                _inverse_1(type, pin, pout, stride.v, shape.v);
+                _inverse_sd(type, pin, pout, stride.v, shape.v);
 
                 ++pin, ++pout;
             }
@@ -247,7 +247,7 @@ void Transform::_inverse(TransformType type, float *input, float *output, Point4
     for (int v = 0; v < shape.v; ++v) {
         for (int y = 0; y < shape.y; ++y) {
             for (int x = 0; x < shape.x; ++x) {
-                _inverse_1(type, pin, pout, stride.u, shape.u);
+                _inverse_sd(type, pin, pout, stride.u, shape.u);
 
                 ++pin, ++pout;
             }
@@ -262,7 +262,7 @@ void Transform::_inverse(TransformType type, float *input, float *output, Point4
     for (int v = 0; v < shape.v; ++v) {
         for (int u = 0; u < shape.u; ++u) {
             for (int x = 0; x < shape.x; ++x) {
-                _inverse_1(type, pin, pout, stride.y, shape.y);
+                _inverse_sd(type, pin, pout, stride.y, shape.y);
 
                 ++pin, ++pout;
             }
@@ -277,7 +277,7 @@ void Transform::_inverse(TransformType type, float *input, float *output, Point4
     for (int v = 0; v < shape.v; ++v) {
         for (int u = 0; u < shape.u; ++u) {
             for (int y = 0; y < shape.y; ++y) {
-                _inverse_1(type, pin, pout, stride.x, shape.x);
+                _inverse_sd(type, pin, pout, stride.x, shape.x);
                 pin += stride.y;
                 pout += stride.y;
             }
@@ -293,18 +293,16 @@ void Transform::flush_cache() {}
 
 Transform::TransformType Transform::get_type(std::string transform) {
     if (transform == "DST")
-        return DST;
+        return DST_II;
     else if (transform == "DST_II")
         return DST_II;
     else if (transform == "DST_VII")
         return DST_VII;
     else if (transform == "DCT")
-        return DCT;
-    else if (transform == "ANY")
-        return ANY;
+        return DCT_II;
     else
         std::cerr << "Unkown transform: " << transform << std::endl;
-    return DCT;
+    return DCT_II;
 }
 
 void Transform::use_statistics(const std::string filename) {
@@ -412,10 +410,10 @@ auto Transform::calculate_distortion(float *block, float *result, Point4D &shape
 
     Quantization quantizer(shape, qp, quant_weight_100);
     for (const auto &type: transforms) {
-        _forward(type, block, blk_transf, shape);
+        _forward_md(type, block, blk_transf, shape);
         quantizer.foward(get_quantization_procotol(type), blk_transf, blk_qnt);
         quantizer.inverse(get_quantization_procotol(type), blk_qnt, blk_iquant);
-        _inverse(type, blk_iquant, blk_itransf, shape);
+        _inverse_md(type, blk_iquant, blk_itransf, shape);
         auto curr_score = mse(block, blk_itransf, SIZE);
 
         if (curr_score < best_score) {
@@ -507,7 +505,7 @@ void Transform::reconstruct_from_tree(_Node *root, float *input, float *output, 
         Quantization quantizer(shape, qp, quant_weight_100);
         quantizer.inverse(get_quantization_procotol((TransformType)root->transform_type), input,
                           block_iquant);
-        _inverse((TransformType)root->transform_type, block_iquant, output, shape);
+        _inverse_md((TransformType)root->transform_type, block_iquant, output, shape);
     } else {
         auto block_shape = this->shape.to_vector();
         auto shapes = make_shapes(block_shape, 1);
@@ -538,7 +536,7 @@ Transform::forward(TransformType transform, float *input, float *output, Point4D
     shape.updateNSamples();
     char buffer[1 << 16];
 #if !!LFCODEC_FORCE_DCT_NON_LUMA && USE_YCbCr == 1
-    this->enforce_transform = channel == 0 ? transform : DCT;
+    this->enforce_transform = channel == 0 ? transform : DCT_II;
 #else
     this->enforce_transform = transform;
 #endif
@@ -565,7 +563,7 @@ void Transform::inverse(TransformType transform, float *input, float *output, Po
     float block_iquant[SIZE];
     Quantization quantizer(shape, qp, quant_weight_100);
     quantizer.inverse(get_quantization_procotol(transform), input, block_iquant);
-    _inverse(transform, block_iquant, output, shape);
+    _inverse_md(transform, block_iquant, output, shape);
 }
 
 void Transform::inverse(const std::string tree, float *input, float *output, Point4D &shape) {
