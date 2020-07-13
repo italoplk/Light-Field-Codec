@@ -66,7 +66,17 @@ public:
 
     float sadVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize);
 
+    float sseHorizontal(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+
+    float sseVertical(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+
     void angularPredictRefHorizontalMI(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+
+    void angularPredictRefVerticalMI(const float *orig_input, const float *ref, const Point4D &origSize, float *out );
+
+    void angularPrediction(uint pos_x, uint pos_y, const float *orig_input, const Point4D &origSize, float *out );
+
+    float roundTowardsZero( const float value );
 
     void residuePred(const float *orig_input, const float *pred, const Point4D &origSize, float *out );
 
@@ -74,7 +84,7 @@ public:
 
     void YCbCR2RGB(float **yCbCr, const Point4D &origSize, float **rgb, int mPGMScale);
 
-    void write(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, int block);
+    void write(float **rgb, const Point4D &origSize, int mPGMScale, int start_t, int start_s, const std::string fileName);
 
     void WritePixelToFile(int pixelPositionInCache, float **rgb, int mPGMScale, int mNumberOfFileBytesPerPixelComponent, FILE *mViewFilePointer);
 

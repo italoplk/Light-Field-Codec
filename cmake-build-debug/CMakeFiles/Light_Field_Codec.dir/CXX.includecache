@@ -94,6 +94,12 @@ iostream
 iomanip
 -
 
+/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Prediction.cpp
+Prediction.h
+/home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Prediction.h
+math.h
+-
+
 /home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Prediction.h
 Typedef.h
 /home/eduardo/Documentos/ViTech/Light-Field-Codec/src/Typedef.h
