@@ -18,35 +18,7 @@
 
 using namespace std;
 
-template <class T>
-void printVector(const std::string &msg, T *vet, int size) {
-    std::cout << std::endl << msg << std::endl;
-    for (int i = 0; i < size; ++i) {
-        std::cout << vet[i] << "\t";
-    }
-    std::cout << std::endl;
-}
-
-void report_macros() {
-    printf("**** MACROS VALUES ****\n");
-    printf("%-.35s %d\n", "TRANSF_QUANT", TRANSF_QUANT);
-    printf("%-.35s %d\n", "QUANTIZATION", QUANTIZATION);
-    printf("%-.35s %d\n", "STATISTICS_LOCAL", STATISTICS_LOCAL);
-    printf("%-.35s %d\n", "STATISTICS_GLOBAL", STATISTICS_GLOBAL);
-    printf("%-.35s %d\n", "STATISTICS_TIME", STATISTICS_TIME);
-    printf("%-.35s %d\n", "TRACE_TRANSF", TRACE_TRANSF);
-    printf("%-.35s %d\n", "TRACE_QUANT", TRACE_QUANT);
-    printf("%-.35s %d\n", "TRACE_LRE", TRACE_LRE);
-    printf("%-.35s %d\n", "DPCM_DC", DPCM_DC);
-    printf("%-.35s %d\n", "LFCODEC_USE_PREDICTION", LFCODEC_USE_PREDICTION);
-    printf("%-.35s %d\n", "LFCODEC_FORCE_DCT_NON_LUMA", LFCODEC_FORCE_DCT_NON_LUMA);
-    printf("***********************\n");
-}
-
-
-
 int main(int argc, char **argv) {
-    report_macros();
     EncoderParameters encoderParameters;
     encoderParameters.parse_cli(argc, argv);
     encoderParameters.report();
@@ -73,18 +45,9 @@ int main(int argc, char **argv) {
     Prediction predictor;
 #endif
     volatile bool should_show_block = false;
-    Transform transform(encoderParameters.dim_block);
-    transform.axis_to_flip = encoderParameters.flipaxis;
-    transform.use_segments = encoderParameters.segments;
-    transform.codec_parameters = encoderParameters;
-
-    transform.qp = encoderParameters.getQp();
-    transform.quant_weight_100 = encoderParameters.quant_weight_100;
-
-
+    Transform transform(encoderParameters);
     auto transform_type = Transform::get_type(encoderParameters.transform);
-    Quantization quantization(encoderParameters.dim_block, encoderParameters.getQp(),
-                              encoderParameters.quant_weight_100);
+    
     // TODO: Entropy entropy(...)
     LRE lre(encoderParameters.dim_block.getNSamples() == 15 * 15 * 15 * 15);
     // todo: fixed block size (15x15x15x15) or (15x15x13x13)
@@ -160,6 +123,13 @@ int main(int argc, char **argv) {
 #endif
     std::string tree;
 
+    volatile float total_steps = 3;
+    total_steps *= std::ceil(dimLF.x / (float)encoderParameters.dim_block.x);
+    total_steps *= std::ceil(dimLF.y / (float)encoderParameters.dim_block.y);
+    total_steps *= std::ceil(dimLF.u / (float)encoderParameters.dim_block.u);
+    total_steps *= std::ceil(dimLF.v / (float)encoderParameters.dim_block.v);
+    float current_step = 1;
+
     // angular
     for (it_pos.v = 0; it_pos.v < dimLF.v; it_pos.v += dimBlock.v) {
         for (it_pos.u = 0; it_pos.u < dimLF.u; it_pos.u += dimBlock.u) {
@@ -195,7 +165,7 @@ int main(int argc, char **argv) {
 #if STATISTICS_TIME
                         getBlock.toc();
 #endif
-                        if (it_pos.y + 15 > dimLF.y)
+                        if (it_pos.y/15 == 1)
                         {
                             // Dummy variable for breakpoint and debugging
                             volatile int xxx = 0;
@@ -216,9 +186,9 @@ int main(int argc, char **argv) {
                         transform.set_position(it_channel, it_pos);
                         tree = transform.forward(transform_type, pf4D, qf4D, dimBlock);
 
-                        printf("Pos(x=%02d,y=%02d,u=%02d,v=%02d,ch=%d) tree=%s\n", 
-                               it_pos.x / 15, it_pos.y / 15, it_pos.u / 15, it_pos.v / 15, it_channel,
-                               tree.c_str());
+                        // printf("Pos(x=%02d,y=%02d,u=%02d,v=%02d,ch=%d) tree=%s\n", 
+                        //        it_pos.x / 15, it_pos.y / 15, it_pos.u / 15, it_pos.v / 15, it_channel,
+                        //        tree.c_str());
 
 #if STATISTICS_TIME
                         t.toc();
@@ -377,6 +347,8 @@ int main(int argc, char **argv) {
                             show_block(it_channel, orig4D, dimBlock, make_stride(Point4D(15,15,13,13)), "ref");
                             show_block(it_channel, pi4D, dimBlock, make_stride(Point4D(15,15,13,13)), "rec");
                         }
+                        
+                        progress_bar(current_step++ / total_steps, 50);
                     }
                 }
             }

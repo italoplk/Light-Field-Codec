@@ -12,70 +12,41 @@
 #include <algorithm>
 #include "utils.h"
 
-std::map<size_t, float *> Transform::_DCT_II_CACHE;
-std::map<size_t, float *> Transform::_DST_II_CACHE;
-std::map<size_t, float *> Transform::_DST_VII_CACHE;
+std::map<size_t, float *> Transform::cache_dct_ii;
+std::map<size_t, float *> Transform::cache_dst_i;
+std::map<size_t, float *> Transform::cache_dst_vii;
 
-void flip_axis(float *block, unsigned to_flip, unsigned flat_size, Point4D shape, Point4D stride) {
-    float _block[flat_size];
-    for (int v = 0; v < shape.v; v++) {
-        for (int u = 0; u < shape.u; u++) {
-            for (int y = 0; y < shape.y; y++) {
-                for (int x = 0; x < shape.x; x++) {
-                    auto dx = to_flip & Transform::AXIS_X ? shape.x - 1 - 2 * x : 0;
-                    auto dy = to_flip & Transform::AXIS_Y ? shape.y - 1 - 2 * y : 0;
-                    auto du = to_flip & Transform::AXIS_U ? shape.u - 1 - 2 * u : 0;
-                    auto dv = to_flip & Transform::AXIS_V ? shape.v - 1 - 2 * v : 0;
-                    auto f_offset = offset(x, y, u, v, stride);
-                    auto r_offset = offset(x + dx, y + dy, u + du, v + dv, stride);
-                    _block[r_offset] = block[f_offset];
-                }
-            }
-        }
-    }
-    for (int v = 0; v < shape.v; v++) {
-        for (int u = 0; u < shape.u; u++) {
-            for (int y = 0; y < shape.y; y++) {
-                for (int x = 0; x < shape.x; x++) {
-                    auto index = offset(x, y, u, v, stride);
-                    block[index] = _block[index];
-                }
-            }
-        }
-    }
-}
-
-float *Transform::_get_coefficients(Transform::TransformType type, const size_t size) {
+float *Transform::get_coefficients(Transform::TransformType type, const size_t size) {
     float *coeff = nullptr;
     switch (type) {
-        case DST_II: try { coeff = _DST_II_CACHE.at(size);
+        case DST_I: try { coeff = cache_dst_i.at(size);
             } catch (...) {
-                coeff = _DST_II(size);
-                _DST_II_CACHE[size] = coeff;
+                coeff = sd_dst_i(size);
+                cache_dst_i[size] = coeff;
             }
             break;
-        case DST_VII: try { coeff = _DST_VII_CACHE.at(size);
+        case DST_VII: try { coeff = cache_dst_vii.at(size);
             } catch (...) {
-                coeff = _DST_VII(size);
-                _DST_VII_CACHE[size] = coeff;
+                coeff = sd_dst_vii(size);
+                cache_dst_vii[size] = coeff;
             }
             break;
         case DCT_II:
-        default: try { coeff = _DCT_II_CACHE.at(size);
+        default: try { coeff = cache_dct_ii.at(size);
             } catch (...) {
-                coeff = _DCT_II(size);
-                _DCT_II_CACHE[size] = coeff;
+                coeff = sd_dct_ii(size);
+                cache_dct_ii[size] = coeff;
             }
     }
     return coeff;
 }
 
-void Transform::_forward_sd(Transform::TransformType type,
+void Transform::sd_forward(Transform::TransformType type,
                            const float *in,
                            float *out,
                            const size_t offset,
                            const size_t size) {
-    float *coeff = _get_coefficients(type, size);
+    float *coeff = get_coefficients(type, size);
     auto pout = out;
     auto pcoeff = coeff;
     for (int k = 0; k < size; k++, pout += offset) {
@@ -86,12 +57,12 @@ void Transform::_forward_sd(Transform::TransformType type,
     }
 }
 
-void Transform::_inverse_sd(Transform::TransformType type,
+void Transform::sd_inverse(Transform::TransformType type,
                            const float *in,
                            float *out,
                            const size_t offset,
                            const size_t size) {
-    float *coeff = _get_coefficients(type, size);
+    float *coeff = get_coefficients(type, size);
     auto pout = out;
     for (int k = 0; k < size; k++, pout += offset) {
         auto pin = in;
@@ -112,12 +83,16 @@ Transform::Transform(Point4D &shape) {
     wh_partial_values = new float[flat_p2];
 }
 
+Transform::Transform(EncoderParameters &params):
+    Transform(params.dim_block)
+     {codec_parameters = params;}
+
 Transform::~Transform() {
     delete[] partial_values;
     delete[] wh_partial_values;
 }
 
-float *Transform::_DST_VII(size_t size) {
+float *Transform::sd_dst_vii(size_t size) {
     auto *output = new float[size * size];
     auto *pout = output;
     for (int k = 0; k < size; k++) {
@@ -127,7 +102,7 @@ float *Transform::_DST_VII(size_t size) {
     }
     return output;
 }
-float *Transform::_DST_II(size_t size) {
+float *Transform::sd_dst_i(size_t size) {
     auto *output = new float[size * size];
     auto *pout = output;
     double s = sqrt(2.0L / (size + 1.0L));
@@ -140,7 +115,7 @@ float *Transform::_DST_II(size_t size) {
     return output;
 }
 
-float *Transform::_DCT_II(size_t size) {
+float *Transform::sd_dct_ii(size_t size) {
     float *output = new float[size * size];
     float *pout = output;
     for (int k = 0; k < size; k++) {
@@ -151,15 +126,24 @@ float *Transform::_DCT_II(size_t size) {
     return output;
 }
 
-void Transform::_forward_md(TransformType type, float *input, float *output, Point4D &shape) {
+auto Transform::get_transform_vector(TransformType transform) {
+    switch (transform) {
+        case HYBRID: return std::vector({DCT_II, DCT_II, DST_I, DST_I});
+        default: return std::vector({transform, transform, transform, transform});
+    }
+}
+
+void Transform::md_forward(TransformType type, float *input, float *output, Point4D &shape) {
     size_t axis_arr[4][3] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
     const float *pin = input;
     float *pout = output;
+    auto tx_vector = get_transform_vector(type);
+    auto tx = tx_vector.begin();
 
     for (int v = 0; v < shape.v; ++v) {
         for (int u = 0; u < shape.u; ++u) {
             for (int y = 0; y < shape.y; ++y) {
-                _forward_sd(type, pin, pout, stride.x, shape.x);
+                sd_forward(*tx, pin, pout, stride.x, shape.x);
                 pin += stride.y;
                 pout += stride.y;
             }
@@ -171,11 +155,12 @@ void Transform::_forward_md(TransformType type, float *input, float *output, Poi
     }
     std::copy(output, output + flat_size, partial_values);
     pin = partial_values, pout = output;
+    ++tx;
 
     for (int v = 0; v < shape.v; ++v) {
         for (int u = 0; u < shape.u; ++u) {
             for (int x = 0; x < shape.x; ++x) {
-                _forward_sd(type, pin, pout, stride.y, shape.y);
+                sd_forward(*tx, pin, pout, stride.y, shape.y);
 
                 ++pin, ++pout;
             }
@@ -188,11 +173,12 @@ void Transform::_forward_md(TransformType type, float *input, float *output, Poi
 
     std::copy(output, output + flat_size, partial_values);
     pin = partial_values, pout = output;
+    ++tx;
 
     for (int v = 0; v < shape.v; ++v) {
         for (int y = 0; y < shape.y; ++y) {
             for (int x = 0; x < shape.x; ++x) {
-                _forward_sd(type, pin, pout, stride.u, shape.u);
+                sd_forward(*tx, pin, pout, stride.u, shape.u);
 
                 ++pin, ++pout;
             }
@@ -205,11 +191,12 @@ void Transform::_forward_md(TransformType type, float *input, float *output, Poi
 
     std::copy(output, output + flat_size, partial_values);
     pin = partial_values, pout = output;
+    ++tx;
 
     for (int u = 0; u < shape.u; ++u) {
         for (int y = 0; y < shape.y; ++y) {
             for (int x = 0; x < shape.x; ++x) {
-                _forward_sd(type, pin, pout, stride.v, shape.v);
+                sd_forward(*tx, pin, pout, stride.v, shape.v);
 
                 ++pin, ++pout;
             }
@@ -221,16 +208,18 @@ void Transform::_forward_md(TransformType type, float *input, float *output, Poi
     }
 }
 
-void Transform::_inverse_md(TransformType type, float *input, float *output, Point4D &shape) {
+void Transform::md_inverse(TransformType type, float *input, float *output, Point4D &shape) {
     size_t axis_arr[4][3] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
 
     float *pin = (float *)input;
     float *pout = output;
+    auto tx_vector = get_transform_vector(type);
+    auto tx = tx_vector.rbegin();
 
     for (int u = 0; u < shape.u; ++u) {
         for (int y = 0; y < shape.y; ++y) {
             for (int x = 0; x < shape.x; ++x) {
-                _inverse_sd(type, pin, pout, stride.v, shape.v);
+                sd_inverse(*tx, pin, pout, stride.v, shape.v);
 
                 ++pin, ++pout;
             }
@@ -243,11 +232,12 @@ void Transform::_inverse_md(TransformType type, float *input, float *output, Poi
 
     std::copy(output, output + flat_size, partial_values);
     pin = partial_values, pout = output;
+    ++tx;
 
     for (int v = 0; v < shape.v; ++v) {
         for (int y = 0; y < shape.y; ++y) {
             for (int x = 0; x < shape.x; ++x) {
-                _inverse_sd(type, pin, pout, stride.u, shape.u);
+                sd_inverse(*tx, pin, pout, stride.u, shape.u);
 
                 ++pin, ++pout;
             }
@@ -259,10 +249,11 @@ void Transform::_inverse_md(TransformType type, float *input, float *output, Poi
     }
     std::copy(output, output + flat_size, partial_values);
     pin = partial_values, pout = output;
+    ++tx;
     for (int v = 0; v < shape.v; ++v) {
         for (int u = 0; u < shape.u; ++u) {
             for (int x = 0; x < shape.x; ++x) {
-                _inverse_sd(type, pin, pout, stride.y, shape.y);
+                sd_inverse(*tx, pin, pout, stride.y, shape.y);
 
                 ++pin, ++pout;
             }
@@ -274,10 +265,11 @@ void Transform::_inverse_md(TransformType type, float *input, float *output, Poi
     }
     std::copy(output, output + flat_size, partial_values);
     pin = partial_values, pout = output;
+    ++tx;
     for (int v = 0; v < shape.v; ++v) {
         for (int u = 0; u < shape.u; ++u) {
             for (int y = 0; y < shape.y; ++y) {
-                _inverse_sd(type, pin, pout, stride.x, shape.x);
+                sd_inverse(*tx, pin, pout, stride.x, shape.x);
                 pin += stride.y;
                 pout += stride.y;
             }
@@ -293,83 +285,34 @@ void Transform::flush_cache() {}
 
 Transform::TransformType Transform::get_type(std::string transform) {
     if (transform == "DST")
-        return DST_II;
-    else if (transform == "DST_II")
-        return DST_II;
+        return DST_I;
+    else if (transform == "DST_I")
+        return DST_I;
     else if (transform == "DST_VII")
         return DST_VII;
     else if (transform == "DCT")
         return DCT_II;
+    else if (transform == "MULTI")
+        return MULTI;
+    else if (transform == "HYBRID")
+        return HYBRID;
     else
         std::cerr << "Unkown transform: " << transform << std::endl;
     return DCT_II;
 }
 
-void Transform::use_statistics(const std::string filename) {
-    stats_stream.open(filename);
-    stats_stream << "segment" << sep << "channel" << sep << "pos_x" << sep << "pos_y" << sep
-                 << "pos_u" << sep << "pos_v" << sep << "bl_x" << sep << "bl_y" << sep << "bl_u"
-                 << sep << "bl_v" << sep << "v_min" << sep << "v_max" << sep << "v_minAbs" << sep
-                 << "v_maxAbs" << sep << "zeros" << sep << "ones" << sep << "mean" << sep << "std"
-                 << sep << "variance" << sep << "energy" << sep << std::endl;
-}
+
 
 void Transform::set_position(int channel, const Point4D &current_pos) {
     this->channel = channel;
     this->position = current_pos;
 }
 
-static inline float _max(float a, float b) { return a > b ? a : b; }
-
-static inline float _min(float a, float b) { return a < b ? a : b; }
-
-void Transform::calculate_metrics(const float *block, const Point4D &shape) {
-    max = block[0];
-    min = block[0];
-    abs_max = std::abs(block[0]);
-    abs_min = std::abs(block[0]);
-    zeros = 0;
-    ones = 0;
-    energy = 0;
-    sum = 0;
-    count = 0;
-    for (int v = 0; v < shape.v; v++)
-        for (int u = 0; u < shape.u; u++)
-            for (int y = 0; y < shape.y; y++)
-                for (int x = 0; x < shape.x; x++) {
-                    auto index = offset(x, y, u, v, stride);
-                    max = _max(max, block[index]);
-                    min = _min(min, block[index]);
-                    abs_max = _max(abs_max, std::abs(block[index]));
-                    abs_min = _min(abs_min, std::abs(block[index]));
-                    if (std::abs(block[index]) < 0.5)
-                        zeros++;
-                    else if (std::abs(block[index]) - 1 < 0.5)
-                        ones++;
-                    energy += block[index] * block[index];
-                    sum += block[index];
-                    count++;
-                }
-}
-
-void Transform::write_stats(const int segment, const float *block, const Point4D &shape) {
-    if (!stats_stream.is_open()) return;
-
-    calculate_metrics(block, shape);
-    float countf = count;
-    float mean = sum / countf;
-    float variance = (1 / countf) * (energy - std::pow(sum / countf, 2));
-    float std = std::sqrt(variance);
-    stats_stream << segment << sep << channel << sep << position.x << sep << position.y << sep
-                 << position.u << sep << position.v << sep << shape.x << sep << shape.y << sep
-                 << shape.u << sep << shape.v << sep << min << sep << max << sep << abs_min << sep
-                 << abs_max << sep << zeros << sep << ones << sep << mean << sep << std << sep
-                 << variance << sep << energy << sep << std::endl;
-}
 auto Transform::get_quantization_procotol(TransformType transform) {
+    return Quantization::HAYAN;
     switch (transform) {
-        case DCT: return Quantization::DEFAULT;
-        default: return Quantization::HOMOGENEOUS;
+        case DCT_II: return Quantization::LEE;
+        default: return Quantization::HAYAN;
     }
 }
 static float mse(float *original, float *reconstructed, unsigned size) {
@@ -379,8 +322,6 @@ static float mse(float *original, float *reconstructed, unsigned size) {
     return value / size;
 }
 
-
-
 auto Transform::calculate_distortion(float *block, float *result, Point4D &shape) {
     shape.updateNSamples();
     const int SIZE = this->shape.getNSamples();
@@ -388,8 +329,8 @@ auto Transform::calculate_distortion(float *block, float *result, Point4D &shape
 
     if (enforce_transform == NO_TRANSFORM)
         return std::tuple(NO_TRANSFORM, std::numeric_limits<float>::infinity());
-
-    else if (enforce_transform == ANY)
+    // TODO: Enable transforms by macro
+    else if (enforce_transform == MULTI)
         for (const auto &type: ALL_TRANSFORMS)
             transforms.push_back(type);
     else
@@ -408,12 +349,12 @@ auto Transform::calculate_distortion(float *block, float *result, Point4D &shape
     float best_score = std::numeric_limits<float>::infinity();
     TransformType best_type;
 
-    Quantization quantizer(shape, qp, quant_weight_100);
+    Quantization quantizer(shape, codec_parameters);
     for (const auto &type: transforms) {
-        _forward_md(type, block, blk_transf, shape);
+        md_forward(type, block, blk_transf, shape);
         quantizer.foward(get_quantization_procotol(type), blk_transf, blk_qnt);
         quantizer.inverse(get_quantization_procotol(type), blk_qnt, blk_iquant);
-        _inverse_md(type, blk_iquant, blk_itransf, shape);
+        md_inverse(type, blk_iquant, blk_itransf, shape);
         auto curr_score = mse(block, blk_itransf, SIZE);
 
         if (curr_score < best_score) {
@@ -427,7 +368,7 @@ auto Transform::calculate_distortion(float *block, float *result, Point4D &shape
 
 auto Transform::calculate_tree(float *block, float *result, Point4D &shape, int level) {
     if (!block) /* Dummy return to deduce return type */
-        return std::tuple((_Node *)nullptr, 0.0F);
+        return std::tuple((Node *)nullptr, 0.0F);
 
     const int SIZE = this->shape.getNSamples();
     shape.updateNSamples();
@@ -448,7 +389,7 @@ auto Transform::calculate_tree(float *block, float *result, Point4D &shape, int 
     float final_score;
 
     auto [block_type, block_score] = calculate_distortion(block, block_transformed, shape);
-    auto root = new _Node();
+    auto root = new Node();
 
     if (level > 0) {
         float segments_score_sum = 0;
@@ -491,7 +432,7 @@ auto Transform::calculate_tree(float *block, float *result, Point4D &shape, int 
     return std::tuple(root, final_score);
 }
 
-void Transform::reconstruct_from_tree(_Node *root, float *input, float *output, Point4D &shape) {
+void Transform::reconstruct_from_tree(Node *root, float *input, float *output, Point4D &shape) {
     shape.updateNSamples();
     const int SIZE = this->shape.getNSamples();
     float block_iquant[SIZE];
@@ -502,10 +443,10 @@ void Transform::reconstruct_from_tree(_Node *root, float *input, float *output, 
     std::fill(segment_results, segment_results + SIZE, 0);
 
     if (root->transform_type != -1) {
-        Quantization quantizer(shape, qp, quant_weight_100);
+        Quantization quantizer(shape, codec_parameters);
         quantizer.inverse(get_quantization_procotol((TransformType)root->transform_type), input,
                           block_iquant);
-        _inverse_md((TransformType)root->transform_type, block_iquant, output, shape);
+        md_inverse((TransformType)root->transform_type, block_iquant, output, shape);
     } else {
         auto block_shape = this->shape.to_vector();
         auto shapes = make_shapes(block_shape, 1);
@@ -546,7 +487,7 @@ Transform::forward(TransformType transform, float *input, float *output, Point4D
     std::vector channel_mapping = {MAX_LEVELS, 0, 0};
 #else
     std::vector channel_mapping = {MAX_LEVELS, MAX_LEVELS, MAX_LEVELS};
-#endif  
+#endif
 #else
     std::vector channel_mapping = {0, 0, 0};
 #endif
@@ -561,14 +502,13 @@ void Transform::inverse(TransformType transform, float *input, float *output, Po
     shape.updateNSamples();
     const int SIZE = this->shape.getNSamples();
     float block_iquant[SIZE];
-    Quantization quantizer(shape, qp, quant_weight_100);
+    Quantization quantizer(shape, codec_parameters);
     quantizer.inverse(get_quantization_procotol(transform), input, block_iquant);
-    _inverse_md(transform, block_iquant, output, shape);
+    md_inverse(transform, block_iquant, output, shape);
 }
 
 void Transform::inverse(const std::string tree, float *input, float *output, Point4D &shape) {
-    _Node root;
+    Node root;
     root.from_string(tree.c_str());
     reconstruct_from_tree(&root, input, output, shape);
 }
-

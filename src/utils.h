@@ -1,9 +1,12 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include "Typedef.h"
 #include "Point4D.h"
+
 #include <vector>
 #include <opencv2/opencv.hpp>
+#include <cmath>
 
 template <typename T>
 inline Point4D make_stride(T shape) {
@@ -139,27 +142,12 @@ void join_segments(const T *from_block,
     }
 }
 
-inline void extend_borders(float *block, const Point4D &shape, const Point4D &stride) {
-    for (int y = 0; y < shape.y; y++)
-        for (int x = 0; x < shape.x; x++)
-            for (int v = 0; v < shape.v; v++) {
-                int u = 0;
-                int value;
-                // Left extension
-                while ((value = block[offset(x, y, u, v, stride)]) == 0)
-                    u++;
-                for (int i = 0; i < u; i++)
-                    block[offset(x, y, i, v, stride)] = value;
-
-                // Right extension
-                u = shape.u - 1;
-                while ((value = block[offset(x, y, u, v, stride)]) == 0)
-                    u--;
-                for (int i = shape.u - 1; i > u; i--)
-                    block[offset(x, y, i, v, stride)] = value;
-            }
-}
+inline void extend_borders(float *block, const Point4D &shape, const Point4D &stride);
 
 void show_block(int channel, float *block, const Point4D &shape, const Point4D &stride, const char *window);
+
+void progress_bar(double progress, int bar_length);
+
+void flip_axis(float *block, unsigned to_flip, unsigned flat_size, Point4D shape, Point4D stride);
 
 #endif // __UTILS_H__

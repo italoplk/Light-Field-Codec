@@ -13,41 +13,38 @@
 #include <deque>
 #include <memory>
 
-
-struct _Node {
-    std::vector<_Node *> children;
+struct Node {
+    std::vector<Node *> children;
     int transform_type;
 
-    _Node() {
+    Node() {
         children.resize(16);
         transform_type = -1;
     };
 
-    ~_Node() {
-        for (auto& it : children)
+    ~Node() {
+        for (auto &it: children)
             if (it) delete it;
-        
     }
 
-    void set_child(int child_pos, _Node *node) {
-        children[child_pos] = node;
-    }
+    void set_child(int child_pos, Node *node) { children[child_pos] = node; }
 
     void set_transform_type(int type) { transform_type = type; }
 
     void from_string(const char *tree) {
-        if (*tree == '\0') return;
+        if (*tree == '\0')
+            return;
         else if (tree[1] == '\0') {
             transform_type = (int)(*tree - '0');
         } else {
-            std::deque<_Node *> queue;
+            std::deque<Node *> queue;
             queue.push_back(this);
             const char *c = tree;
             while (!queue.empty()) {
                 auto *node = queue.front();
                 queue.pop_front();
                 for (int i = 0; i < 16; i++, c++) {
-                    auto *child = new _Node();
+                    auto *child = new Node();
                     if (*c == '0')
                         queue.push_back(child);
                     else
@@ -59,7 +56,7 @@ struct _Node {
     }
 
     void to_string(char *buffer) {
-        std::deque<_Node *> queue;
+        std::deque<Node *> queue;
         queue.push_back(this);
         char *c = buffer;
         while (!queue.empty()) {
@@ -82,50 +79,39 @@ struct _Node {
     }
 };
 
-
 class Transform {
   public:
     enum TransformType {
         NO_TRANSFORM = 0, /* Empty value */
         DCT_II,           /* Discrete Cosine Transform Type II */
-        DST_II,           /* Discrete Sine Transform Type II */
+        DST_I,            /* Discrete Sine Transform Type II */
         DST_VII,          /* Discrete Sine Transform Type VII */
-        MULTI,            /* Pick transform with smallest distortion rate */  
         HYBRID,           /* Applies different transforms across the dimensions */
-    };
-
-    enum {
-        NO_SEGMENTS,
-        SEGMENTS_8,
-        SEGMENTS_4,
-        SEGMENTS_2,
+        MULTI,            /* Pick transform with smallest distortion rate */
     };
 
     enum { NO_AXIS = 0, AXIS_X = 1, AXIS_Y = 2, AXIS_U = 4, AXIS_V = 8 };
 
-    int use_segments = 0;
-    int axis_to_flip = 0;
     EncoderParameters codec_parameters;
-    float qp;
     bool disable_segmentation = false;
-    Point4D quant_weight_100;
+
     static void flush_cache();
     static TransformType get_type(std::string transform);
 
     Transform(Point4D &shape);
+    Transform(EncoderParameters &params);
+
     ~Transform();
 
     void use_statistics(const std::string filename);
     void set_position(int channel, const Point4D &current_pos);
 
-    // void forward(TransformType transform, float *input, float *output, Point4D &shape);
-    // void inverse(TransformType transform, float *input, float *output, Point4D &shape);
-
     std::string forward(TransformType transform, float *input, float *output, Point4D &shape);
     void inverse(TransformType transform, float *input, float *output, Point4D &shape);
     void inverse(const std::string tree, float *input, float *output, Point4D &shape);
-    void _forward_md(TransformType transform, float *input, float *output, Point4D &shape);
-    void _inverse_md(TransformType transform, float *input, float *output, Point4D &shape);
+    void md_forward(TransformType transform, float *input, float *output, Point4D &shape);
+    void md_inverse(TransformType transform, float *input, float *output, Point4D &shape);
+
   private:
     Point4D shape;
     Point4D stride;
@@ -135,53 +121,38 @@ class Transform {
     size_t flat_p2;
     float *wh_partial_values;
     float *partial_values;
-    float max;
-    float min;
-    float abs_max;
-    float abs_min;
-    int zeros;
-    int ones;
-    int count;
-    float energy;
-    float sum;
+
     TransformType enforce_transform;
-    std::ofstream stats_stream;
-    const std::string sep = ",";
-    const std::vector<TransformType> ALL_TRANSFORMS = {DCT_II, DST_II, DST_VII};
+
+    const std::vector<TransformType> ALL_TRANSFORMS = {DCT_II, DST_I, DST_VII};
     const std::vector<TransformType> HYBRID_LST = {DCT_II, DST_VII, DST_VII, DST_VII};
 
+    static std::map<size_t, float *> cache_dct_ii;
+    static std::map<size_t, float *> cache_dst_i;
+    static std::map<size_t, float *> cache_dst_vii;
 
-    static std::map<size_t, float *> _DCT_II_CACHE;
-    static std::map<size_t, float *> _DST_II_CACHE;
-    static std::map<size_t, float *> _DST_VII_CACHE;
-
-    static float *_DCT_II(size_t size);
-    static float *_DST_II(size_t size);
-    static float *_DST_VII(size_t size);
+    static float *sd_dct_ii(size_t size);
+    static float *sd_dst_i(size_t size);
+    static float *sd_dst_vii(size_t size);
 
     static auto get_transform(TransformType type, bool is_inverse = false);
-    static float *_get_coefficients(TransformType type, const size_t size);
-    static void _forward_sd(TransformType type,
+    static float *get_coefficients(TransformType type, const size_t size);
+    static void sd_forward(TransformType type,
                            const float *in,
                            float *out,
                            const size_t offset,
                            const size_t size);
-    static void _inverse_sd(TransformType type,
+    static void sd_inverse(TransformType type,
                            const float *in,
                            float *out,
                            const size_t offset,
                            const size_t size);
 
-    
-
-    void write_stats(int segment, const float *block, const Point4D &shape);
-    void calculate_metrics(const float *block, const Point4D &shape);
-
-    auto calculate_distortion(float *block,  float *result, Point4D &shape);
+    auto calculate_distortion(float *block, float *result, Point4D &shape);
     auto calculate_tree(float *block, float *result, Point4D &shape, int level);
-    void reconstruct_from_tree(_Node *root, float *input, float *output, Point4D& shape);
+    void reconstruct_from_tree(Node *root, float *input, float *output, Point4D &shape);
     auto get_quantization_procotol(TransformType transform);
-    float calculate_bistream(const float *block);
+    auto get_transform_vector(TransformType transform);
 };
 
 #endif // TRANSFORM_H

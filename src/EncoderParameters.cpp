@@ -41,8 +41,16 @@ void EncoderParameters::parse_cli(int argc, char *argv[]) {
             this->transform = argv[++it];
         } else if (flag == "-flipaxis") {
             this->flipaxis = strtol(argv[++it], nullptr, 10);
-        } else if (flag == "-segments") {
-            this->segments = strtol(argv[++it], nullptr, 10);
+        } else if (flag == "-lee-c") {
+            this->lee_c = strtof(argv[++it], nullptr);
+        } else if (flag == "-lee-a0") {
+            this->lee_a0 = strtof(argv[++it], nullptr);
+        } else if (flag == "-lee-ai") {
+            this->lee_ai = strtof(argv[++it], nullptr);
+        } else if (flag == "-lee-b0") {
+            this->lee_b0 = strtof(argv[++it], nullptr);
+        } else if (flag == "-lee-bi") {
+            this->lee_bi = strtof(argv[++it], nullptr);
         } else {
             std::cout << "Unused Option: " << argv[it];
             std::cout << "\t" << argv[++it] << std::endl;

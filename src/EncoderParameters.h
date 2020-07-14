@@ -18,6 +18,12 @@ public:
     std::string transform;
     int flipaxis {0};
     int segments {0};
+    float lee_c = 10;
+    float lee_ai = 1023;
+    float lee_a0 = 1023;
+    float lee_bi = 0.04;
+    float lee_b0 = 0.01;
+    
     bool isLytro() const;
 
   EncoderParameters() = default;

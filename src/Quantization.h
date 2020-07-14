@@ -3,47 +3,55 @@
 #define QUANTIZATION_H
 
 #include <cmath>
+#include <tuple>
+#include <unordered_map>
+#include <functional>
 #include "Typedef.h"
 #include "Point4D.h"
+#include "EncoderParameters.h"
 
 class Quantization {
-private:
-    Point4D dim_block, weight_100;
-
-    float *volume{nullptr};
-
-#if LFCODEC_QUANTIZATION_EXTRA_VOLUMES
-    float *volume_hom = nullptr;
-#endif
-
-    float qp;
-
-    static float clip_min(float val, float min);
-
-    void generateVolume();
 
 public:
-    Quantization(const Point4D &dimBlock, float qp, const Point4D &weight_100);
+    enum QuantizationVolumeType {
+        HAYAN = 1,
+        LEE = 2,
+    };
+    Quantization() = default;
 
+    Quantization(const Point4D &dimBlock, const EncoderParameters codec_parameters);
+    virtual ~Quantization();
     void delete_volume();
 
-    virtual ~Quantization();
+    void set_lee_parameters(float C, float ai, float a0, float bi, float b0);
 
     void inverse(const float *input, float *output);
-
     void foward(const float *input, float *output);
+    
+    void inverse(const QuantizationVolumeType type, const float *input, float *output);
+    void foward(const QuantizationVolumeType type, const float *input, float *output);
+private:
+    float qp = 1;
+    float lee_c = 10;
+    float lee_ai = 1023;
+    float lee_a0 = 1023;
+    float lee_bi = 0.04;
+    float lee_b0 = 0.01;
+    Point4D dim_block;
+    Point4D weight_100;
+    float *volume_hayan = nullptr;
+    float *volume_lee = nullptr;
+    static std::unordered_map<const Point4D, float *, Point4DHasher> cache_lee;
+    static std::unordered_map<const Point4D, float *, Point4DHasher> cache_hayan;
 
 
-#if LFCODEC_QUANTIZATION_EXTRA_VOLUMES
-    enum {
-        DEFAULT = 0,
-        HOMOGENEOUS
-    };
-    void inverse(const int volume, const float *input, float *output);
+    
 
-    void foward(const int volume, const float *input, float *output);
-#endif
+    static float clip_min(float val, float min);
+    float* generate_volume(const QuantizationVolumeType type);
+    float* get_volume(const QuantizationVolumeType type);
 };
+
 
 
 #endif //QUANTIZATION_H

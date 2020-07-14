@@ -31,7 +31,7 @@ TEST(BackwardsCompatibilityWithOldAPI, new_dct_4d_is_consistent) {
   }
 
   old_transform.dct_4d(input, expected, shape, shape);
-  new_transform._forward(Transform::DCT, input, output, shape);
+  new_transform.md_forward(Transform::DCT, input, output, shape);
 
   for (int i = 0; i < FLAT_SIZE; i++)
     ASSERT_NEAR(expected[i], output[i], std::abs(expected[i] * 1e-3));
@@ -65,8 +65,8 @@ TEST(BackwardsCompatibilityWithOldAPI, new_idct_4d_is_consistent) {
   old_transform.dct_4d(input, temp1, shape, shape);
   old_transform.idct_4d(temp1, expected, shape, shape);
 
-  new_transform._forward(Transform::DCT, input, temp2, shape);
-  new_transform._inverse(Transform::DCT, temp2, output, shape);
+  new_transform.md_forward(Transform::DCT, input, temp2, shape);
+  new_transform.md_inverse(Transform::DCT, temp2, output, shape);
 
   for (int i = 0; i < FLAT_SIZE; i++)
     ASSERT_NEAR(expected[i], output[i], std::abs(expected[i] * 1e-3));
@@ -96,10 +96,10 @@ TEST(BackwardsCompatibilityWithOldAPI, partial_size_dct) {
   }
 
   old_transform.dct_4d(input, temp1, smaller_shape, shape);
-  new_transform._forward(Transform::DCT, input, temp2, smaller_shape);
+  new_transform.md_forward(Transform::DCT, input, temp2, smaller_shape);
 
   old_transform.idct_4d(temp1, expected, smaller_shape, shape);
-  new_transform._inverse(Transform::DCT, temp2, output, smaller_shape);
+  new_transform.md_inverse(Transform::DCT, temp2, output, smaller_shape);
 
   for (int v = 0; v < shape.v; v++) {
     for (int u = 0; u < shape.u; u++) {
@@ -143,8 +143,8 @@ TEST(BackwardsCompatibilityWithOldAPI, partial_size_dst2) {
     output[i] = transformed_signal[i] = MAGIC_NUMBER;
   }
 
-  new_transform._forward(Transform::DST_II, input, transformed_signal, smaller_shape);
-  new_transform._inverse(Transform::DST_II, transformed_signal, output, smaller_shape);
+  new_transform.md_forward(Transform::DST_I, input, transformed_signal, smaller_shape);
+  new_transform.md_inverse(Transform::DST_I, transformed_signal, output, smaller_shape);
 
   for (int v = 0; v < shape.v; v++) {
     for (int u = 0; u < shape.u; u++) {

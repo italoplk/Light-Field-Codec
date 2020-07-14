@@ -60,6 +60,19 @@ public:
     }
     throw;
   }
+
+  friend bool operator<(const Point4D& p, const Point4D& q) {
+    return p.x < q.x && p.y < q.y && p.u < q.u && p.v < q.v;
+  }
+};
+
+
+struct Point4DHasher
+{
+  std::size_t operator () (const Point4D &p) const 
+  {
+    return p.x ^ ((p.y << 1) ^ ((p.u << 2) ^ (p.v << 3)));
+  }
 };
 
 #endif // POINT4D_H
