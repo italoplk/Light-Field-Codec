@@ -61,8 +61,7 @@ int main(int argc, char **argv) {
     // encoder.writeHeader();
 
 #if STATISTICS_LOCAL
-    transform.use_statistics(encoderParameters.getPathOutput() +
-                             "localStatistics_transform.csv");
+    
     Statistics statistics_qf(encoderParameters.getPathOutput() +
                              "localStatistics_quantization.csv");
 #endif
