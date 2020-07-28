@@ -34,6 +34,8 @@ public:
     LFSample *rgb[3];
     LFSample predictors[3];
     LFSample predictor;
+    int l;
+    int mode_Selected[1218],  sse_Selected[1218] = {0};
 
     uint num_elementos;
 
@@ -44,6 +46,11 @@ public:
 
     void init_references();
 
+    void writeHeatMap(const std::string  output_path);
+
+    float sseHorizontalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+    float sseVerticalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize);
+  
     Prediction(uint resol_x);
 
     int get_reference(uint x, uint y);

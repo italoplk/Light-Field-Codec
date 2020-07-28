@@ -3,6 +3,14 @@
 #include <math.h>
 //EDUARDO END
 
+//idm bibliotecas pra escrita do arquivo CSV
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
+
+
+
 Prediction::Prediction(){
     this->predictor = 0;
     this->predictors[0] = 0;
@@ -560,6 +568,7 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
     float R1 = 0;
     float min_sse = 0;
     float min_mode = 0;
+    int mode = 0;
 
     float refAbove4D[origSize.getNSamples()],
             refLeft4D[origSize.getNSamples()];
@@ -583,7 +592,7 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
         }
     } else{ //se tem bloco de referência
 
-        for(int mode = 0; mode < num_modes; mode++) {
+        for(mode = 0; mode < num_modes; mode++) {
             switch (mode)
             {
                 case 0:
@@ -755,6 +764,10 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
                         }
                     }
                 }
+
+
+
+
                 int sse = this->sseVertical(orig_input, out, origSize);
                 if(mode == 0){
                     min_sse = sse;
@@ -857,7 +870,98 @@ void Prediction::angularPrediction(uint pos_x, uint pos_y, const float *orig_inp
             }
         }
     }
+    this->sse_Selected[l] = mode-2 <= 15 ?  sseHorizontalFullBlock(orig_input, out, origSize) : sseVerticalFullBlock(orig_input, out, origSize);
+
+
+//IDM begin Heat Map for Mode Selected
+
+    mode_Selected[l] = min_mode;
+    std::cout << mode_Selected[l] << '\n';
+    l++;
+    
+//IDM end
+
 }
+
+//IDM begin Heat Map for Mode Selected
+void Prediction::writeHeatMap(const std::string output_path){
+    std::ofstream file;
+    int cont = 0;
+
+    file.open (output_path + "heat_map.csv");
+
+    for (int i = 1; i <= 1218; i++)
+    {
+ 
+        if((i%42) == 0) file << mode_Selected[i-1] << "\n";
+        else file << mode_Selected[i-1] << ",";
+        
+    }
+    
+    file.close();
+
+}
+
+//IDM end
+
+float Prediction::sseHorizontalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
+    Point4D it_pos;
+
+    // Horizontal
+    it_pos.x = 0;
+    it_pos.u = 0;
+    it_pos.y = 0;
+    it_pos.v = 0;
+
+    float sum = 0;
+    int pos = 0;
+
+    // percorre vetor out na ordem horizontal espacial
+    for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+        for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+
+            // percorre vetor out na ordem horizontal angular
+            for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+
+                    pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
+                    sum += pow(orig_input[pos] - prediction_input[pos], 2);
+                }
+            }
+        }
+    }
+}
+
+float Prediction::sseVerticalFullBlock(const float *orig_input, const float *prediction_input, const Point4D &origSize){
+    Point4D it_pos;
+    
+    it_pos.x = 0;
+    it_pos.u = 0;
+    it_pos.y = 0;
+    it_pos.v = 0;
+
+    float sum = 0;
+    int pos = 0;
+
+    // percorre vetor out na ordem vertical espacial
+    for (it_pos.x = 0; it_pos.x < origSize.x; it_pos.x += 1) {
+        for (it_pos.y = 0; it_pos.y < origSize.y; it_pos.y += 1) {
+
+            // percorre vetor out na ordem vertical angular
+            for (it_pos.u = 0; it_pos.u < origSize.u; it_pos.u += 1) {
+                for (it_pos.v = 0; it_pos.v < origSize.v; it_pos.v += 1) {
+                    pos = (it_pos.x) + (it_pos.y * origSize.x) + (it_pos.u * origSize.x * origSize.y)
+                          + (it_pos.v * origSize.x * origSize.y * origSize.u);
+                    sum += pow(orig_input[pos] - prediction_input[pos], 2);
+                }
+            }
+        }
+    }
+    return sum;
+}
+
+
 
 float Prediction::roundTowardsZero( const float value ){
     float result = std::floor( std::fabs( value ) );
@@ -995,4 +1099,5 @@ void Prediction::update(float *curr, bool available, uint blockSize) {
 void Prediction::init_references() {
     for (int i = 0; i < this->resol_x + 1; ++i) this->pred_references.emplace_back();
 }
+
 //EDUARDO END

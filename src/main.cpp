@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
                         //newPredictor[it_channel].angularPredictRefHorizontalMI(orig4D, ref4D, encoderParameters.dim_block, pf4D);
 
                         newPredictor[it_channel].angularPrediction(it_pos.x, it_pos.y, orig4D, encoderParameters.dim_block, pf4D);
-
+                        newPredictor[0].writeHeatMap(encoderParameters.getPathOutput());
                         //float sad;
                         //sad = newPredictor[it_channel].sadVertical(orig4D, pf4D, encoderParameters.dim_block);
                         //sad = newPredictor[it_channel].sadHorizontal(orig4D, pf4D, encoderParameters.dim_block);
@@ -219,6 +219,8 @@ int main(int argc, char **argv) {
 
                         //transform.dct_4d(orig4D, tf4D, dimBlock, encoderParameters.dim_block);
                         //EDUARDO END
+
+
 
 #if STATISTICS_TIME
                         t.toc();
